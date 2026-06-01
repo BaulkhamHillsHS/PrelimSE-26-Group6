@@ -43,19 +43,19 @@ class LoginFrame(ctk.CTkFrame):
     # Frame for log in/welcome screen
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
-        self.grid_rowconfigure(2, weight=1)
-        self.grid_columnconfigure(2, weight=1)
+        self.grid_rowconfigure(2, weight=2)
+        self.grid_columnconfigure(2, weight=2)
 
         self.signup_form = None
 
-        self.logintitle = ctk.CTkLabel(self, text="login", font=("Roboto", 36))
-        self.logintitle.grid(row=0, column=0, columnspan=2, sticky="ew")
+        self.logintitle = ctk.CTkLabel(self, text="login", font=("Roboto", 50))
+        self.logintitle.grid(row=0, column=0, columnspan=2, sticky="nsew", pady=(30, 60))
 
-        self.create_account_button = ctk.CTkButton(self, text="Create an account", command=self.create_signup_form)
-        self.create_account_button.grid(row=1, column=0)
+        self.create_account_button = ctk.CTkButton(self, 300, 50, text="Create an account", command=self.create_signup_form)
+        self.create_account_button.grid(row=1, column=0, sticky="nsew", padx=10)
 
-        self.loginbtn = ctk.CTkButton(self, text="login", command=self.master.loggedin)
-        self.loginbtn.grid(row=1, column=1)
+        self.loginbtn = ctk.CTkButton(self, 300, 50, text="login", command=self.master.loggedin)
+        self.loginbtn.grid(row=1, column=1, sticky="nsew", padx=10)
 
     def create_signup_form(self):
         self.create_account_button.grid_forget()
@@ -63,7 +63,7 @@ class LoginFrame(ctk.CTkFrame):
         if self.signup_form == None:
             self.signup_form = SignupFrame(self)
             self.signup_form.grid(row=0, column=0, padx=15, pady=15, columnspan=2, rowspan=2, sticky="nesw")
-            
+
 
 class SignupFrame(ctk.CTkFrame):
     # Frame to create an account
@@ -117,6 +117,11 @@ class SignupFrame(ctk.CTkFrame):
         if any(var == "" for var in (username, age, email, password, confirm_password)):
             self.status_label.configure(text="Please fill in all fields.", text_color="red")
             return
+        try:
+            age = int(age)
+        except:
+            self.status_label.configure(text="Please enter a number for age", text_color="red")
+            return
         if password != confirm_password:
             self.status_label.configure(text="Passwords do not match.", text_color="red")
             return
@@ -143,15 +148,14 @@ class StreamingServiceApp(ctk.CTk):
         super().__init__()
         self.title(NAME + " streaming service :3 ")
         self.geometry("720x720")
-        self.grid_rowconfigure(1, weight=1)
-        self.grid_columnconfigure(1, weight=1)
-
 
         self.accounts_list = [] # make csv soontm
 
+        self.titletxt = ctk.CTkLabel(self, text=NAME, text_color="pink")
+        self.titletxt.pack(side="top", pady=(40, 0))
 
         self.login = LoginFrame(self)
-        self.login.grid(row=1, column=1, sticky="nesw")
+        self.login.pack(fill="both", expand=True, padx=40, pady=40)
 
         self.main = MainFrame(self)
 
