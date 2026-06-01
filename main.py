@@ -39,6 +39,26 @@ have settings such as:
 
 NAME = "yaoi"
 
+class LoginFrame(ctk.CTkFrame):
+    # Frame for log in/welcome screen
+    def __init__(self, master, **kwargs):
+        super().__init__(master, **kwargs)
+        self.logintitle = ctk.CTkLabel(self, text="login")
+        self.logintitle.pack(pady=30)
+
+        self.loginbtn = ctk.CTkButton(self, text="login", command=master.loggedin)
+        self.loginbtn.pack(pady=50)
+
+
+class MainFrame(ctk.CTkFrame): # better name than mainframe?
+    # Frame for after login, watching things idk
+    def __init__(self, master, **kwargs):
+        super().__init__(master, **kwargs)
+        self.maintitle = ctk.CTkLabel(self, text="main")
+        self.maintitle.pack(pady=30)
+
+
+
 class StreamingServiceApp(ctk.CTk):
     def __init__(self):
         super().__init__()
@@ -47,10 +67,21 @@ class StreamingServiceApp(ctk.CTk):
         
         self.accounts_list = [] # make csv soontm
 
+
+        self.login = LoginFrame(self)
+        self.login.pack()
+
+        self.main = MainFrame(self)
+
         self.create_account_button = ctk.CTkButton(self, text="Create an account", command=self.create_signup_form)
         self.create_account_button.pack(pady=20)
 
         self.signup_form = None
+
+    def loggedin(self):
+        self.login.forget()
+        self.main.pack()
+
 
     def create_signup_form(self):
         if self.signup_form is not None:
@@ -109,5 +140,7 @@ class StreamingServiceApp(ctk.CTk):
         self.status_label.configure(text="Account created successfully!", text_color="green")
 
         print(self.accounts_list)
+
+
 app = StreamingServiceApp()
 app.mainloop()
