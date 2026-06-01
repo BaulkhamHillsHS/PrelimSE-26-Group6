@@ -32,6 +32,7 @@ have settings such as:
   - each profile should have:
       - age
         - show nsfw?  (should be disabled when age < 18, toggle switch)
+            - https://youtu.be/uGI0tkmyogU?t=1590 "We should blur this on YouTube and make it unblurred on Nebula."
       - watch history
 
 """
@@ -41,8 +42,72 @@ NAME = "yaoi"
 class StreamingServiceApp(ctk.CTk):
     def __init__(self):
         super().__init__()
-        self.title(NAME + " streaming service")
-        self.geometry("720x420")
+        self.title(NAME + " streaming service :3 ")
+        self.geometry("720x720")
+        
+        self.accounts_list = [] # make csv soontm
 
+        self.create_account_button = ctk.CTkButton(self, text="Create an account", command=self.create_signup_form)
+        self.create_account_button.pack(pady=20)
+
+        self.signup_form = None
+
+    def create_signup_form(self):
+        if self.signup_form is not None:
+            return
+
+        self.signup_form = ctk.CTkFrame(self)
+        self.signup_form.pack(pady=10, padx=20, fill="both", expand=True)
+
+        self.username_label = ctk.CTkLabel(self.signup_form, text="Username")
+        self.username_label.pack(pady=(10, 0))
+        self.username_entry = ctk.CTkEntry(self.signup_form)
+        self.username_entry.pack(pady=5)
+
+        self.age_label = ctk.CTkLabel(self.signup_form, text="Age")
+        self.age_label.pack(pady=(10, 0))
+        self.age_entry = ctk.CTkEntry(self.signup_form)
+        self.age_entry.pack(pady=5)
+
+        self.email_label = ctk.CTkLabel(self.signup_form, text="Email")
+        self.email_label.pack(pady=(10, 0))
+        self.email_entry = ctk.CTkEntry(self.signup_form)
+        self.email_entry.pack(pady=5)
+
+        self.password_label = ctk.CTkLabel(self.signup_form, text="Password")
+        self.password_label.pack(pady=(10, 0))
+        self.password_entry = ctk.CTkEntry(self.signup_form, show="*")
+        self.password_entry.pack(pady=5)
+
+        self.confirm_password_label = ctk.CTkLabel(self.signup_form, text="Confirm password")
+        self.confirm_password_label.pack(pady=(10, 0))
+        self.confirm_password_entry = ctk.CTkEntry(self.signup_form, show="*")
+        self.confirm_password_entry.pack(pady=5)
+
+        self.submit_button = ctk.CTkButton(self.signup_form, text="Submit", command=self.submit_account)
+        self.submit_button.pack(pady=15)
+
+        self.status_label = ctk.CTkLabel(self.signup_form, text="")
+        self.status_label.pack()
+
+    def submit_account(self):
+        username = self.username_entry.get()
+        age = self.age_entry.get()
+        email = self.email_entry.get()
+        password = self.password_entry.get()
+        confirm_password = self.confirm_password_entry.get()
+
+        if any(var == "" for var in (username, age, email, password, confirm_password)):
+            self.status_label.configure(text="Please fill in all fields.", text_color="red")
+            return
+        if password != confirm_password:
+            self.status_label.configure(text="Passwords do not match.", text_color="red")
+            return
+
+        self.accounts_list.append([username, age, email, password])
+
+        self.status_label.configure(text="Account created successfully!", text_color="green")
+
+        print(self.accounts_list)
 app = StreamingServiceApp()
 app.mainloop()
