@@ -38,11 +38,43 @@ have settings such as:
 
 NAME = "yaoi"
 
+class LoginFrame(ctk.CTkFrame):
+    # Frame for log in/welcome screen
+    def __init__(self, master, **kwargs):
+        super().__init__(master, **kwargs)
+        self.logintitle = ctk.CTkLabel(self, text="login")
+        self.logintitle.pack(pady=30)
+
+        self.loginbtn = ctk.CTkButton(self, text="login", command=master.loggedin)
+        self.loginbtn.pack(pady=50)
+
+
+class MainFrame(ctk.CTkFrame): # better name than mainframe?
+    # Frame for after login, watching things idk
+    def __init__(self, master, **kwargs):
+        super().__init__(master, **kwargs)
+        self.maintitle = ctk.CTkLabel(self, text="main")
+        self.maintitle.pack(pady=30)
+
+
+
 class StreamingServiceApp(ctk.CTk):
     def __init__(self):
         super().__init__()
         self.title(NAME + " streaming service")
         self.geometry("720x420")
+
+
+        self.login = LoginFrame(self)
+        self.login.pack()
+
+        self.main = MainFrame(self)
+
+    def loggedin(self):
+        self.login.forget()
+        self.main.pack()
+
+    
 
 app = StreamingServiceApp()
 app.mainloop()
