@@ -192,7 +192,6 @@ class ProfileFrame(ctk.CTkFrame):
     # profile name, age
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
-        #self.main = MainFrame(self)
         
         self.grid_rowconfigure(10, weight=1)
         self.grid_columnconfigure(10, weight=1)
@@ -226,11 +225,6 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe?
         self.profilebtn.grid(row=0, column=10)
 
         self.accountinfo = AccountInfoFrame(self)
-        self.accountinfo.grid(row=1, column=7, rowspan=3, columnspan=3)
-        self.accountinfo.grid_forget()
-
-        self.createprofile = ProfileFrame(self)
-        self.createprofile.pack(pady=20)
 
     def updateaccount(self, account):
         self.accountinfo.accountnametxt.configure(text="Account: "+account)
@@ -239,7 +233,7 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe?
         if self.accountinfo.winfo_ismapped():
             self.accountinfo.grid_forget()
         else:
-            self.accountinfo.grid()
+            self.accountinfo.grid(row=1, column=8, rowspan=3, columnspan=3)
 
 
 
@@ -263,6 +257,8 @@ class StreamingServiceApp(ctk.CTk):
 
         self.main = MainFrame(self)
 
+        self.profile = ProfileFrame(self)
+
     def loggedin(self):
         self.changeframetomain()
         self.account = self.login.accountbox.get()
@@ -273,19 +269,27 @@ class StreamingServiceApp(ctk.CTk):
         self.account = self.login.signup_form.username_entry.get()
         self.main.updateaccount(self.account)
 
+    def logout(self):
+        self.changeframetologin()
+        self.login.pack()
+        self.login.buildui()
+        self.account = ""
+
     def changeframetomain(self):
         self.login.create_account_button.grid_forget()
         self.login.accountbox.grid_forget()
         self.login.loginbtn.grid_forget()
         self.login.forget()
         self.main.pack(fill="both", expand=True)
-    
-    def logout(self):
+
+    def changeframetologin(self):
         self.main.forget()
         self.main.accountinfo.grid_forget()
-        self.login.pack()
-        self.login.buildui()
-        self.account = ""
+
+    def changeframetoprofile(self):
+        pass
+
+    
 
 
 
