@@ -43,7 +43,7 @@ class LoginFrame(ctk.CTkFrame):
     # Frame for log in/welcome screen
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
-        self.grid_rowconfigure(2, weight=2)
+        self.grid_rowconfigure(3, weight=2)
         self.grid_columnconfigure(2, weight=2)
 
         self.signup_form = None
@@ -57,10 +57,19 @@ class LoginFrame(ctk.CTkFrame):
         self.logintitle.grid(row=0, column=0, columnspan=2, sticky="nsew", pady=(30, 60))
 
         self.create_account_button = ctk.CTkButton(self, 300, 50, text="Create an account", command=self.create_signup_form)
-        self.create_account_button.grid(row=1, column=0, sticky="nsew", padx=10)
+        self.create_account_button.grid(row=2, column=0, sticky="nsew", padx=10)
+
+        self.accountbox = ctk.CTkComboBox(self, values=self.master._accounts.get_usernames())
+        self.accountbox.grid(row=1, column=1, padx=10, pady=10)
 
         self.loginbtn = ctk.CTkButton(self, 300, 50, text="login", command=self.master.loggedin)
-        self.loginbtn.grid(row=1, column=1, sticky="nsew", padx=10)
+        self.loginbtn.grid(row=2, column=1, sticky="nsew", padx=10)
+
+        if self.master._accounts.get_usernames() == []:
+            self.accountbox.set("No accounts")
+            self.accountbox.configure(state="disabled")
+            self.loginbtn.configure(state="disabled")
+
 
     def create_signup_form(self):
         self.create_account_button.grid_forget()
@@ -140,7 +149,7 @@ class SignupFrame(ctk.CTkFrame):
         self.status_label.configure(text="Account created successfully!", text_color="green")
 
         print(self.master.master._accounts.get_usernames())
-        self.master.master.loggedin()
+        self.master.master.newaccountloggedin()
 
 
 
@@ -151,8 +160,14 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe?
         self.maintitle = ctk.CTkLabel(self, text="main")
         self.maintitle.pack(pady=30)
 
+        self.accounttxt = ctk.CTkLabel(self, text="Account: ")
+        self.accounttxt.pack(pady=20)
+
         self.backbtn = ctk.CTkButton(self, text="Back", command=master.logout)
         self.backbtn.pack(pady=20)
+
+    def updateaccount(self, account):
+        self.accounttxt.configure(text="Account: "+account)
 
 
 
@@ -163,6 +178,7 @@ class StreamingServiceApp(ctk.CTk):
         self.geometry("720x720")
 
         self._accounts = UserAccounts()
+        self.account = ""
 
         self.titletxt = ctk.CTkLabel(self, text=NAME, text_color="pink")
         self.titletxt.pack(side="top", pady=(40, 0))
@@ -173,13 +189,24 @@ class StreamingServiceApp(ctk.CTk):
         self.main = MainFrame(self)
 
     def loggedin(self):
+        self.changeframetomain()
+        self.account = self.login.accountbox.get()
+        self.main.updateaccount(self.account)
+
+    def newaccountloggedin(self):
+        self.changeframetomain()
+        self.account = self.login.signup_form.username_entry.get()
+        self.main.updateaccount(self.account)
+
+    def changeframetomain(self):
         self.login.forget()
         self.main.pack(fill="both", expand=True)
-
+    
     def logout(self):
         self.main.forget()
         self.login.pack()
         self.login.buildui()
+        self.account = ""
 
 
 class UserAccounts:
