@@ -47,7 +47,12 @@ class LoginFrame(ctk.CTkFrame):
         self.grid_columnconfigure(2, weight=2)
 
         self.signup_form = None
+        self.buildui()
 
+    def buildui(self):
+        if self.signup_form:
+            self.signup_form.destroy()
+            self.signup_form = None
         self.logintitle = ctk.CTkLabel(self, text="login", font=("Roboto", 50))
         self.logintitle.grid(row=0, column=0, columnspan=2, sticky="nsew", pady=(30, 60))
 
@@ -78,27 +83,27 @@ class SignupFrame(ctk.CTkFrame):
         self.username_label = ctk.CTkLabel(self, text="Username")
         self.username_label.grid(row=1, column=0)
         self.username_entry = ctk.CTkEntry(self)
-        self.username_entry.grid(row=1, column=1)
+        self.username_entry.grid(row=1, column=1, padx=10, pady=10)
 
         self.age_label = ctk.CTkLabel(self, text="Age")
         self.age_label.grid(row=2, column=0)
         self.age_entry = ctk.CTkEntry(self)
-        self.age_entry.grid(row=2, column=1)
+        self.age_entry.grid(row=2, column=1, padx=10, pady=10)
 
         self.email_label = ctk.CTkLabel(self, text="Email")
         self.email_label.grid(row=3, column=0)
         self.email_entry = ctk.CTkEntry(self)
-        self.email_entry.grid(row=3, column=1)
+        self.email_entry.grid(row=3, column=1, padx=10, pady=10)
 
         self.password_label = ctk.CTkLabel(self, text="Password")
         self.password_label.grid(row=4, column=0)
         self.password_entry = ctk.CTkEntry(self, show="*")
-        self.password_entry.grid(row=4, column=1)
+        self.password_entry.grid(row=4, column=1, padx=10, pady=10)
 
         self.confirm_password_label = ctk.CTkLabel(self, text="Confirm password")
         self.confirm_password_label.grid(row=5, column=0)
         self.confirm_password_entry = ctk.CTkEntry(self, show="*")
-        self.confirm_password_entry.grid(row=5, column=1)
+        self.confirm_password_entry.grid(row=5, column=1, padx=10, pady=10)
         
         self.status_label = ctk.CTkLabel(self, text="")
         self.status_label.grid(row=6, column=0, columnspan=2)
@@ -126,11 +131,16 @@ class SignupFrame(ctk.CTkFrame):
             self.status_label.configure(text="Passwords do not match.", text_color="red")
             return
 
-        self.master.master.accounts_list.append([username, age, email, password])
+        if username in self.master.master._accounts.get_usernames():
+            self.status_label.configure(text=f"Username {username} is taken.", text_color="red")
+            return
+
+        self.master.master._accounts.add_account(username, age, email, password)
 
         self.status_label.configure(text="Account created successfully!", text_color="green")
 
-        print(self.master.master.accounts_list)
+        print(self.master.master._accounts.get_usernames())
+        self.master.master.loggedin()
 
 
 
@@ -141,6 +151,9 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe?
         self.maintitle = ctk.CTkLabel(self, text="main")
         self.maintitle.pack(pady=30)
 
+        self.backbtn = ctk.CTkButton(self, text="Back", command=master.logout)
+        self.backbtn.pack(pady=20)
+
 
 
 class StreamingServiceApp(ctk.CTk):
@@ -149,7 +162,7 @@ class StreamingServiceApp(ctk.CTk):
         self.title(NAME + " streaming service :3 ")
         self.geometry("720x720")
 
-        self.accounts_list = [] # make csv soontm
+        self._accounts = UserAccounts()
 
         self.titletxt = ctk.CTkLabel(self, text=NAME, text_color="pink")
         self.titletxt.pack(side="top", pady=(40, 0))
@@ -163,5 +176,43 @@ class StreamingServiceApp(ctk.CTk):
         self.login.forget()
         self.main.pack(fill="both", expand=True)
 
+    def logout(self):
+        self.main.forget()
+        self.login.pack()
+        self.login.buildui()
+
+
+class UserAccounts:
+    # Only handles data
+    FIELDS = ["username", "age", "email", "password", "profiles"]
+
+    def __init__(self):
+        self.usernames = []
+
+    def __init__(self):
+        self._accounts = []
+
+    def add_account(self, username, age, email, password, profiles:list=[]):
+        self._accounts.append({"username": username,
+                               "age": age,
+                               "email": email,
+                               "password": password,
+                               "profiles": profiles})
+        self._refresh()
+    
+    def remove_account(self, username):
+        self._accounts.remove(username)
+        self._refresh()
+
+    def get_usernames(self):
+        return [*map(lambda user: user["username"], self._accounts)]
+    
+    def _refresh(self):
+        # Updates the values
+        self.usernames = self.get_usernames()
+        
+        
+
+    
 app = StreamingServiceApp()
 app.mainloop()
