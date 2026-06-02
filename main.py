@@ -133,8 +133,10 @@ class SignupFrame(ctk.CTkFrame):
             return
         try:
             age = int(age)
+            if age <= 0:
+                raise ValueError
         except:
-            self.status_label.configure(text="Please enter a number for age", text_color="red")
+            self.status_label.configure(text="Please enter a positive whole number for age", text_color="red")
             return
         if password != confirm_password:
             self.status_label.configure(text="Passwords do not match.", text_color="red")
