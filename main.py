@@ -164,6 +164,30 @@ class SignupFrame(ctk.CTkFrame):
 
 
 
+class ProfileFrame(ctk.CTkFrame):
+    # profile name, age
+    def __init__(self, master, **kwargs):
+        super().__init__(master, **kwargs)
+        #self.main = MainFrame(self)
+        
+        self.grid_rowconfigure(10, weight=1)
+        self.grid_columnconfigure(10, weight=1)
+
+        self.title = ctk.CTkLabel(self, text="Create a profile")
+        self.title.grid(row=0, column=0, padx=10, pady=10, columnspan=2)
+
+        self.username_label = ctk.CTkLabel(self, text="Profile name")
+        self.username_label.grid(row=1, column=0)
+        self.username_entry = ctk.CTkEntry(self)
+        self.username_entry.grid(row=1, column=1, padx=10, pady=10)
+
+        self.age_label = ctk.CTkLabel(self, text="Age")
+        self.age_label.grid(row=2, column=0)
+        self.age_entry = ctk.CTkEntry(self)
+        self.age_entry.grid(row=2, column=1, padx=10, pady=10)
+
+
+
 class MainFrame(ctk.CTkFrame): # better name than mainframe?
     # Frame for after login, watching things idk
     def __init__(self, master, **kwargs):
@@ -176,6 +200,9 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe?
 
         self.backbtn = ctk.CTkButton(self, text="Back", command=master.logout)
         self.backbtn.pack(pady=20)
+
+        self.createprofile = ProfileFrame(self)
+        self.createprofile.pack(pady=20)
 
     def updateaccount(self, account):
         self.accounttxt.configure(text="Account: "+account)
@@ -223,6 +250,7 @@ class StreamingServiceApp(ctk.CTk):
         self.account = ""
 
 
+
 class UserAccounts:
     # Only handles data
     FIELDS = ["username", "age", "email", "password", "profiles"]
@@ -254,6 +282,6 @@ class UserAccounts:
         
         
 
-    
+
 app = StreamingServiceApp()
 app.mainloop()
