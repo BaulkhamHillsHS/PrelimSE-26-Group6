@@ -74,9 +74,10 @@ class LoginFrame(ctk.CTkFrame):
     def create_signup_form(self):
         self.create_account_button.grid_forget()
         self.loginbtn.grid_forget()
+        self.accountbox.grid_forget()
         if self.signup_form == None:
             self.signup_form = SignupFrame(self)
-            self.signup_form.grid(row=0, column=0, padx=15, pady=15, columnspan=2, rowspan=2, sticky="nesw")
+            self.signup_form.grid(row=0, column=0, padx=15, pady=15, columnspan=2, rowspan=3, sticky="nesw")
 
 
 class SignupFrame(ctk.CTkFrame):
@@ -209,6 +210,9 @@ class StreamingServiceApp(ctk.CTk):
         self.main.updateaccount(self.account)
 
     def changeframetomain(self):
+        self.login.create_account_button.grid_forget()
+        self.login.accountbox.grid_forget()
+        self.login.loginbtn.grid_forget()
         self.login.forget()
         self.main.pack(fill="both", expand=True)
     
