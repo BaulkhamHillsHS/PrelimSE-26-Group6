@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 import customtkinter as ctk
 import tkinter as tk
 
@@ -79,6 +80,80 @@ class LoginFrame(ctk.CTkFrame):
             self.signup_form = SignupFrame(self)
             self.signup_form.grid(row=0, column=0, padx=15, pady=15, columnspan=2, rowspan=3, sticky="nesw")
 
+
+class FormFrame(ctk.CTkFrame, ABC):
+    """
+    Default frame for forms\n
+    Enter a title and a dictionary of values\n
+    Dictionary should be in form {"entry name": "type"}\n
+    "entry name" is the name of the label next to the box\n
+    "type" is the type of entry\n
+    valid types are "password" and "number"
+    """
+    def __init__(self, master, title, vars:dict={}, **kwargs):
+        
+        super().__init__(master, **kwargs)
+        self.vars = vars
+        self.length = len(vars)
+        self.passwordids = []
+        for i in range(self.length):
+            if [*vars.values()][i] == "password":
+                self.passwordids.append(i)
+
+
+        self.grid_rowconfigure(self.length+4, weight=1)
+        self.grid_columnconfigure(2, weight=1)
+
+        self.title = ctk.CTkLabel(self, text=title)
+        self.title.grid(row=0, column=0, padx=10, pady=10, columnspan=2)
+
+        self.entrys = []
+        for i in range(self.length):
+            label = ctk.CTkLabel(self, text=(t:=[*vars.keys()])[i])
+            label.grid(row=i+1, column=0)
+            if [*vars.values()][i] == "password":
+                entry = ctk.CTkEntry(self, show="*")
+            else:
+                entry = ctk.CTkEntry(self)
+            entry.grid(row=i+1, column=1)
+            self.entrys.append(entry)
+
+        
+        self.status_label = ctk.CTkLabel(self, text="", text_color="red")
+        self.status_label.grid(row=self.length+1, column=0, columnspan=2)
+
+        self.submit_btn = ctk.CTkButton(self, text="Submit", command=self.submit)
+        self.submit_btn.grid(row=self.length+2, column=0, columnspan=2, pady=10)
+
+        self.cancel_btn = ctk.CTkButton(self, text="Cancel", command=self.cancel)
+        self.cancel_btn.grid(row=self.length+3, column=0, columnspan=2, pady=10)
+
+    @abstractmethod
+    def submit(self):
+        self.values = []
+        for i in range(self.length):
+            self.values.append(value:=self.entrys[i].get())
+            if value == "":
+                self.status_label.configure(text="Please fill in all fields")
+                return
+            if [*self.vars.values()][i] == "number":
+                try:
+                    age = int(value)
+                    if age <= 0:
+                        raise ValueError
+                except:
+                    self.status_label.configure(text="Please enter a positive whole number for age")
+                    return
+            checkpassword = self.passwordids[1:]
+            for i in range(len(checkpassword)):
+                if self.passwordids[0] != checkpassword[i]:
+                    self.status_label.configure(text="Passwords do not match.")
+                    return
+
+    @abstractmethod
+    def cancel(self):
+        pass
+        
 
 class SignupFrame(ctk.CTkFrame):
     # Frame to create an account
