@@ -111,7 +111,7 @@ class SignupFrame(ctk.CTkFrame):
         self.password_entry.grid(row=4, column=1, padx=10, pady=10)
 
         self.confirm_password_label = ctk.CTkLabel(self, text="Confirm password")
-        self.confirm_password_label.grid(row=5, column=0)
+        self.confirm_password_label.grid(row=5, column=0, padx=(10, 0))
         self.confirm_password_entry = ctk.CTkEntry(self, show="*")
         self.confirm_password_entry.grid(row=5, column=1, padx=10, pady=10)
         
@@ -163,22 +163,57 @@ class SignupFrame(ctk.CTkFrame):
         self.master.buildui()
 
 
+class AccountInfoFrame(ctk.CTkFrame):
+    # Frame for showing account information
+    def __init__(self, master, **kwargs):
+        super().__init__(master, **kwargs)
+        self.grid_rowconfigure(5, weight=1)
+        self.grid_columnconfigure(1, weight=1)
+
+        self.accountnametxt = ctk.CTkLabel(self, text="Account: "+self.master.master.account)
+        self.accountnametxt.grid(row=0, column=0)
+
+        self.profilelist = ctk.CTkComboBox(self, values=self.master.master.profiles)
+        self.profilelist.grid(row=1, column=0)
+
+        self.newprofilebtn = ctk.CTkButton(self, text="New Profile")
+        self.newprofilebtn.grid(row=2, column=0)
+
+        self.switchprofilebtn = ctk.CTkButton(self, text="Switch Profile")
+        self.switchprofilebtn.grid(row=3, column=0)
+
+        self.logoutbtn = ctk.CTkButton(self, text="Logout", command=master.master.logout)
+        self.logoutbtn.grid(row=4, column=0)
+
+
+
 
 class MainFrame(ctk.CTkFrame): # better name than mainframe?
     # Frame for after login, watching things idk
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
+        self.grid_columnconfigure(10, weight=1)
+        self.grid_rowconfigure(4, weight=1)
+
         self.maintitle = ctk.CTkLabel(self, text="main")
-        self.maintitle.pack(pady=30)
+        self.maintitle.grid(row=0, column=0, padx=10, pady=10)
 
-        self.accounttxt = ctk.CTkLabel(self, text="Account: ")
-        self.accounttxt.pack(pady=20)
+        self.profilebtn = ctk.CTkButton(self, text="", width=60, height=60, corner_radius=30, command=self.toggle_account_info_visibility)
+        self.profilebtn.grid(row=0, column=10)
 
-        self.backbtn = ctk.CTkButton(self, text="Back", command=master.logout)
-        self.backbtn.pack(pady=20)
+        self.accountinfo = AccountInfoFrame(self)
+        self.accountinfo.grid(row=1, column=7, rowspan=3, columnspan=3)
+        self.accountinfo.grid_forget()
 
     def updateaccount(self, account):
-        self.accounttxt.configure(text="Account: "+account)
+        self.accountinfo.accountnametxt.configure(text="Account: "+account)
+
+    def toggle_account_info_visibility(self):
+        if self.accountinfo.winfo_ismapped():
+            self.accountinfo.grid_forget()
+        else:
+            self.accountinfo.grid()
+
 
 
 
@@ -190,6 +225,8 @@ class StreamingServiceApp(ctk.CTk):
 
         self._accounts = UserAccounts()
         self.account = ""
+        self.profile = ""
+        self.profiles = self._accounts.get_profiles(self.account)
 
         self.titletxt = ctk.CTkLabel(self, text=NAME, text_color="pink")
         self.titletxt.pack(side="top", pady=(40, 0))
@@ -218,6 +255,7 @@ class StreamingServiceApp(ctk.CTk):
     
     def logout(self):
         self.main.forget()
+        self.main.accountinfo.grid_forget()
         self.login.pack()
         self.login.buildui()
         self.account = ""
@@ -226,9 +264,6 @@ class StreamingServiceApp(ctk.CTk):
 class UserAccounts:
     # Only handles data
     FIELDS = ["username", "age", "email", "password", "profiles"]
-
-    def __init__(self):
-        self.usernames = []
 
     def __init__(self):
         self._accounts = []
@@ -247,6 +282,9 @@ class UserAccounts:
 
     def get_usernames(self):
         return [*map(lambda user: user["username"], self._accounts)]
+    
+    def get_profiles(self, username):
+        return self._accounts[self._accounts.index(username)]["profiles"] if username else []
     
     def _refresh(self):
         # Updates the values
