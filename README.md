@@ -1,5 +1,5 @@
 # Reminder
-## git pull origin main
-## every time
+**git pull origin main**
+**every time**
 
 hello sir
