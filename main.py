@@ -120,6 +120,9 @@ class SignupFrame(ctk.CTkFrame):
         self.submit_button = ctk.CTkButton(self, text="Submit", command=self.submit_account)
         self.submit_button.grid(row=7, column=0, columnspan=2, pady=10)
 
+        self.back_button = ctk.CTkButton(self, text="Cancel", command=self.cancel_submit)
+        self.back_button.grid(row=8, column=0, columnspan=2, pady=10)
+
 
     def submit_account(self):
         username = self.username_entry.get()
@@ -131,6 +134,7 @@ class SignupFrame(ctk.CTkFrame):
         if any(var == "" for var in (username, age, email, password, confirm_password)):
             self.status_label.configure(text="Please fill in all fields.", text_color="red")
             return
+        
         try:
             age = int(age)
             if age <= 0:
@@ -138,6 +142,7 @@ class SignupFrame(ctk.CTkFrame):
         except:
             self.status_label.configure(text="Please enter a positive whole number for age", text_color="red")
             return
+        
         if password != confirm_password:
             self.status_label.configure(text="Passwords do not match.", text_color="red")
             return
@@ -152,6 +157,9 @@ class SignupFrame(ctk.CTkFrame):
 
         print(self.master.master._accounts.get_usernames())
         self.master.master.newaccountloggedin()
+
+    def cancel_submit(self):
+        self.master.buildui()
 
 
 
