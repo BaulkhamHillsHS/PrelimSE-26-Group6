@@ -195,14 +195,14 @@ class StreamingServiceApp(ctk.CTk):
         self.main.updateaccount(self.account)
 
     def newaccountloggedin(self):
-        self.login.create_account_button.grid_forget()
-        self.login.accountbox.grid_forget()
-        self.login.loginbtn.grid_forget()
         self.changeframetomain()
         self.account = self.login.signup_form.username_entry.get()
         self.main.updateaccount(self.account)
 
     def changeframetomain(self):
+        self.login.create_account_button.grid_forget()
+        self.login.accountbox.grid_forget()
+        self.login.loginbtn.grid_forget()
         self.login.forget()
         self.main.pack(fill="both", expand=True)
     
