@@ -4,32 +4,33 @@ import csv
 
 """
 Notes:
-Login/welcome screen:
-    - Components
-    - Left: user creation screen 
-        - Top: 'No account?' label (or something like that)
-        - Bottom: 'Create an account' button
-            In create account screen:
-                - title label: 'create an account'
-                - text boxes:
-                    - name (needed?)
-                    - username
-                    - email
-                    - password
-                        - requirements: length, specal characters
-                    - age (use this age as the default for new profiles, as well as default for auto created profile when creating an account)                
-    - Right: list of users
-        - Top: 'Existing accounts' label
-        - Middle: combobox with a list of users
-        - Bottom: 'continue' button to continue to login screen based on selected user
-                  feedback label in case user has not selected 
+NEEDED THINGS
+profiles: 
+- each profile should have an age, watch list and watch history
+- profile should be a class
 
-once logged in, open settings by clicking on their pfp, 
-have settings such as:
-- profile management, list of profiles
-    - switch profiles by clicking
-  - each profile should have:
-      - watch history
+subscription management:
+button next to profile to open a seperate window to see subscription and manage
+
+OOP PROGRAMMING:
+CONGposition - class containing classes 
+- make a profile class, where the account class is containing profiles
+
+encapsulation - more protected things? currently only _accounts
+
+polymorphism - multiple classes containing same method
+- easy imo, because movie and tv show are going to be inheriting from the same abstract class
+
+
+
+
+
+
+
+
+
+
+
 
 
 https://youtu.be/uGI0tkmyogU?t=1590 "We should blur this on YouTube and make it unblurred on Nebula."
