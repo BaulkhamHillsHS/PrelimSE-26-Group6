@@ -218,7 +218,7 @@ class StreamingServiceApp(ctk.CTk):
         self._accounts.load_from_csv()
         self.account = ""
         self.profiles = self._accounts.get_profiles(self.account)
-        self.profile = self.profiles[0]
+        self.profile = ""
 
         self.titletxt = ctk.CTkLabel(self, text=NAME, text_color="pink")
         self.titletxt.pack(side="top", pady=(40, 0))
@@ -236,6 +236,7 @@ class StreamingServiceApp(ctk.CTk):
     def newaccountloggedin(self):
         self.changeframetomain()
         self.account = self.login.signup_form.username_entry.get()
+        # self.profile = self._accounts.get_profiles(self.account)[0]
         self.main.updateaccount(self.account)
 
     def logout(self):
@@ -280,7 +281,7 @@ class UserAccounts:
         return [*map(lambda user: user["username"], self._accounts)]
     
     def get_profiles(self, username):
-        return self._accounts[self._accounts.index(username)]["profiles"] if username else []
+        return self._accounts[self._accounts.index(username)]["profiles"] if username in self._accounts else []
     
     def get_all(self):
         return list(self._accounts)
