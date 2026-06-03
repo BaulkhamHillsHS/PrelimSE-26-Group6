@@ -1,5 +1,6 @@
 import customtkinter as ctk
 import tkinter as tk
+import csv
 
 """
 Notes:
@@ -27,14 +28,11 @@ once logged in, open settings by clicking on their pfp,
 have settings such as:
 - profile management, list of profiles
     - switch profiles by clicking
-    - delete profiles
-    - create new profiles
   - each profile should have:
-      - age
-        - show nsfw?  (should be disabled when age < 18, toggle switch)
-            - https://youtu.be/uGI0tkmyogU?t=1590 "We should blur this on YouTube and make it unblurred on Nebula."
       - watch history
 
+
+https://youtu.be/uGI0tkmyogU?t=1590 "We should blur this on YouTube and make it unblurred on Nebula."
 """
 
 NAME = "yaoi"
@@ -195,6 +193,9 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe?
         self.profilebtn = ctk.CTkButton(self, text="", width=60, height=60, corner_radius=30, command=self.toggle_account_info_visibility)
         self.profilebtn.grid(row=0, column=10)
 
+        self.savetocsv = ctk.CTkButton(self, text="save", command=master._accounts.save_to_csv)
+        self.savetocsv.grid(row=2, column=3)
+
         self.accountinfo = AccountInfoFrame(self)
 
     def updateaccount(self, account):
@@ -214,9 +215,10 @@ class StreamingServiceApp(ctk.CTk):
         self.geometry("720x720")
 
         self._accounts = UserAccounts()
+        self._accounts.load_from_csv()
         self.account = ""
-        self.profile = ""
         self.profiles = self._accounts.get_profiles(self.account)
+        self.profile = ""
 
         self.titletxt = ctk.CTkLabel(self, text=NAME, text_color="pink")
         self.titletxt.pack(side="top", pady=(40, 0))
@@ -234,6 +236,7 @@ class StreamingServiceApp(ctk.CTk):
     def newaccountloggedin(self):
         self.changeframetomain()
         self.account = self.login.signup_form.username_entry.get()
+        # self.profile = self._accounts.get_profiles(self.account)[0]
         self.main.updateaccount(self.account)
 
     def logout(self):
@@ -257,11 +260,12 @@ class StreamingServiceApp(ctk.CTk):
 class UserAccounts:
     # Only handles data
     FIELDS = ["username", "age", "email", "password", "profiles", "subscription"]
+    filepath = "accounts.csv"
 
     def __init__(self):
         self._accounts = []
 
-    def add_account(self, username, age, email, password, profiles:list=[], subscription="normal"):
+    def add_account(self, username, age, email, password, profiles:list[dict]=[], subscription="normal"):
         self._accounts.append({"username": username,
                                "age": age,
                                "email": email,
@@ -269,20 +273,42 @@ class UserAccounts:
                                "profiles": profiles,
                                "subscription": subscription})
         self._refresh()
-    
-    def remove_account(self, username):
-        self._accounts.remove(username)
-        self._refresh()
+
+    def add_profile(self, username, profile):
+        pass
 
     def get_usernames(self):
         return [*map(lambda user: user["username"], self._accounts)]
     
     def get_profiles(self, username):
-        return self._accounts[self._accounts.index(username)]["profiles"] if username else []
+        return self._accounts[self._accounts.index(username)]["profiles"] if username in self._accounts else []
+    
+    def get_all(self):
+        return list(self._accounts)
     
     def _refresh(self):
         # Updates the values
         self.usernames = self.get_usernames()
+
+    
+    def save_to_csv(self):
+        with open(self.filepath, "w", newline="") as f:
+            writer = csv.DictWriter(f, fieldnames=self.FIELDS)
+            writer.writeheader()
+            writer.writerows(self._accounts)
+
+    def load_from_csv(self):
+        with open(self.filepath, "r", newline="") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                self._accounts.append({"username": row["username"],
+                                       "age": row["age"],
+                                       "email": row["email"],
+                                       "password": row["password"],
+                                       "profiles": row["profiles"],
+                                       "subscription": row["subscription"]})
+        self._refresh()
+
         
         
 
