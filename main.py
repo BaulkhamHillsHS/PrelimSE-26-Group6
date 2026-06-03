@@ -1,4 +1,3 @@
-from abc import ABC, abstractmethod
 import customtkinter as ctk
 import tkinter as tk
 
@@ -81,85 +80,11 @@ class LoginFrame(ctk.CTkFrame):
             self.signup_form.grid(row=0, column=0, padx=15, pady=15, columnspan=2, rowspan=3, sticky="nesw")
 
 
-class FormFrame(ctk.CTkFrame, ABC):
-    """
-    Default frame for forms\n
-    Enter a title and a dictionary of values\n
-    Dictionary should be in form {"entry name": "type"}\n
-    "entry name" is the name of the label next to the box\n
-    "type" is the type of entry\n
-    valid types are "password" and "number"
-    """
-    def __init__(self, master, title, vars:dict={}, **kwargs):
-        
-        super().__init__(master, **kwargs)
-        self.vars = vars
-        self.length = len(vars)
-        self.passwordids = []
-        for i in range(self.length):
-            if [*vars.values()][i] == "password":
-                self.passwordids.append(i)
-
-
-        self.grid_rowconfigure(self.length+4, weight=1)
-        self.grid_columnconfigure(2, weight=1)
-
-        self.title = ctk.CTkLabel(self, text=title)
-        self.title.grid(row=0, column=0, padx=10, pady=10, columnspan=2)
-
-        self.entrys = []
-        for i in range(self.length):
-            label = ctk.CTkLabel(self, text=(t:=[*vars.keys()])[i])
-            label.grid(row=i+1, column=0)
-            if [*vars.values()][i] == "password":
-                entry = ctk.CTkEntry(self, show="*")
-            else:
-                entry = ctk.CTkEntry(self)
-            entry.grid(row=i+1, column=1)
-            self.entrys.append(entry)
-
-        
-        self.status_label = ctk.CTkLabel(self, text="", text_color="red")
-        self.status_label.grid(row=self.length+1, column=0, columnspan=2)
-
-        self.submit_btn = ctk.CTkButton(self, text="Submit", command=self.submit)
-        self.submit_btn.grid(row=self.length+2, column=0, columnspan=2, pady=10)
-
-        self.cancel_btn = ctk.CTkButton(self, text="Cancel", command=self.cancel)
-        self.cancel_btn.grid(row=self.length+3, column=0, columnspan=2, pady=10)
-
-    @abstractmethod
-    def submit(self):
-        self.values = []
-        for i in range(self.length):
-            self.values.append(value:=self.entrys[i].get())
-            if value == "":
-                self.status_label.configure(text="Please fill in all fields")
-                return
-            if [*self.vars.values()][i] == "number":
-                try:
-                    age = int(value)
-                    if age <= 0:
-                        raise ValueError
-                except:
-                    self.status_label.configure(text="Please enter a positive whole number for age")
-                    return
-            checkpassword = self.passwordids[1:]
-            for i in range(len(checkpassword)):
-                if self.passwordids[0] != checkpassword[i]:
-                    self.status_label.configure(text="Passwords do not match.")
-                    return
-
-    @abstractmethod
-    def cancel(self):
-        pass
-        
-
 class SignupFrame(ctk.CTkFrame):
     # Frame to create an account
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
-        self.grid_rowconfigure(8, weight=1)
+        self.grid_rowconfigure(9, weight=1)
         self.grid_columnconfigure(2, weight=1)
 
         self.title = ctk.CTkLabel(self, text="Create an account")
@@ -210,7 +135,6 @@ class SignupFrame(ctk.CTkFrame):
         if any(var == "" for var in (username, age, email, password, confirm_password)):
             self.status_label.configure(text="Please fill in all fields.", text_color="red")
             return
-        
         try:
             age = int(age)
             if age <= 0:
@@ -251,39 +175,11 @@ class AccountInfoFrame(ctk.CTkFrame):
         self.profilelist = ctk.CTkComboBox(self, values=self.master.master.profiles)
         self.profilelist.grid(row=1, column=0)
 
-        self.newprofilebtn = ctk.CTkButton(self, text="New Profile")
-        self.newprofilebtn.grid(row=2, column=0)
-
         self.switchprofilebtn = ctk.CTkButton(self, text="Switch Profile")
         self.switchprofilebtn.grid(row=3, column=0)
 
         self.logoutbtn = ctk.CTkButton(self, text="Logout", command=master.master.logout)
         self.logoutbtn.grid(row=4, column=0)
-
-
-
-
-class ProfileFrame(ctk.CTkFrame):
-    # profile name, age
-    def __init__(self, master, **kwargs):
-        super().__init__(master, **kwargs)
-        
-        self.grid_rowconfigure(10, weight=1)
-        self.grid_columnconfigure(10, weight=1)
-
-        self.title = ctk.CTkLabel(self, text="Create a profile")
-        self.title.grid(row=0, column=0, padx=10, pady=10, columnspan=2)
-
-        self.username_label = ctk.CTkLabel(self, text="Profile name")
-        self.username_label.grid(row=1, column=0)
-        self.username_entry = ctk.CTkEntry(self)
-        self.username_entry.grid(row=1, column=1, padx=10, pady=10)
-
-        self.age_label = ctk.CTkLabel(self, text="Age")
-        self.age_label.grid(row=2, column=0)
-        self.age_entry = ctk.CTkEntry(self)
-        self.age_entry.grid(row=2, column=1, padx=10, pady=10)
-
 
 
 class MainFrame(ctk.CTkFrame): # better name than mainframe?
@@ -311,8 +207,6 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe?
             self.accountinfo.grid(row=1, column=8, rowspan=3, columnspan=3)
 
 
-
-
 class StreamingServiceApp(ctk.CTk):
     def __init__(self):
         super().__init__()
@@ -331,8 +225,6 @@ class StreamingServiceApp(ctk.CTk):
         self.login.pack(fill="both", expand=True, padx=40, pady=40)
 
         self.main = MainFrame(self)
-
-        self.profile = ProfileFrame(self)
 
     def loggedin(self):
         self.changeframetomain()
@@ -361,26 +253,21 @@ class StreamingServiceApp(ctk.CTk):
         self.main.forget()
         self.main.accountinfo.grid_forget()
 
-    def changeframetoprofile(self):
-        pass
-
-    
-
-
 
 class UserAccounts:
     # Only handles data
-    FIELDS = ["username", "age", "email", "password", "profiles"]
+    FIELDS = ["username", "age", "email", "password", "profiles", "subscription"]
 
     def __init__(self):
         self._accounts = []
 
-    def add_account(self, username, age, email, password, profiles:list=[]):
+    def add_account(self, username, age, email, password, profiles:list=[], subscription="normal"):
         self._accounts.append({"username": username,
                                "age": age,
                                "email": email,
                                "password": password,
-                               "profiles": profiles})
+                               "profiles": profiles,
+                               "subscription": subscription})
         self._refresh()
     
     def remove_account(self, username):
