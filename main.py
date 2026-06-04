@@ -171,14 +171,22 @@ class AccountInfoFrame(ctk.CTkFrame):
         self.accountnametxt = ctk.CTkLabel(self, text="Account: "+self.master.master.account)
         self.accountnametxt.grid(row=0, column=0)
 
+        self.profilenametxt = ctk.CTkLabel(self, text="Profile: "+self.master.master.profile)
+        self.profilenametxt.grid(row=1, column=0)
+
         self.profilelist = ctk.CTkComboBox(self, values=self.master.master.profiles)
-        self.profilelist.grid(row=1, column=0)
+        self.profilelist.grid(row=2, column=0)
 
         self.switchprofilebtn = ctk.CTkButton(self, text="Switch Profile")
         self.switchprofilebtn.grid(row=3, column=0)
 
         self.logoutbtn = ctk.CTkButton(self, text="Logout", command=master.master.logout)
         self.logoutbtn.grid(row=4, column=0)
+
+    def updateprofiles(self, profiles):
+        self.profilelist.configure(values=profiles)
+        self.profilelist.set(profiles[0])
+
 
 
 class MainFrame(ctk.CTkFrame): # better name than mainframe?
@@ -199,8 +207,9 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe?
 
         self.accountinfo = AccountInfoFrame(self)
 
-    def updateaccount(self, account):
+    def updateaccounttxt(self, account, profile):
         self.accountinfo.accountnametxt.configure(text="Account: "+account)
+        self.accountinfo.profilenametxt.configure(text="Profile: "+profile)
 
     def toggle_account_info_visibility(self):
         if self.accountinfo.winfo_ismapped():
@@ -232,13 +241,18 @@ class StreamingServiceApp(ctk.CTk):
     def loggedin(self):
         self.changeframetomain()
         self.account = self.login.accountbox.get()
-        self.main.updateaccount(self.account)
+        self.loginupdate(self.account)
 
     def newaccountloggedin(self):
         self.changeframetomain()
         self.account = self.login.signup_form.username_entry.get()
-        # self.profile = self._accounts.get_profiles(self.account)[0]
-        self.main.updateaccount(self.account)
+        self.loginupdate(self.account)
+
+    def loginupdate(self, username):
+        self.profile = self._accounts.get_profiles(self.account)[0]
+        self.main.updateaccounttxt(self.account, self.profile.name)
+        self.main.accountinfo.updateprofiles(self._accounts.get_profilesnames(username))
+        
 
     def logout(self):
         self.changeframetologin()
@@ -265,32 +279,31 @@ class UserAccounts:
 
     def __init__(self):
         self._accounts = []
+        self._profiles = {}
 
-    def add_account(self, username, age, email, password, profiles:list[dict]=[], subscription="normal"):
+    def add_account(self, username, age, email, password, subscription="normal"):
         self._accounts.append({"username": username,
                                "age": age,
                                "email": email,
                                "password": password,
-                               "profiles": profiles,
+                               "profiles": f"{username}:{age}",
                                "subscription": subscription})
-        self._refresh()
-
-    def add_profile(self, username, profile):
-        pass
+        self._profiles[username] = [UserProfiles(username, age)]
 
     def get_usernames(self):
         return [*map(lambda user: user["username"], self._accounts)]
     
     def get_profiles(self, username):
-        return self._accounts[self._accounts.index(username)]["profiles"] if username in self._accounts else []
+        try:
+            return self._profiles[username]
+        except:
+            return []
+        
+    def get_profilesnames(self, username:str):
+        return [*map(lambda profile:profile.name, self._profiles[username])]
     
     def get_all(self):
         return list(self._accounts)
-    
-    def _refresh(self):
-        # Updates the values
-        self.usernames = self.get_usernames()
-
     
     def save_to_csv(self):
         with open(self.filepath, "w", newline="") as f:
@@ -308,11 +321,16 @@ class UserAccounts:
                                        "password": row["password"],
                                        "profiles": row["profiles"],
                                        "subscription": row["subscription"]})
-        self._refresh()
+                self._profiles[row["username"]] = []
+                if row["profiles"]:
+                    for profile in row["profiles"].split(";"):
+                        # profile should be name:age
+                        self._profiles[row["username"]].append(UserProfiles((plist:=profile.split(":"))[0], int(plist[1])))
 
-        
-        
-
+class UserProfiles():
+    def __init__(self, name, age:int):
+        self.name = name
+        self.age = age
 
 app = StreamingServiceApp()
 app.mainloop()
