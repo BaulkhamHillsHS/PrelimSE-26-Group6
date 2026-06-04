@@ -81,7 +81,6 @@ class LoginFrame(ctk.CTkFrame):
             self.feedback.configure(text="Username or password is wrong")
             self.feedback.after(3000, lambda:self.feedback.configure(text=""))
 
-
     def create_signup_form(self):
         self.create_account_button.grid_forget()
         self.loginbtn.grid_forget()
@@ -135,7 +134,6 @@ class SignupFrame(ctk.CTkFrame):
         self.back_button = ctk.CTkButton(self, text="Cancel", command=self.cancel_submit)
         self.back_button.grid(row=8, column=0, columnspan=2, pady=10)
 
-
     def submit_account(self):
         username = self.username_entry.get()
         age = self.age_entry.get()
@@ -173,32 +171,38 @@ class SignupFrame(ctk.CTkFrame):
         self.master.buildui()
 
 
-class AccountInfoFrame(ctk.CTkFrame):
+class AccountInfoWindow(ctk.CTkToplevel):
     # Frame for showing account information
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
         self.grid_rowconfigure(5, weight=1)
         self.grid_columnconfigure(1, weight=1)
 
+        self.title(NAME + " account info")
+        self.relative()
+        self.resizable(False, False)
+
         self.accountnametxt = ctk.CTkLabel(self, text="Account: "+self.master.master.account)
-        self.accountnametxt.grid(row=0, column=0)
+        self.accountnametxt.grid(row=0, column=0, padx=10, pady=2)
 
         self.profilenametxt = ctk.CTkLabel(self, text="Profile: "+self.master.master.profile)
-        self.profilenametxt.grid(row=1, column=0)
+        self.profilenametxt.grid(row=1, column=0, padx=10, pady=(0,3))
 
         self.profilelist = ctk.CTkComboBox(self, values=self.master.master.profiles)
-        self.profilelist.grid(row=2, column=0)
+        self.profilelist.grid(row=2, column=0, padx=10, pady=3)
 
         self.switchprofilebtn = ctk.CTkButton(self, text="Switch Profile")
-        self.switchprofilebtn.grid(row=3, column=0)
+        self.switchprofilebtn.grid(row=3, column=0, padx=10, pady=3)
 
         self.logoutbtn = ctk.CTkButton(self, text="Logout", command=master.master.logout)
-        self.logoutbtn.grid(row=4, column=0)
+        self.logoutbtn.grid(row=4, column=0, padx=10, pady=3)
+
+    def relative(self):
+        self.geometry(f"160x200+{self.master.master.winfo_x()+600}+{self.master.master.winfo_y()+250}")
 
     def updateprofiles(self, profiles):
         self.profilelist.configure(values=profiles)
         self.profilelist.set(profiles[0])
-
 
 
 class MainFrame(ctk.CTkFrame): # better name than mainframe?
@@ -208,33 +212,39 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe?
         self.grid_columnconfigure(10, weight=1)
         self.grid_rowconfigure(4, weight=1)
 
+        self.accountinfowindow = AccountInfoWindow(self)
+        self.accountinfowindow.withdraw()
+
         self.maintitle = ctk.CTkLabel(self, text="main")
         self.maintitle.grid(row=0, column=0, padx=10, pady=10)
 
-        self.profilebtn = ctk.CTkButton(self, text="", width=60, height=60, corner_radius=30, command=self.toggle_account_info_visibility)
+        self.profilebtn = ctk.CTkButton(self, text="", width=60, height=60, corner_radius=30, command=self._open_account_info)
         self.profilebtn.grid(row=0, column=10)
 
         self.savetocsv = ctk.CTkButton(self, text="save", command=master._accounts.save_to_csv)
         self.savetocsv.grid(row=2, column=3)
 
-        self.accountinfo = AccountInfoFrame(self)
-
     def updateaccounttxt(self, account, profile):
-        self.accountinfo.accountnametxt.configure(text="Account: "+account)
-        self.accountinfo.profilenametxt.configure(text="Profile: "+profile)
+        self.accountinfowindow.accountnametxt.configure(text="Account: "+account)
+        self.accountinfowindow.profilenametxt.configure(text="Profile: "+profile)
 
-    def toggle_account_info_visibility(self):
-        if self.accountinfo.winfo_ismapped():
-            self.accountinfo.grid_forget()
+    def _open_account_info(self):
+        if self.accountinfowindow.state() != "normal":
+            self.accountinfowindow.relative()
+            self.accountinfowindow.deiconify()
         else:
-            self.accountinfo.grid(row=1, column=8, rowspan=3, columnspan=3)
+            self.accountinfowindow.withdraw()
 
 
 class StreamingServiceApp(ctk.CTk):
     def __init__(self):
         super().__init__()
         self.title(NAME + " streaming service :3 ")
-        self.geometry("720x720")
+        self.WIDTH = 720
+        self.HEIGHT = 600
+        self.X = 100
+        self.Y = 100
+        self.geometry(f"{self.WIDTH}x{self.HEIGHT}+{self.X}+{self.Y}")
 
         self._accounts = UserAccounts()
         self._accounts.load_from_csv()
@@ -263,7 +273,7 @@ class StreamingServiceApp(ctk.CTk):
     def loginupdate(self, username):
         self.profile = self._accounts.get_profiles(self.account)[0]
         self.main.updateaccounttxt(self.account, self.profile.name)
-        self.main.accountinfo.updateprofiles(self._accounts.get_profilesnames(username))
+        self.main.accountinfowindow.updateprofiles(self._accounts.get_profilesnames(username))
 
     def logout(self):
         self.changeframetologin()
@@ -338,10 +348,12 @@ class UserAccounts:
                         # profile should be name:age
                         self._profiles[row["username"]].append(UserProfiles((plist:=profile.split(":"))[0], int(plist[1])))
 
+
 class UserProfiles():
     def __init__(self, name, age:int):
         self.name = name
         self.age = age
+
 
 app = StreamingServiceApp()
 app.mainloop()
