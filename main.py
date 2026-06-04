@@ -350,9 +350,34 @@ class UserAccounts:
 
 
 class UserProfiles():
+
+    FIELDS = ["name", "wlist", "whistory"]
+    filepath = "profiles.csv"
+
     def __init__(self, name, age:int):
         self.name = name
         self.age = age
+        self._watch_list = []
+        self._watch_history = []
+
+    def load_from_csv(self):
+        with open(self.filepath, "r", newline="") as f:
+            reader = csv.DictReader(f)
+
+    def save_to_csv(self):
+        with open(self.filepath, "w", newline="") as f:
+            writer = csv.DictWriter(f, fieldnames=self.FIELDS)
+            writer.writeheader()
+            # writer.writerows()
+
+    def add_to_whistory(self, id):
+        if id in self._watch_history:
+            self._watch_history.remove(id)
+        self._watch_history.append(id)
+        
+    def remove_from_whistory(self, index):
+        self._watch_history.pop(index)
+    
 
 
 app = StreamingServiceApp()
