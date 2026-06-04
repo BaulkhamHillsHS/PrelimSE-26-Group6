@@ -42,8 +42,8 @@ class LoginFrame(ctk.CTkFrame):
     # Frame for log in/welcome screen
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
-        self.grid_rowconfigure(3, weight=2)
-        self.grid_columnconfigure(2, weight=2)
+        self.grid_rowconfigure(5, weight=2)
+        self.grid_columnconfigure(4, weight=2)
 
         self.signup_form = None
         self.buildui()
@@ -52,22 +52,34 @@ class LoginFrame(ctk.CTkFrame):
         if self.signup_form:
             self.signup_form.destroy()
             self.signup_form = None
-        self.logintitle = ctk.CTkLabel(self, text="login", font=("Roboto", 50))
-        self.logintitle.grid(row=0, column=0, columnspan=2, sticky="nsew", pady=(30, 60))
+        self.logintitle = ctk.CTkLabel(self, text="Login", font=("Roboto", 50))
+        self.logintitle.grid(row=0, column=0, columnspan=4, sticky="nsew", pady=(30, 60))
 
         self.create_account_button = ctk.CTkButton(self, 300, 50, text="Create an account", command=self.create_signup_form)
-        self.create_account_button.grid(row=2, column=0, sticky="nsew", padx=10)
+        self.create_account_button.grid(row=2, column=0, sticky="nsew", padx=10, columnspan=2)
 
-        self.accountbox = ctk.CTkComboBox(self, values=self.master._accounts.get_usernames())
-        self.accountbox.grid(row=1, column=1, padx=10, pady=10)
+        self.username = ctk.CTkLabel(self, text="Username")
+        self.username.grid(row=1, column=2)
+        self.accountbox = ctk.CTkEntry(self)
+        self.accountbox.grid(row=1, column=3, padx=10, pady=10)
 
-        self.loginbtn = ctk.CTkButton(self, 300, 50, text="login", command=self.master.loggedin)
-        self.loginbtn.grid(row=2, column=1, sticky="nsew", padx=10)
+        self.password = ctk.CTkLabel(self, text="Password")
+        self.password.grid(row=2, column=2)
+        self.passwordbox = ctk.CTkEntry(self)
+        self.passwordbox.grid(row=2, column=3)
 
-        if self.master._accounts.get_usernames() == []:
-            self.accountbox.set("No accounts")
-            self.accountbox.configure(state="disabled")
-            self.loginbtn.configure(state="disabled")
+        self.feedback = ctk.CTkLabel(self, text="", text_color="red")
+        self.feedback.grid(row=3, column=2, columnspan=2)
+
+        self.loginbtn = ctk.CTkButton(self, 300, 50, text="login", command=self.login)
+        self.loginbtn.grid(row=4, column=2, sticky="nsew", padx=10, columnspan=2)
+
+    def login(self):
+        if (uname:=self.accountbox.get()) in (unames:=(acc:=self.master._accounts).get_usernames()) and acc._accounts[unames.index(uname)]["password"] == self.passwordbox.get():
+            self.master.loggedin()
+        else:
+            self.feedback.configure(text="Username or password is wrong")
+            self.feedback.after(3000, lambda:self.feedback.configure(text=""))
 
 
     def create_signup_form(self):
@@ -252,7 +264,6 @@ class StreamingServiceApp(ctk.CTk):
         self.profile = self._accounts.get_profiles(self.account)[0]
         self.main.updateaccounttxt(self.account, self.profile.name)
         self.main.accountinfo.updateprofiles(self._accounts.get_profilesnames(username))
-        
 
     def logout(self):
         self.changeframetologin()
