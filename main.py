@@ -1,6 +1,7 @@
 import customtkinter as ctk
 import tkinter as tk
 import csv
+from PIL import Image # pip install Pillow
 
 """
 Notes:
@@ -19,7 +20,7 @@ CONGposition - class containing classes
 encapsulation - more protected things? currently only _accounts
 
 polymorphism - multiple classes containing same method
-- easy imo, because movie and tv show are going to be inheriting from the same abstract class
+- easy imo, because video and tv show are going to be inheriting from the same abstract class
 
 
 
@@ -65,7 +66,7 @@ class LoginFrame(ctk.CTkFrame):
 
         self.password = ctk.CTkLabel(self, text="Password")
         self.password.grid(row=2, column=2)
-        self.passwordbox = ctk.CTkEntry(self)
+        self.passwordbox = ctk.CTkEntry(self, show="*")
         self.passwordbox.grid(row=2, column=3)
 
         self.feedback = ctk.CTkLabel(self, text="", text_color="red")
@@ -205,6 +206,94 @@ class AccountInfoWindow(ctk.CTkToplevel):
         self.profilelist.set(profiles[0])
 
 
+class BrowseMenu:
+    def __init__(self, mainframe):
+        self.mainframe = mainframe
+
+        self.video_images = {
+                            "Senior Band Camp Performance 2021": {"image": "video_images/bandcamp.png", "genre": "music", "type": "user-made video", "rating": "G"},
+                            "Eat This Card": {"image": "video_images/yummycard.png", "genre": "food", "type": "short", "rating": "M"},
+                            "7 Hours in the Snack Zone": {"image": "video_images/snackzone.png", "genre": "food", "type": "TV show", "rating": "PG"},
+                            "Film a Bird — Sam’s Full Attempt | Nebula Plus": {"image": "video_images/bird_sam.png", "genre": "lifestyle", "type": "TV show", "rating": "PG"},
+                            "Film a Bird — Ben & Adam’s Full Attempt | Nebula Plus": {"image": "video_images/bird_badam.png", "genre": "lifestyle", "type": "TV show", "rating": "PG"},
+                            "How to Embed Audio into a Google Site": {"image": "video_images/embedaudio.png", "genre": "education", "type": "user-made video", "rating": "G"},
+                            }
+
+        self.videomenu = None
+        self.video_buttons = []
+
+    def open_video_menu(self):
+        self.mainframe.historylabel.configure(text="")
+        self.mainframe.pack_forget()
+
+        self.videomenu = ctk.CTkFrame(self.mainframe.master)
+        self.videomenu.pack(fill="both", expand=True)
+
+        self.filter_frame = ctk.CTkFrame(self.videomenu)
+        self.filter_frame.grid(row=1, column=1, columnspan=10, padx=10, pady=10, sticky="w")
+
+        ctk.CTkLabel(self.filter_frame, text="Genre").pack(side="top", padx=(5, 2))
+        self.genre_filter = ctk.CTkComboBox(self.filter_frame, values=["all", "music", "food", "lifestyle", "education"])
+        self.genre_filter.set("all")
+        self.genre_filter.pack(side="top", padx=5)
+
+        ctk.CTkLabel(self.filter_frame, text="Type").pack(side="top", padx=(10, 2))
+        self.type_filter = ctk.CTkComboBox(self.filter_frame, values=["all", "user-made video", "short", "TV show"])
+        self.type_filter.set("all")
+        self.type_filter.pack(side="top", padx=5)
+
+        ctk.CTkLabel(self.filter_frame, text="Rating").pack(side="top", padx=(10, 2))
+        self.rating_filter = ctk.CTkComboBox(self.filter_frame, values=["all", "G", "PG", "M"])
+        self.rating_filter.set("all")
+        self.rating_filter.pack(side="top", padx=5)
+
+        ctk.CTkButton(self.videomenu, text="back", command=self.close_video_menu).grid(row=0, column=0, padx=10, pady=10)
+        ctk.CTkButton(self.videomenu, text="Apply Filters", command=self.refresh_videos).grid(row=1, column=0, padx=10, pady=10)
+
+        self.refresh_videos()
+
+    def refresh_videos(self):
+        for btn in self.video_buttons:
+            btn.destroy()
+
+        self.video_buttons.clear()
+
+        genre = self.genre_filter.get()
+        content_type = self.type_filter.get()
+        rating = self.rating_filter.get()
+
+        row = 2
+        for video, info in self.video_images.items():
+            if genre != "all" and info["genre"] != genre:
+                continue
+            if content_type != "all" and info["type"] != content_type:
+                continue
+            if rating != "all" and info["rating"] != rating:
+                continue
+
+            btn = ctk.CTkButton(self.videomenu, text=video, command=lambda v=video: self.open_video(v))
+            btn.grid(row=row, column=0, padx=10, pady=5)
+            self.video_buttons.append(btn)
+            row += 1
+
+    def close_video_menu(self):
+        self.videomenu.destroy()
+        self.mainframe.pack(fill="both", expand=True)
+
+    def open_video(self, video):
+        self.mainframe.add_video_to_history(video)
+
+        window = ctk.CTkToplevel(self.mainframe)
+        window.title(video)
+
+        image_path = self.video_images[video]["image"]
+        image = ctk.CTkImage(light_image=Image.open(image_path), size=(400, 225))
+
+        label = ctk.CTkLabel(window, text="", image=image)
+        label.image = image
+        label.pack(padx=10, pady=10)
+
+
 class MainFrame(ctk.CTkFrame): # better name than mainframe?
     # Frame for after login, watching things idk
     def __init__(self, master, **kwargs):
@@ -224,6 +313,17 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe?
         self.savetocsv = ctk.CTkButton(self, text="save", command=master._accounts.save_to_csv)
         self.savetocsv.grid(row=2, column=3)
 
+        self.browsemenu = BrowseMenu(self)
+
+        self.addvideobtn = ctk.CTkButton(self, text="browse", command=self.browsemenu.open_video_menu)
+        self.addvideobtn.grid(row=2, column=4, padx=5)
+
+        self.historybtn = ctk.CTkButton(self, text="watch history", command=self.show_history)
+        self.historybtn.grid(row=2, column=5, padx=5)
+
+        self.historylabel = ctk.CTkLabel(self, text="")
+        self.historylabel.grid(row=3, column=3, columnspan=3)
+
     def updateaccounttxt(self, account, profile):
         self.accountinfowindow.accountnametxt.configure(text="Account: "+account)
         self.accountinfowindow.profilenametxt.configure(text="Profile: "+profile)
@@ -234,6 +334,20 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe?
             self.accountinfowindow.deiconify()
         else:
             self.accountinfowindow.withdraw()
+
+    def add_video_to_history(self, video):
+        self.master.profile.add_to_whistory(video)
+
+    def show_history(self):
+        if self.historylabel.cget("text"):
+            self.historylabel.configure(text="")
+            return
+        history = self.master.profile.get_whistory()
+
+        if history:
+            self.historylabel.configure(text="\n".join(history))
+        else:
+            self.historylabel.configure(text="No watch history")
 
 
 class StreamingServiceApp(ctk.CTk):
@@ -378,6 +492,8 @@ class UserProfiles():
     def remove_from_whistory(self, index):
         self._watch_history.pop(index)
     
+    def get_whistory(self):
+        return self._watch_history
 
 
 app = StreamingServiceApp()
