@@ -271,10 +271,26 @@ class BrowseMenu:
             if rating != "all" and info["rating"] != rating:
                 continue
 
-            btn = ctk.CTkButton(self.videomenu, text=video, command=lambda v=video: self.open_video(v))
-            btn.grid(row=row, column=0, padx=10, pady=5)
-            self.video_buttons.append(btn)
+            title = ctk.CTkLabel(self.videomenu, text=video)
+            title.grid(row=row, column=0, padx=10, pady=5, sticky="e")
+            self.video_buttons.append(title)
+
+            watchbtn = ctk.CTkButton(self.videomenu, text="watch", command=lambda v=video: self.open_video(v))
+            watchbtn.grid(row=row, column=1, padx=5, pady=5)
+            self.video_buttons.append(watchbtn)
+
+            watchlaterbtn = ctk.CTkButton(self.videomenu, text=("remove from " if video in self.mainframe.master.profile.get_wlist() else "add to ") + "watch later", command=lambda v=video: self.toggle_watch_later(v))
+            watchlaterbtn.grid(row=row, column=2, padx=5, pady=5)
+            self.video_buttons.append(watchlaterbtn)
+
             row += 1
+
+    def toggle_watch_later(self, video):
+        if video in self.mainframe.master.profile.get_wlist():
+            self.mainframe.master.profile.remove_from_wlist(video)
+        else:
+            self.mainframe.master.profile.add_to_wlist(video)
+        self.refresh_videos()
 
     def close_video_menu(self):
         self.videomenu.destroy()
@@ -282,6 +298,9 @@ class BrowseMenu:
 
     def open_video(self, video):
         self.mainframe.add_video_to_history(video)
+        if self.mainframe.watchlist_setting.get():
+            self.mainframe.master.profile.remove_from_wlist(video)
+            self.refresh_videos()
 
         window = ctk.CTkToplevel(self.mainframe)
         window.title(video)
@@ -299,7 +318,9 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe?
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
         self.grid_columnconfigure(10, weight=1)
-        self.grid_rowconfigure(4, weight=1)
+        self.grid_rowconfigure(5, weight=1)
+
+        self.watchlist_setting = master.watchlist_setting
 
         self.accountinfowindow = AccountInfoWindow(self)
         self.accountinfowindow.withdraw()
@@ -311,18 +332,24 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe?
         self.profilebtn.grid(row=0, column=10)
 
         self.savetocsv = ctk.CTkButton(self, text="save", command=master._accounts.save_to_csv)
-        self.savetocsv.grid(row=2, column=3)
+        self.savetocsv.grid(row=3, column=3)
 
         self.browsemenu = BrowseMenu(self)
 
-        self.addvideobtn = ctk.CTkButton(self, text="browse", command=self.browsemenu.open_video_menu)
-        self.addvideobtn.grid(row=2, column=4, padx=5)
+        self.browsebtn = ctk.CTkButton(self, text="browse", command=self.browsemenu.open_video_menu)
+        self.browsebtn.grid(row=3, column=4, padx=5)
 
         self.historybtn = ctk.CTkButton(self, text="watch history", command=self.show_history)
-        self.historybtn.grid(row=2, column=5, padx=5)
+        self.historybtn.grid(row=3, column=5, padx=5)
+
+        self.watchlaterbtn = ctk.CTkButton(self, text="watch later", command=self.show_watch_later)
+        self.watchlaterbtn.grid(row=3, column=6, padx=5)
+
+        self.switch = ctk.CTkSwitch(self, text="when watching video, remove from Watch Later", variable=self.watchlist_setting, onvalue=True, offvalue=False)
+        self.switch.grid(row=2, column=3, columnspan=3, pady=10)
 
         self.historylabel = ctk.CTkLabel(self, text="")
-        self.historylabel.grid(row=3, column=3, columnspan=3)
+        self.historylabel.grid(row=4, column=3, columnspan=3)
 
     def updateaccounttxt(self, account, profile):
         self.accountinfowindow.accountnametxt.configure(text="Account: "+account)
@@ -349,6 +376,17 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe?
         else:
             self.historylabel.configure(text="No watch history")
 
+    def show_watch_later(self):
+        if self.historylabel.cget("text"):
+            self.historylabel.configure(text="")
+            return
+        wlist = self.master.profile.get_wlist()
+
+        if wlist:
+            self.historylabel.configure(text="\n".join(wlist))
+        else:
+            self.historylabel.configure(text="No videos in Watch Later")
+
 
 class StreamingServiceApp(ctk.CTk):
     def __init__(self):
@@ -359,6 +397,8 @@ class StreamingServiceApp(ctk.CTk):
         self.X = 100
         self.Y = 100
         self.geometry(f"{self.WIDTH}x{self.HEIGHT}+{self.X}+{self.Y}")
+
+        self.watchlist_setting = ctk.BooleanVar(value=False)
 
         self._accounts = UserAccounts()
         self._accounts.load_from_csv()
@@ -404,7 +444,7 @@ class StreamingServiceApp(ctk.CTk):
 
     def changeframetologin(self):
         self.main.forget()
-        self.main.accountinfo.grid_forget()
+        self.main.accountinfowindow.withdraw()
 
 
 class UserAccounts:
@@ -485,16 +525,26 @@ class UserProfiles():
             # writer.writerows()
 
     def add_to_whistory(self, id):
-        if id in self._watch_history:
-            self._watch_history.remove(id)
+        self.remove_from_whistory(id)
         self._watch_history.append(id)
         
-    def remove_from_whistory(self, index):
-        self._watch_history.pop(index)
+    def remove_from_whistory(self, id):
+        if id in self._watch_history:
+            self._watch_history.remove(id)
     
     def get_whistory(self):
         return self._watch_history
 
+    def add_to_wlist(self, id):
+        self.remove_from_wlist(id)
+        self._watch_list.append(id)
+
+    def remove_from_wlist(self, id):
+        if id in self._watch_list:
+            self._watch_list.remove(id)
+
+    def get_wlist(self):
+        return self._watch_list
 
 app = StreamingServiceApp()
 app.mainloop()
