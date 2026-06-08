@@ -325,9 +325,6 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe?
         self.accountinfowindow = AccountInfoWindow(self)
         self.accountinfowindow.withdraw()
 
-        self.maintitle = ctk.CTkLabel(self, text="main")
-        self.maintitle.grid(row=0, column=0, padx=10, pady=10)
-
         self.profilebtn = ctk.CTkButton(self, text="", width=60, height=60, corner_radius=30, command=self._open_account_info)
         self.profilebtn.grid(row=0, column=10)
 
@@ -366,24 +363,24 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe?
         self.master.profile.add_to_whistory(video)
 
     def show_history(self):
-        if self.historylabel.cget("text"):
+        if (t:=self.historylabel.cget("text")) and "watch history" in t.lower():
             self.historylabel.configure(text="")
             return
         history = self.master.profile.get_whistory()
 
         if history:
-            self.historylabel.configure(text="\n".join(history))
+            self.historylabel.configure(text="Watch History:\n"+"\n".join(history))
         else:
             self.historylabel.configure(text="No watch history")
 
     def show_watch_later(self):
-        if self.historylabel.cget("text"):
+        if (t:=self.historylabel.cget("text")) and "watch later" in t.lower():
             self.historylabel.configure(text="")
             return
         wlist = self.master.profile.get_wlist()
 
         if wlist:
-            self.historylabel.configure(text="\n".join(wlist))
+            self.historylabel.configure(text="Watch Later:\n"+"\n".join(wlist))
         else:
             self.historylabel.configure(text="No videos in Watch Later")
 
