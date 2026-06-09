@@ -227,6 +227,7 @@ class BrowseMenu:
     def open_video_menu(self):
         self.mainframe.historylabel.configure(text="")
         self.mainframe.pack_forget()
+        self.mainframe.accountinfowindow.withdraw()
 
         self.videomenu = ctk.CTkFrame(self.mainframe.master)
         self.videomenu.pack(fill="both", expand=True)
