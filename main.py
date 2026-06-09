@@ -222,6 +222,8 @@ class BrowseMenu:
         self.videomenu = None
         self.video_buttons = []
 
+        self.window = None
+
     def open_video_menu(self):
         self.mainframe.historylabel.configure(text="")
         self.mainframe.pack_forget()
@@ -302,15 +304,21 @@ class BrowseMenu:
             self.mainframe.master.profile.remove_from_wlist(video)
             self.refresh_videos()
 
-        window = ctk.CTkToplevel(self.mainframe)
-        window.title(video)
+        if self.window == None or not self.window.winfo_exists():
+            self.window = ctk.CTkToplevel(self.mainframe)
+            self.window.title(video)
 
-        image_path = self.video_images[video]["image"]
-        image = ctk.CTkImage(light_image=Image.open(image_path), size=(400, 225))
+            image_path = self.video_images[video]["image"]
+            image = ctk.CTkImage(light_image=Image.open(image_path), size=(400, 225))
 
-        label = ctk.CTkLabel(window, text="", image=image)
-        label.image = image
-        label.pack(padx=10, pady=10)
+            label = ctk.CTkLabel(self.window, text="", image=image)
+            label.image = image
+            label.pack(padx=10, pady=10, fill="both", expand=True)
+        elif self.window.title() == video:
+            self.window.focus()
+        else:
+            self.window.destroy()
+            self.open_video(video)
 
 
 class MainFrame(ctk.CTkFrame): # better name than mainframe?
@@ -471,6 +479,9 @@ class UserAccounts:
         except:
             return []
         
+    def get_profile_dict(self):
+        return self._profiles
+                
     def get_profilesnames(self, username:str):
         return [*map(lambda profile:profile.name, self._profiles[username])]
     
@@ -505,20 +516,32 @@ class UserProfiles():
     FIELDS = ["name", "wlist", "whistory"]
     filepath = "profiles.csv"
 
-    def __init__(self, name, age:int):
+    def __init__(self, name, age:int, wlist=[], whistory=[]):
         self.name = name
         self.age = age
-        self._watch_list = []
-        self._watch_history = []
+        self._watch_list = wlist
+        self._watch_history = whistory
 
     def load_from_csv(self):
         with open(self.filepath, "r", newline="") as f:
             reader = csv.DictReader(f)
+            profiles = UserAccounts.get_profile_dict()
+            #for row in reader:
+
+
 
     def save_to_csv(self):
         with open(self.filepath, "w", newline="") as f:
             writer = csv.DictWriter(f, fieldnames=self.FIELDS)
             writer.writeheader()
+            # Change UserProfiles class into a dict
+            profiles = UserAccounts.get_profile_dict()
+            # {name: [UserProfiles(), UserProfiles()], name: [UserProfiles()]}
+            pdict = {}
+            # : separates the values, such as name, age, wlist
+            # ; separates the profiles
+            # ' separates the wlist and whistory items
+
             # writer.writerows()
 
     def add_to_whistory(self, id):
