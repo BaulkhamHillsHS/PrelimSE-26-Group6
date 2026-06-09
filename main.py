@@ -2,6 +2,7 @@ import customtkinter as ctk
 import tkinter as tk
 import csv
 from PIL import Image # pip install Pillow
+import CTkColorPicker as ctkcolor # pip install ctkcolorpicker
 
 """
 Notes:
@@ -145,6 +146,7 @@ class SignupFrame(ctk.CTkFrame):
         if any(var == "" for var in (username, age, email, password, confirm_password)):
             self.status_label.configure(text="Please fill in all fields.", text_color="red")
             return
+        
         try:
             age = int(age)
             if age <= 0:
@@ -180,8 +182,9 @@ class AccountInfoWindow(ctk.CTkToplevel):
         self.grid_columnconfigure(1, weight=1)
 
         self.title(NAME + " account info")
-        self.relative()
+        #self.relative()
         self.resizable(False, False)
+        self.overrideredirect(True)
 
         self.accountnametxt = ctk.CTkLabel(self, text="Account: "+self.master.master.account)
         self.accountnametxt.grid(row=0, column=0, padx=10, pady=2)
@@ -192,18 +195,29 @@ class AccountInfoWindow(ctk.CTkToplevel):
         self.profilelist = ctk.CTkComboBox(self, values=self.master.master.profiles)
         self.profilelist.grid(row=2, column=0, padx=10, pady=3)
 
+        self.colorbtn = ctk.CTkButton(self, text="Change Profile Colour", command=self.pick_color)
+        self.colorbtn.grid(row=3, column=0, padx=10, pady=3)
+
         self.switchprofilebtn = ctk.CTkButton(self, text="Switch Profile")
-        self.switchprofilebtn.grid(row=3, column=0, padx=10, pady=3)
+        self.switchprofilebtn.grid(row=4, column=0, padx=10, pady=3)
 
         self.logoutbtn = ctk.CTkButton(self, text="Logout", command=master.master.logout)
-        self.logoutbtn.grid(row=4, column=0, padx=10, pady=3)
+        self.logoutbtn.grid(row=5, column=0, padx=10, pady=3)
 
     def relative(self):
-        self.geometry(f"160x200+{self.master.master.winfo_x()+600}+{self.master.master.winfo_y()+250}")
+        self.update_idletasks()
+        self.profilebtn = self.master.profilebtn
+        self.geometry(f"160x200+{self.profilebtn.winfo_rootx() - 80}+{self.profilebtn.winfo_rooty() + self.profilebtn.winfo_height() + 10}")
 
     def updateprofiles(self, profiles):
         self.profilelist.configure(values=profiles)
         self.profilelist.set(profiles[0])
+
+    def pick_color(self):
+        color = ctkcolor.AskColor().get()
+        if color:
+            self.master.master.profile.color = color
+            self.master.updateprofilebtn()
 
 
 class BrowseMenu():
@@ -344,7 +358,7 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe?
         self.profilebtn = ctk.CTkButton(self, text="", width=60, height=60, corner_radius=30, command=self._open_account_info)
         self.profilebtn.grid(row=0, column=10)
 
-        self.savetocsv = ctk.CTkButton(self, text="save", command=self.savebtn)
+        self.savetocsv = ctk.CTkButton(self, text="save", command=master._accounts.save_to_csv)
         self.savetocsv.grid(row=3, column=3)
 
         self.browsemenu = BrowseMenu(self)
@@ -400,9 +414,15 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe?
         else:
             self.historylabel.configure(text="No videos in Watch Later")
 
-    def savebtn(self):
-        self.master._accounts.save_to_csv()
-        UserProfiles.save_to_csv(self.master._accounts)
+    def _darken_color(self, color, amount):
+        c = color[1:]
+        r = max(0, int(c[0:2], 16) - amount)
+        g = max(0, int(c[2:4], 16) - amount)
+        b = max(0, int(c[4:6], 16) - amount)
+        return f"#{r:02x}{g:02x}{b:02x}"
+
+    def updateprofilebtn(self):
+        self.profilebtn.configure(text=self.master.profile.name[0], fg_color=self.master.profile.color, hover_color=self._darken_color(self.master.profile.color, 40))
 
 
 class StreamingServiceApp(ctk.CTk):
@@ -445,6 +465,7 @@ class StreamingServiceApp(ctk.CTk):
         self.profile = self._accounts.get_profiles(self.account)[0]
         self.main.updateaccounttxt(self.account, self.profile.name)
         self.main.accountinfowindow.updateprofiles(self._accounts.get_profilesnames(username))
+        self.main.updateprofilebtn()
 
     def logout(self):
         self.changeframetologin()
@@ -523,15 +544,17 @@ class UserAccounts:
                         self._profiles[row["username"]].append(UserProfiles((plist:=profile.split(":"))[0], int(plist[1])))
 
 
-class UserProfiles:
+class UserProfiles():
 
-    FIELDS = ["name", "age", "wlist", "whistory"]
+    FIELDS = ["name", "wlist", "whistory"]
+    filepath = "profiles.csv"
 
-    def __init__(self, name, age:int, wlist=[], whistory=[]):
+    def __init__(self, name, age:int, wlist=[], whistory=[], color=None):
         self.name = name
         self.age = age
         self._watch_list = wlist
         self._watch_history = whistory
+        self.color = color or ctk.ThemeManager.theme["CTkButton"]["fg_color"][int(ctk.get_appearance_mode() == "Dark")]
 
     def load_from_csv(self):
         with open(self.filepath, "r", newline="") as f:
@@ -540,28 +563,20 @@ class UserProfiles:
             #for row in reader:
 
 
-    def save_to_csv(account):
-        # Change UserProfiles class into a dict
-        profiles = account.get_profile_dict()
-        # {name: [UserProfiles(), UserProfiles()], name: [UserProfiles()]}
-        plist = []
-        # ; separates the profiles
-        # ' separates the wlist and whistory items
-        # becomes:
-        # name, age1;age2, video1'video2'video3;video2'video1, video4;video3'video4
-        for i in range(len(profiles)):
-            wlist = []
-            whistorylist = []
-            for profile in (pvals:=[*profiles.values()][i]):
-                wlist.append("'".join(profile._watch_list))
-                whistorylist.append("'".join(profile._watch_history))
-            wlisttxt = ";".join(wlist)
-            whistorytxt = ";".join(whistorylist)
-            plist.append({"name":[*profiles.keys()][i], "wlist":wlisttxt, "whistory":whistorytxt})
-        with open("profiles.csv", "w", newline="") as f:
-                writer = csv.DictWriter(f, fieldnames=["name", "wlist", "whistory"])
-                writer.writeheader()
-                writer.writerows(plist)
+
+    def save_to_csv(self):
+        with open(self.filepath, "w", newline="") as f:
+            writer = csv.DictWriter(f, fieldnames=self.FIELDS)
+            writer.writeheader()
+            # Change UserProfiles class into a dict
+            profiles = UserAccounts.get_profile_dict()
+            # {name: [UserProfiles(), UserProfiles()], name: [UserProfiles()]}
+            pdict = {}
+            # : separates the values, such as name, age, wlist
+            # ; separates the profiles
+            # ' separates the wlist and whistory items
+
+            # writer.writerows()
 
     def add_to_whistory(self, id):
         self.remove_from_whistory(id)
