@@ -337,7 +337,7 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe?
         self.profilebtn = ctk.CTkButton(self, text="", width=60, height=60, corner_radius=30, command=self._open_account_info)
         self.profilebtn.grid(row=0, column=10)
 
-        self.savetocsv = ctk.CTkButton(self, text="save", command=master._accounts.save_to_csv)
+        self.savetocsv = ctk.CTkButton(self, text="save", command=self.savebtn)
         self.savetocsv.grid(row=3, column=3)
 
         self.browsemenu = BrowseMenu(self)
@@ -392,6 +392,10 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe?
             self.historylabel.configure(text="Watch Later:\n"+"\n".join(wlist))
         else:
             self.historylabel.configure(text="No videos in Watch Later")
+
+    def savebtn(self):
+        self.master._accounts.save_to_csv()
+        UserProfiles.save_to_csv(self.master._accounts)
 
 
 class StreamingServiceApp(ctk.CTk):
@@ -512,10 +516,9 @@ class UserAccounts:
                         self._profiles[row["username"]].append(UserProfiles((plist:=profile.split(":"))[0], int(plist[1])))
 
 
-class UserProfiles():
+class UserProfiles:
 
-    FIELDS = ["name", "wlist", "whistory"]
-    filepath = "profiles.csv"
+    FIELDS = ["name", "age", "wlist", "whistory"]
 
     def __init__(self, name, age:int, wlist=[], whistory=[]):
         self.name = name
@@ -530,20 +533,28 @@ class UserProfiles():
             #for row in reader:
 
 
-
-    def save_to_csv(self):
-        with open(self.filepath, "w", newline="") as f:
-            writer = csv.DictWriter(f, fieldnames=self.FIELDS)
-            writer.writeheader()
-            # Change UserProfiles class into a dict
-            profiles = UserAccounts.get_profile_dict()
-            # {name: [UserProfiles(), UserProfiles()], name: [UserProfiles()]}
-            pdict = {}
-            # : separates the values, such as name, age, wlist
-            # ; separates the profiles
-            # ' separates the wlist and whistory items
-
-            # writer.writerows()
+    def save_to_csv(account):
+        # Change UserProfiles class into a dict
+        profiles = account.get_profile_dict()
+        # {name: [UserProfiles(), UserProfiles()], name: [UserProfiles()]}
+        plist = []
+        # ; separates the profiles
+        # ' separates the wlist and whistory items
+        # becomes:
+        # name, age1;age2, video1'video2'video3;video2'video1, video4;video3'video4
+        for i in range(len(profiles)):
+            wlist = []
+            whistorylist = []
+            for profile in (pvals:=[*profiles.values()][i]):
+                wlist.append("'".join(profile._watch_list))
+                whistorylist.append("'".join(profile._watch_history))
+            wlisttxt = ";".join(wlist)
+            whistorytxt = ";".join(whistorylist)
+            plist.append({"name":[*profiles.keys()][i], "wlist":wlisttxt, "whistory":whistorytxt})
+        with open("profiles.csv", "w", newline="") as f:
+                writer = csv.DictWriter(f, fieldnames=["name", "wlist", "whistory"])
+                writer.writeheader()
+                writer.writerows(plist)
 
     def add_to_whistory(self, id):
         self.remove_from_whistory(id)
