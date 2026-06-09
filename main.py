@@ -206,7 +206,7 @@ class AccountInfoWindow(ctk.CTkToplevel):
         self.profilelist.set(profiles[0])
 
 
-class BrowseMenu:
+class BrowseMenu():
     def __init__(self, mainframe):
         self.mainframe = mainframe
 
@@ -217,6 +217,9 @@ class BrowseMenu:
                             "Film a Bird — Sam’s Full Attempt | Nebula Plus": {"image": "video_images/bird_sam.png", "genre": "lifestyle", "type": "TV show", "rating": "PG"},
                             "Film a Bird — Ben & Adam’s Full Attempt | Nebula Plus": {"image": "video_images/bird_badam.png", "genre": "lifestyle", "type": "TV show", "rating": "PG"},
                             "How to Embed Audio into a Google Site": {"image": "video_images/embedaudio.png", "genre": "education", "type": "user-made video", "rating": "G"},
+                            "どごというおんせん": {"image": "video_images/dogo.png", "genre": "lifestyle", "type": "user-made video", "rating": "R"},
+                            "foot": {"image": "video_images/foot.png", "genre": "education", "type": "user-made video", "rating": "R"},
+                            "massive and really long foot": {"image": "video_images/bigfoot.png", "genre": "education", "type": "user-made video", "rating": "MA"},
                             }
 
         self.videomenu = None
@@ -246,7 +249,7 @@ class BrowseMenu:
         self.type_filter.pack(side="top", padx=5)
 
         ctk.CTkLabel(self.filter_frame, text="Rating").pack(side="top", padx=(10, 2))
-        self.rating_filter = ctk.CTkComboBox(self.filter_frame, values=["all", "G", "PG", "M"])
+        self.rating_filter = ctk.CTkComboBox(self.filter_frame, values=["all", "G", "PG", "M", "MA", "R"])
         self.rating_filter.set("all")
         self.rating_filter.pack(side="top", padx=5)
 
@@ -272,6 +275,10 @@ class BrowseMenu:
             if content_type != "all" and info["type"] != content_type:
                 continue
             if rating != "all" and info["rating"] != rating:
+                continue
+            if self.mainframe.master.profile.age < 18 and info["rating"] == "R":
+                continue
+            if self.mainframe.master.profile.age < 15 and info["rating"] in ["R", "MA"]:
                 continue
 
             title = ctk.CTkLabel(self.videomenu, text=video)
@@ -577,6 +584,15 @@ class UserProfiles:
 
     def get_wlist(self):
         return self._watch_list
+
+
+class Profile:
+    def __init__(self, name, age):
+        self.name = name
+        self.age = int(age)
+        self.watchlist = []
+        self.watch_history = []
+
 
 app = StreamingServiceApp()
 app.mainloop()
