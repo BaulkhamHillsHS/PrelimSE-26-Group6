@@ -48,6 +48,7 @@ class LoginFrame(ctk.CTkFrame):
         self.buildui()
 
     def buildui(self):
+        """Builds the ui for signup form"""
         if self.signup_form:
             self.signup_form.destroy()
             self.signup_form = None
@@ -74,6 +75,7 @@ class LoginFrame(ctk.CTkFrame):
         self.loginbtn.grid(row=4, column=2, sticky="nsew", padx=10, columnspan=2)
 
     def login(self):
+        """Used for confirming entries are correct"""
         if (uname:=self.accountbox.get()) in (unames:=(acc:=self.master._accounts).get_usernames()) and acc._accounts[unames.index(uname)]["password"] == self.passwordbox.get():
             self.master.loggedin()
         else:
@@ -81,6 +83,7 @@ class LoginFrame(ctk.CTkFrame):
             self.feedback.after(3000, lambda:self.feedback.configure(text=""))
 
     def create_signup_form(self):
+        """Used for generating a signup form"""
         self.create_account_button.grid_forget()
         self.loginbtn.grid_forget()
         self.username.grid_forget()
@@ -137,6 +140,7 @@ class SignupFrame(ctk.CTkFrame):
         self.back_button.grid(row=8, column=0, columnspan=2, pady=10)
 
     def submit_account(self):
+        """Check if all entries are correct"""
         username = self.username_entry.get()
         age = self.age_entry.get()
         email = self.email_entry.get()
@@ -167,10 +171,10 @@ class SignupFrame(ctk.CTkFrame):
 
         self.status_label.configure(text="Account created successfully!", text_color="green")
 
-        print(self.master.master._accounts.get_usernames())
         self.master.master.newaccountloggedin()
 
     def cancel_submit(self):
+        """Returns to the login screen"""
         self.master.buildui()
 
 
@@ -220,9 +224,10 @@ class AccountInfoWindow(ctk.CTkToplevel):
             self.master.updateprofilebtn()
 
 
-class BrowseMenu():
-    def __init__(self, mainframe):
-        self.mainframe = mainframe
+class BrowseMenu(ctk.CTkFrame):
+    def __init__(self, master, **kwargs):
+        super().__init__(master, **kwargs)
+        self.mainframe = master
 
         self.video_images = {
                             "Senior Band Camp Performance 2021": {"image": "video_images/bandcamp.png", "genre": "music", "type": "user-made video", "rating": "G"},
@@ -417,7 +422,6 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe?
     def savebtn(self):
         self.master._accounts.save_to_csv()
         UserProfiles.save_to_csv(self.master._accounts)
-        UserProfiles.printall(self.master._accounts)
 
     def _darken_color(self, color, amount):
         c = color[1:]
@@ -449,8 +453,7 @@ class StreamingServiceApp(ctk.CTk):
         self.profile = ""
         UserProfiles.load_from_csv(self._accounts)
 
-        self.titletxt = ctk.CTkLabel(self, text=NAME, text_color="pink")
-        self.titletxt.pack(side="top", pady=(10, 10))
+        ctk.CTkLabel(self, text=NAME, text_color="pink").pack(side="top", pady=(10, 10))
 
         self.login = LoginFrame(self)
         self.login.pack(fill="both", expand=True, padx=40, pady=(10, 20))
@@ -469,7 +472,6 @@ class StreamingServiceApp(ctk.CTk):
 
     def loginupdate(self, username):
         self.profile = self._accounts.get_profiles(self.account)[0]
-        print(self.profile, self.profile.name)
         self.main.updateaccounttxt(self.account, self.profile.name)
         self.main.accountinfowindow.updateprofiles(self._accounts.get_profilesnames(username))
         self.main.updateprofilebtn()
@@ -578,11 +580,6 @@ class UserProfiles():
                         profile.add_to_wlist(video)
                     for video in watch_history:
                         profile.add_to_whistory(video)
-                        
-
-
-
-
 
     def save_to_csv(account):
         # Change UserProfiles class into a dict
@@ -607,17 +604,9 @@ class UserProfiles():
             writer.writeheader()
             writer.writerows(plist)
 
-    def printall(a):
-        ps = a.get_profile_dict()
-        for name in [*ps.keys()]:
-            for p in ps[name]:
-                print(p.name, p._watch_list, p._watch_history)
-
     def add_to_whistory(self, id):
         self.remove_from_whistory(id)
         self._watch_history.append(id)
-        print(self, self.name)
-        print(self._watch_history)
         
     def remove_from_whistory(self, id):
         if id in self._watch_history:
