@@ -568,10 +568,21 @@ class UserProfiles():
             profiles = account.get_profile_dict()
             for row in reader:
                 name = row["name"]
-                accountswatchlist = row["wlist"].split(";")
-                for i in range(len(accountswatchlist)):
-                    videos = accountswatchlist[i].split("'")
-                    print(videos)
+                profiles_watch_list = row["wlist"].split(";")
+                profile_watch_history = row["whistory"].split(";")
+                for i in range(len(profiles_watch_list)):
+                    profile = profiles[name][i]
+                    watch_list = profiles_watch_list[i].split("'") # watch list in the profile in the account
+                    watch_history = profile_watch_history[i].split("'")
+                    for video in watch_list:
+                        profile.add_to_wlist(video)
+                    for video in watch_history:
+                        profile.add_to_whistory(video)
+                        
+
+
+
+
 
     def save_to_csv(account):
         # Change UserProfiles class into a dict
