@@ -83,7 +83,10 @@ class LoginFrame(ctk.CTkFrame):
     def create_signup_form(self):
         self.create_account_button.grid_forget()
         self.loginbtn.grid_forget()
+        self.username.grid_forget()
         self.accountbox.grid_forget()
+        self.password.grid_forget()
+        self.passwordbox.grid_forget()
         if self.signup_form == None:
             self.signup_form = SignupFrame(self)
             self.signup_form.grid(row=0, column=0, padx=15, pady=15, columnspan=2, rowspan=3, sticky="nesw")
@@ -355,7 +358,7 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe?
         self.profilebtn = ctk.CTkButton(self, text="", width=60, height=60, corner_radius=30, command=self._open_account_info)
         self.profilebtn.grid(row=0, column=10)
 
-        self.savetocsv = ctk.CTkButton(self, text="save", command=master._accounts.save_to_csv)
+        self.savetocsv = ctk.CTkButton(self, text="save", command=self.savebtn)
         self.savetocsv.grid(row=3, column=3)
 
         self.browsemenu = BrowseMenu(self)
@@ -388,7 +391,6 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe?
 
     def add_video_to_history(self, video):
         self.master.profile.add_to_whistory(video)
-        # UserProfiles.printall(self.master._accounts)
 
     def show_history(self):
         if (t:=self.historylabel.cget("text")) and "watch history" in t.lower():
@@ -416,6 +418,7 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe?
         self.master._accounts.save_to_csv()
         UserProfiles.save_to_csv(self.master._accounts)
         UserProfiles.printall(self.master._accounts)
+
     def _darken_color(self, color, amount):
         c = color[1:]
         r = max(0, int(c[0:2], 16) - amount)
@@ -444,8 +447,7 @@ class StreamingServiceApp(ctk.CTk):
         self.account = ""
         self.profiles = self._accounts.get_profiles(self.account)
         self.profile = ""
-        # UserProfiles.load_from_csv(self._accounts)
-        # UserProfiles.printall(self._accounts)
+        UserProfiles.load_from_csv(self._accounts)
 
         self.titletxt = ctk.CTkLabel(self, text=NAME, text_color="pink")
         self.titletxt.pack(side="top", pady=(10, 10))
@@ -546,14 +548,14 @@ class UserAccounts:
                 if row["profiles"]:
                     for profile in row["profiles"].split(";"):
                         # profile should be name:age
-                        self._profiles[row["username"]].append(UserProfiles((plist:=profile.split(":"))[0], int(plist[1])))
+                        self._profiles[row["username"]].append(UserProfiles((plist:=profile.split(":"))[0], int(plist[1]), [], []))
 
 
 class UserProfiles():
 
     FIELDS = ["name", "wlist", "whistory"]
 
-    def __init__(self, name, age:int, wlist:list=[], whistory:list=[], color=None):
+    def __init__(self, name, age:int, wlist:list, whistory:list, color=None):
         self.name = name
         self.age = age
         self._watch_list = wlist
