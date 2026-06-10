@@ -32,9 +32,6 @@ polymorphism - multiple classes containing same method
 
 
 
-
-
-
 https://youtu.be/uGI0tkmyogU?t=1590 "We should blur this on YouTube and make it unblurred on Nebula."
 """
 
@@ -451,10 +448,10 @@ class StreamingServiceApp(ctk.CTk):
         # UserProfiles.printall(self._accounts)
 
         self.titletxt = ctk.CTkLabel(self, text=NAME, text_color="pink")
-        self.titletxt.pack(side="top", pady=(40, 0))
+        self.titletxt.pack(side="top", pady=(10, 10))
 
         self.login = LoginFrame(self)
-        self.login.pack(fill="both", expand=True, padx=40, pady=40)
+        self.login.pack(fill="both", expand=True, padx=40, pady=(10, 20))
 
         self.main = MainFrame(self)
 
@@ -511,22 +508,22 @@ class UserAccounts:
                                "subscription": subscription})
         self._profiles[username] = [UserProfiles(username, age)]
 
-    def get_usernames(self):
+    def get_usernames(self) -> list:
         return [*map(lambda user: user["username"], self._accounts)]
     
-    def get_profiles(self, username):
+    def get_profiles(self, username) -> list:
         try:
             return self._profiles[username]
         except:
             return []
         
-    def get_profile_dict(self):
+    def get_profile_dict(self) -> dict:
         return self._profiles
                 
-    def get_profilesnames(self, username:str):
+    def get_profilesnames(self, username:str) -> list:
         return [*map(lambda profile:profile.name, self._profiles[username])]
     
-    def get_all(self):
+    def get_all(self) -> list:
         return list(self._accounts)
     
     def save_to_csv(self):
@@ -556,7 +553,7 @@ class UserProfiles():
 
     FIELDS = ["name", "wlist", "whistory"]
 
-    def __init__(self, name, age:int, wlist=[], whistory=[], color=None):
+    def __init__(self, name, age:int, wlist:list=[], whistory:list=[], color=None):
         self.name = name
         self.age = age
         self._watch_list = wlist
@@ -613,7 +610,7 @@ class UserProfiles():
         if id in self._watch_history:
             self._watch_history.remove(id)
     
-    def get_whistory(self):
+    def get_whistory(self) -> list:
         return self._watch_history
 
     def add_to_wlist(self, id):
@@ -624,7 +621,7 @@ class UserProfiles():
         if id in self._watch_list:
             self._watch_list.remove(id)
 
-    def get_wlist(self):
+    def get_wlist(self) -> list:
         return self._watch_list
 
 
