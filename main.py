@@ -163,11 +163,11 @@ class SignupFrame(ctk.CTkFrame):
             self.status_label.configure(text=f"Username {username} is taken.", text_color="red")
             return
 
-        self.master.master._accounts.add_account(username, age, email, password)
+        self.master.master._accounts.add_account(username, age, email, password, "basic")
 
         self.status_label.configure(text="Account created successfully!", text_color="green")
 
-        print(self.master.master._accounts.get_usernames())
+        #print(self.master.master._accounts.get_usernames())
         self.master.master.newaccountloggedin()
 
     def cancel_submit(self):
@@ -178,7 +178,7 @@ class AccountInfoWindow(ctk.CTkToplevel):
     # Frame for showing account information
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
-        self.grid_rowconfigure(5, weight=1)
+        self.grid_rowconfigure(6, weight=1)
         self.grid_columnconfigure(1, weight=1)
 
         self.title(NAME + " account info")
@@ -201,19 +201,23 @@ class AccountInfoWindow(ctk.CTkToplevel):
         self.switchprofilebtn = ctk.CTkButton(self, text="Switch Profile")
         self.switchprofilebtn.grid(row=4, column=0, padx=10, pady=3)
 
+        self.subscriptionbtn = ctk.CTkButton( self, text="Subscription", command=self.master.open_subscription)
+        self.subscriptionbtn.grid(row=5, column=0, padx=10, pady=3)
+
         self.logoutbtn = ctk.CTkButton(self, text="Logout", command=master.master.logout)
-        self.logoutbtn.grid(row=5, column=0, padx=10, pady=3)
+        self.logoutbtn.grid(row=6, column=0, padx=10, pady=3)
 
     def relative(self):
         self.update_idletasks()
         self.profilebtn = self.master.profilebtn
-        self.geometry(f"160x200+{self.profilebtn.winfo_rootx() - 80}+{self.profilebtn.winfo_rooty() + self.profilebtn.winfo_height() + 10}")
+        self.geometry(f"160x300+{self.profilebtn.winfo_rootx() - 80}+{self.profilebtn.winfo_rooty() + self.profilebtn.winfo_height() + 10}")
 
     def updateprofiles(self, profiles):
         self.profilelist.configure(values=profiles)
         self.profilelist.set(profiles[0])
 
     def pick_color(self):
+        self.master.accountinfowindow.withdraw()
         color = ctkcolor.AskColor().get()
         if color:
             self.master.master.profile.color = color
@@ -343,7 +347,7 @@ class BrowseMenu():
             self.open_video(video)
 
 
-class MainFrame(ctk.CTkFrame): # better name than mainframe?
+class MainFrame(ctk.CTkFrame): # better name than mainframe? also this class is way too long
     # Frame for after login, watching things idk
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
@@ -354,6 +358,7 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe?
 
         self.accountinfowindow = AccountInfoWindow(self)
         self.accountinfowindow.withdraw()
+        self.subscriptionframe = None
 
         self.profilebtn = ctk.CTkButton(self, text="", width=60, height=60, corner_radius=30, command=self._open_account_info)
         self.profilebtn.grid(row=0, column=10)
@@ -417,17 +422,113 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe?
     def savebtn(self):
         self.master._accounts.save_to_csv()
         UserProfiles.save_to_csv(self.master._accounts)
-        UserProfiles.printall(self.master._accounts)
+        #UserProfiles.printall(self.master._accounts)
 
-    def _darken_color(self, color, amount):
+    def _darken_color(self, color, amount): # amount is a % of the rgb value to reduce
         c = color[1:]
-        r = max(0, round(int(c[0:2], 16) * (1-amount/100)))
-        g = max(0, round(int(c[2:4], 16) * (1-amount/100)))
-        b = max(0, round(int(c[4:6], 16) * (1-amount/100)))
+        r = round(int(c[0:2], 16) * (1-amount/100))
+        g = round(int(c[2:4], 16) * (1-amount/100))
+        b = round(int(c[4:6], 16) * (1-amount/100))
         return f"#{r:02x}{g:02x}{b:02x}"
 
     def updateprofilebtn(self):
         self.profilebtn.configure(text=self.master.profile.name[0], fg_color=self.master.profile.color, hover_color=self._darken_color(self.master.profile.color, 20))
+
+    def set_entry(self, entry, value):
+        if value:
+            entry.insert(0, value)
+
+    def open_subscription(self):
+        self.accountinfowindow.withdraw()
+        self.pack_forget()
+
+        self.subscriptionframe = ctk.CTkFrame(self.master)
+        self.subscriptionframe.pack(fill="both", expand=True)
+
+        account = self.master.account
+        current_plan = self.master._accounts.get_subscription(account)
+
+        ctk.CTkLabel(self.subscriptionframe, text=f"Current Plan: {current_plan}").pack(pady=10)
+
+        ctk.CTkLabel(self.subscriptionframe, text="Available plans: basic (free), premium ($5/month), 神様 ($67/month)").pack(pady=10)
+
+        ctk.CTkLabel(self.subscriptionframe, text="Input fields have been pre-filled with known information, if any.\nRemember to change if details have changed.\n-----------------").pack(pady=10)
+
+        self.subscriptionlabel = ctk.CTkLabel(self.subscriptionframe, text="Subscription")
+        self.subscriptionlabel.pack(pady=5)
+        self.planbox = ctk.CTkComboBox(self.subscriptionframe, values=["basic", "premium", "kamisama"])
+        self.planbox.pack(pady=5)
+
+        # label text, placeholder text, hidden with asterisk?
+        fields = {"cardholder": ("Cardholder Name", "e.g. Ryan Dunne", False, 200),
+                  "cardnumber": ("Card Number", "e.g. https://en.wikipedia.org/wiki/Luhn_algorithm", False, 200),
+                  "expiry": ("Expiration Date (MM/YY)", "e.g. 01/67", False, 200),
+                  "security": ("Security Code", "e.g. 420", True, 200),
+                  "billing": ("Billing Address", "e.g. 419A Windsor Road", False, 300)}
+        self.subscription_entries = {}
+
+        for key, (label_text, placeholder, hidden, width) in fields.items():
+            ctk.CTkLabel(self.subscriptionframe, text=label_text).pack(pady=(10, 0))
+
+            entry = ctk.CTkEntry(self.subscriptionframe, placeholder_text=placeholder, show="*" if hidden else "", width=width)
+            entry.pack(pady=5)
+
+            self.subscription_entries[key] = entry
+
+        self.successlabel = ctk.CTkLabel(self.subscriptionframe, text="")
+        self.successlabel.pack(pady=5)
+
+        acc = self.master._accounts.get_account(account)
+        self.set_entry(self.subscription_entries["cardholder"], acc.get("cardholder", ""))
+        self.set_entry(self.subscription_entries["cardnumber"], acc.get("cardnumber", ""))
+        self.set_entry(self.subscription_entries["expiry"], acc.get("expiry", ""))
+        self.set_entry(self.subscription_entries["security"], acc.get("securitycode", ""))
+        self.set_entry(self.subscription_entries["billing"], acc.get("billingaddress", ""))
+
+        ctk.CTkButton(self.subscriptionframe, text="Update Subscription", command=self.update_subscription).pack(pady=5) # currently doesnt validate inputs lol (ill do on thursday)
+
+        ctk.CTkButton(self.subscriptionframe, text="Back", command=self.close_subscription).pack(pady=5)
+
+    def close_subscription(self):
+        self.subscriptionframe.destroy()
+        self.subscriptionframe = None
+        self.pack(fill="both", expand=True)
+
+    def update_subscription(self):
+        prices = {"basic": 0, "premium": 5, "kamisama": 67}
+        self.master._accounts.update_subscription(self.master.account,
+                                                  self.planbox.get(),
+                                                  self.subscription_entries["cardholder"].get(),
+                                                  self.subscription_entries["cardnumber"].get(),
+                                                  self.subscription_entries["expiry"].get(),
+                                                  self.subscription_entries["security"].get(),
+                                                  self.subscription_entries["billing"].get())
+        
+        with open(f"{self.master.account}_invoice.txt", "w") as f:
+            f.write(f"i love {NAME}, you love {NAME}, we love {NAME} streaming service :3\n\n")
+
+            f.write("--------------------\n")
+            f.write("SUBSCRIPTION INVOICE\n")
+            f.write("--------------------\n\n")
+
+            f.write(f"Account Name: {self.master.account}\n")
+            f.write(f"Plan: {self.planbox.get()} (${str(prices[self.planbox.get()])}/month)\n")
+            f.write(f'Cardholder: {self.subscription_entries["Cardholder Name"].get()}\n')
+            f.write(f'Billing Address: {self.subscription_entries["billing"].get()}\n\n')
+
+            f.write("---------------\n")
+            f.write("VIEWING HISTORY\n")
+            f.write("---------------\n")
+
+            history = self.master.profile.get_whistory()
+
+            if history:
+                for video in history:
+                    f.write(f"- {video}\n")
+            else:
+                f.write("No viewing history.\n")
+
+        self.successlabel.configure(text="Subscription updated successfully!", text_color="green")
 
 
 class StreamingServiceApp(ctk.CTk):
@@ -435,7 +536,7 @@ class StreamingServiceApp(ctk.CTk):
         super().__init__()
         self.title(NAME + " streaming service :3 ")
         self.WIDTH = 720
-        self.HEIGHT = 600
+        self.HEIGHT = 1080
         self.X = 100
         self.Y = 100
         self.geometry(f"{self.WIDTH}x{self.HEIGHT}+{self.X}+{self.Y}")
@@ -469,7 +570,7 @@ class StreamingServiceApp(ctk.CTk):
 
     def loginupdate(self, username):
         self.profile = self._accounts.get_profiles(self.account)[0]
-        print(self.profile, self.profile.name)
+        #print(self.profile, self.profile.name)
         self.main.updateaccounttxt(self.account, self.profile.name)
         self.main.accountinfowindow.updateprofiles(self._accounts.get_profilesnames(username))
         self.main.updateprofilebtn()
@@ -494,21 +595,32 @@ class StreamingServiceApp(ctk.CTk):
 
 class UserAccounts:
     # Only handles data
-    FIELDS = ["username", "age", "email", "password", "profiles", "subscription"]
+    FIELDS = ["username", "age", "email", "password", "profiles", "subscription", "cardholder", "cardnumber", "expiry", "securitycode", "billingaddress"]
     filepath = "accounts.csv"
 
     def __init__(self):
         self._accounts = []
         self._profiles = {}
 
-    def add_account(self, username, age, email, password, subscription="normal"):
+    def add_account(self, username, age, email, password, subscription="basic"):
         self._accounts.append({"username": username,
                                "age": age,
                                "email": email,
                                "password": password,
                                "profiles": f"{username}:{age}",
-                               "subscription": subscription})
+                               "subscription": subscription,
+                               "cardholder": "",
+                               "cardnumber": "",
+                               "expiry": "",
+                               "securitycode": "",
+                               "billingaddress": ""})
         self._profiles[username] = [UserProfiles(username, age)]
+
+    def get_account(self, username):
+        for account in self._accounts:
+            if account["username"] == username:
+                return account
+        return None
 
     def get_usernames(self) -> list:
         return [*map(lambda user: user["username"], self._accounts)]
@@ -543,13 +655,34 @@ class UserAccounts:
                                        "email": row["email"],
                                        "password": row["password"],
                                        "profiles": row["profiles"],
-                                       "subscription": row["subscription"]})
+                                       "subscription": row["subscription"],
+                                       "cardholder": row.get("cardholder", ""),
+                                       "cardnumber": row.get("cardnumber", ""),
+                                       "expiry": row.get("expiry", ""),
+                                       "securitycode": row.get("securitycode", ""),
+                                       "billingaddress": row.get("billingaddress", "")})
                 self._profiles[row["username"]] = []
                 if row["profiles"]:
                     for profile in row["profiles"].split(";"):
                         # profile should be name:age
                         self._profiles[row["username"]].append(UserProfiles((plist:=profile.split(":"))[0], int(plist[1]), [], []))
 
+    def get_subscription(self, username):
+        for account in self._accounts:
+            if account["username"] == username:
+                return account["subscription"]
+
+    def update_subscription(self, username, subscription, cardholder, cardnumber, expiry, securitycode, billingaddress):
+        for account in self._accounts:
+            if account["username"] == username:
+                account["subscription"] = subscription
+                account["cardholder"] = cardholder
+                account["cardnumber"] = cardnumber
+                account["expiry"] = expiry
+                account["securitycode"] = securitycode
+                account["billingaddress"] = billingaddress
+                break
+        self.save_to_csv()
 
 class UserProfiles():
 
@@ -578,11 +711,6 @@ class UserProfiles():
                         profile.add_to_wlist(video)
                     for video in watch_history:
                         profile.add_to_whistory(video)
-                        
-
-
-
-
 
     def save_to_csv(account):
         # Change UserProfiles class into a dict
@@ -616,8 +744,8 @@ class UserProfiles():
     def add_to_whistory(self, id):
         self.remove_from_whistory(id)
         self._watch_history.append(id)
-        print(self, self.name)
-        print(self._watch_history)
+        #print(self, self.name)
+        #print(self._watch_history)
         
     def remove_from_whistory(self, id):
         if id in self._watch_history:
