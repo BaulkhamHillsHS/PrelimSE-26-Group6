@@ -228,8 +228,8 @@ class BrowseMenu():
                             "Senior Band Camp Performance 2021": {"image": "video_images/bandcamp.png", "genre": "music", "type": "user-made video", "rating": "G"},
                             "Eat This Card": {"image": "video_images/yummycard.png", "genre": "food", "type": "short", "rating": "M"},
                             "7 Hours in the Snack Zone": {"image": "video_images/snackzone.png", "genre": "food", "type": "TV show", "rating": "PG"},
-                            "Film a Bird — Sam’s Full Attempt | Nebula Plus": {"image": "video_images/bird_sam.png", "genre": "lifestyle", "type": "TV show", "rating": "PG"},
-                            "Film a Bird — Ben & Adam’s Full Attempt | Nebula Plus": {"image": "video_images/bird_badam.png", "genre": "lifestyle", "type": "TV show", "rating": "PG"},
+                            "Film a Bird - Sam’s Full Attempt | Nebula Plus": {"image": "video_images/bird_sam.png", "genre": "lifestyle", "type": "TV show", "rating": "PG"},
+                            "Film a Bird - Ben & Adam’s Full Attempt | Nebula Plus": {"image": "video_images/bird_badam.png", "genre": "lifestyle", "type": "TV show", "rating": "PG"},
                             "How to Embed Audio into a Google Site": {"image": "video_images/embedaudio.png", "genre": "education", "type": "user-made video", "rating": "G"},
                             "どごというおんせん": {"image": "video_images/dogo.png", "genre": "lifestyle", "type": "user-made video", "rating": "R"},
                             "foot": {"image": "video_images/foot.png", "genre": "education", "type": "user-made video", "rating": "R"},
@@ -391,6 +391,7 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe?
 
     def add_video_to_history(self, video):
         self.master.profile.add_to_whistory(video)
+        # UserProfiles.printall(self.master._accounts)
 
     def show_history(self):
         if (t:=self.historylabel.cget("text")) and "watch history" in t.lower():
@@ -414,6 +415,10 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe?
         else:
             self.historylabel.configure(text="No videos in Watch Later")
 
+    def savebtn(self):
+        self.master._accounts.save_to_csv()
+        UserProfiles.save_to_csv(self.master._accounts)
+        UserProfiles.printall(self.master._accounts)
     def _darken_color(self, color, amount):
         c = color[1:]
         r = max(0, int(c[0:2], 16) - amount)
@@ -442,6 +447,8 @@ class StreamingServiceApp(ctk.CTk):
         self.account = ""
         self.profiles = self._accounts.get_profiles(self.account)
         self.profile = ""
+        # UserProfiles.load_from_csv(self._accounts)
+        # UserProfiles.printall(self._accounts)
 
         self.titletxt = ctk.CTkLabel(self, text=NAME, text_color="pink")
         self.titletxt.pack(side="top", pady=(40, 0))
@@ -463,6 +470,7 @@ class StreamingServiceApp(ctk.CTk):
 
     def loginupdate(self, username):
         self.profile = self._accounts.get_profiles(self.account)[0]
+        print(self.profile, self.profile.name)
         self.main.updateaccounttxt(self.account, self.profile.name)
         self.main.accountinfowindow.updateprofiles(self._accounts.get_profilesnames(username))
         self.main.updateprofilebtn()
@@ -547,7 +555,6 @@ class UserAccounts:
 class UserProfiles():
 
     FIELDS = ["name", "wlist", "whistory"]
-    filepath = "profiles.csv"
 
     def __init__(self, name, age:int, wlist=[], whistory=[], color=None):
         self.name = name
@@ -556,31 +563,51 @@ class UserProfiles():
         self._watch_history = whistory
         self.color = color or ctk.ThemeManager.theme["CTkButton"]["fg_color"][int(ctk.get_appearance_mode() == "Dark")]
 
-    def load_from_csv(self):
-        with open(self.filepath, "r", newline="") as f:
+    def load_from_csv(account):
+        with open("profiles.csv", "r", newline="") as f:
             reader = csv.DictReader(f)
-            profiles = UserAccounts.get_profile_dict()
-            #for row in reader:
+            profiles = account.get_profile_dict()
+            for row in reader:
+                name = row["name"]
+                accountswatchlist = row["wlist"].split(";")
+                for i in range(len(accountswatchlist)):
+                    videos = accountswatchlist[i].split("'")
+                    print(videos)
 
-
-
-    def save_to_csv(self):
-        with open(self.filepath, "w", newline="") as f:
-            writer = csv.DictWriter(f, fieldnames=self.FIELDS)
+    def save_to_csv(account):
+        # Change UserProfiles class into a dict
+        profiles = account.get_profile_dict()
+        # {name: [UserProfiles(), UserProfiles()], name: [UserProfiles()]}
+        plist = []
+        # ; separates the profiles
+        # ' separates the wlist and whistory items
+        # becomes:
+        # name, age1;age2, video1'video2'video3;video2'video1, video4;video3'video4
+        for i in range(len(profiles)):
+            wlist = []
+            whistorylist = []
+            for profile in [*profiles.values()][i]:
+                wlist.append("'".join(profile._watch_list))
+                whistorylist.append("'".join(profile._watch_history))
+            wlisttxt = ";".join(wlist)
+            whistorytxt = ";".join(whistorylist)
+            plist.append({"name":[*profiles.keys()][i], "wlist":wlisttxt, "whistory":whistorytxt})           
+        with open("profiles.csv", "w", newline="") as f:
+            writer = csv.DictWriter(f, fieldnames=["name", "wlist", "whistory"])
             writer.writeheader()
-            # Change UserProfiles class into a dict
-            profiles = UserAccounts.get_profile_dict()
-            # {name: [UserProfiles(), UserProfiles()], name: [UserProfiles()]}
-            pdict = {}
-            # : separates the values, such as name, age, wlist
-            # ; separates the profiles
-            # ' separates the wlist and whistory items
+            writer.writerows(plist)
 
-            # writer.writerows()
+    def printall(a):
+        ps = a.get_profile_dict()
+        for name in [*ps.keys()]:
+            for p in ps[name]:
+                print(p.name, p._watch_list, p._watch_history)
 
     def add_to_whistory(self, id):
         self.remove_from_whistory(id)
         self._watch_history.append(id)
+        print(self, self.name)
+        print(self._watch_history)
         
     def remove_from_whistory(self, id):
         if id in self._watch_history:
@@ -599,14 +626,6 @@ class UserProfiles():
 
     def get_wlist(self):
         return self._watch_list
-
-
-class Profile:
-    def __init__(self, name, age):
-        self.name = name
-        self.age = int(age)
-        self.watchlist = []
-        self.watch_history = []
 
 
 app = StreamingServiceApp()
