@@ -32,9 +32,6 @@ polymorphism - multiple classes containing same method
 
 
 
-
-
-
 https://youtu.be/uGI0tkmyogU?t=1590 "We should blur this on YouTube and make it unblurred on Nebula."
 """
 
@@ -86,7 +83,10 @@ class LoginFrame(ctk.CTkFrame):
     def create_signup_form(self):
         self.create_account_button.grid_forget()
         self.loginbtn.grid_forget()
+        self.username.grid_forget()
         self.accountbox.grid_forget()
+        self.password.grid_forget()
+        self.passwordbox.grid_forget()
         if self.signup_form == None:
             self.signup_form = SignupFrame(self)
             self.signup_form.grid(row=0, column=0, padx=15, pady=15, columnspan=2, rowspan=3, sticky="nesw")
@@ -358,7 +358,7 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe?
         self.profilebtn = ctk.CTkButton(self, text="", width=60, height=60, corner_radius=30, command=self._open_account_info)
         self.profilebtn.grid(row=0, column=10)
 
-        self.savetocsv = ctk.CTkButton(self, text="save", command=master._accounts.save_to_csv)
+        self.savetocsv = ctk.CTkButton(self, text="save", command=self.savebtn)
         self.savetocsv.grid(row=3, column=3)
 
         self.browsemenu = BrowseMenu(self)
@@ -391,7 +391,6 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe?
 
     def add_video_to_history(self, video):
         self.master.profile.add_to_whistory(video)
-        # UserProfiles.printall(self.master._accounts)
 
     def show_history(self):
         if (t:=self.historylabel.cget("text")) and "watch history" in t.lower():
@@ -419,7 +418,8 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe?
         self.master._accounts.save_to_csv()
         UserProfiles.save_to_csv(self.master._accounts)
         UserProfiles.printall(self.master._accounts)
-    def _darken_color(self, color, amount): # amount is % of rgb values to remove
+
+    def _darken_color(self, color, amount):
         c = color[1:]
         r = max(0, round(int(c[0:2], 16) * (1-amount/100)))
         g = max(0, round(int(c[2:4], 16) * (1-amount/100)))
@@ -447,14 +447,13 @@ class StreamingServiceApp(ctk.CTk):
         self.account = ""
         self.profiles = self._accounts.get_profiles(self.account)
         self.profile = ""
-        # UserProfiles.load_from_csv(self._accounts)
-        # UserProfiles.printall(self._accounts)
+        UserProfiles.load_from_csv(self._accounts)
 
         self.titletxt = ctk.CTkLabel(self, text=NAME, text_color="pink")
-        self.titletxt.pack(side="top", pady=(40, 0))
+        self.titletxt.pack(side="top", pady=(10, 10))
 
         self.login = LoginFrame(self)
-        self.login.pack(fill="both", expand=True, padx=40, pady=40)
+        self.login.pack(fill="both", expand=True, padx=40, pady=(10, 20))
 
         self.main = MainFrame(self)
 
@@ -511,22 +510,22 @@ class UserAccounts:
                                "subscription": subscription})
         self._profiles[username] = [UserProfiles(username, age)]
 
-    def get_usernames(self):
+    def get_usernames(self) -> list:
         return [*map(lambda user: user["username"], self._accounts)]
     
-    def get_profiles(self, username):
+    def get_profiles(self, username) -> list:
         try:
             return self._profiles[username]
         except:
             return []
         
-    def get_profile_dict(self):
+    def get_profile_dict(self) -> dict:
         return self._profiles
                 
-    def get_profilesnames(self, username:str):
+    def get_profilesnames(self, username:str) -> list:
         return [*map(lambda profile:profile.name, self._profiles[username])]
     
-    def get_all(self):
+    def get_all(self) -> list:
         return list(self._accounts)
     
     def save_to_csv(self):
@@ -549,14 +548,14 @@ class UserAccounts:
                 if row["profiles"]:
                     for profile in row["profiles"].split(";"):
                         # profile should be name:age
-                        self._profiles[row["username"]].append(UserProfiles((plist:=profile.split(":"))[0], int(plist[1])))
+                        self._profiles[row["username"]].append(UserProfiles((plist:=profile.split(":"))[0], int(plist[1]), [], []))
 
 
 class UserProfiles():
 
     FIELDS = ["name", "wlist", "whistory"]
 
-    def __init__(self, name, age:int, wlist=[], whistory=[], color=None):
+    def __init__(self, name, age:int, wlist:list, whistory:list, color=None):
         self.name = name
         self.age = age
         self._watch_list = wlist
@@ -569,10 +568,21 @@ class UserProfiles():
             profiles = account.get_profile_dict()
             for row in reader:
                 name = row["name"]
-                accountswatchlist = row["wlist"].split(";")
-                for i in range(len(accountswatchlist)):
-                    videos = accountswatchlist[i].split("'")
-                    print(videos)
+                profiles_watch_list = row["wlist"].split(";")
+                profile_watch_history = row["whistory"].split(";")
+                for i in range(len(profiles_watch_list)):
+                    profile = profiles[name][i]
+                    watch_list = profiles_watch_list[i].split("'") # watch list in the profile in the account
+                    watch_history = profile_watch_history[i].split("'")
+                    for video in watch_list:
+                        profile.add_to_wlist(video)
+                    for video in watch_history:
+                        profile.add_to_whistory(video)
+                        
+
+
+
+
 
     def save_to_csv(account):
         # Change UserProfiles class into a dict
@@ -613,7 +623,7 @@ class UserProfiles():
         if id in self._watch_history:
             self._watch_history.remove(id)
     
-    def get_whistory(self):
+    def get_whistory(self) -> list:
         return self._watch_history
 
     def add_to_wlist(self, id):
@@ -624,7 +634,7 @@ class UserProfiles():
         if id in self._watch_list:
             self._watch_list.remove(id)
 
-    def get_wlist(self):
+    def get_wlist(self) -> list:
         return self._watch_list
 
 
