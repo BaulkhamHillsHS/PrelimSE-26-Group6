@@ -419,15 +419,15 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe?
         self.master._accounts.save_to_csv()
         UserProfiles.save_to_csv(self.master._accounts)
         UserProfiles.printall(self.master._accounts)
-    def _darken_color(self, color, amount):
+    def _darken_color(self, color, amount): # amount is % of rgb values to remove
         c = color[1:]
-        r = max(0, int(c[0:2], 16) - amount)
-        g = max(0, int(c[2:4], 16) - amount)
-        b = max(0, int(c[4:6], 16) - amount)
+        r = max(0, round(int(c[0:2], 16) * (1-amount/100)))
+        g = max(0, round(int(c[2:4], 16) * (1-amount/100)))
+        b = max(0, round(int(c[4:6], 16) * (1-amount/100)))
         return f"#{r:02x}{g:02x}{b:02x}"
 
     def updateprofilebtn(self):
-        self.profilebtn.configure(text=self.master.profile.name[0], fg_color=self.master.profile.color, hover_color=self._darken_color(self.master.profile.color, 40))
+        self.profilebtn.configure(text=self.master.profile.name[0], fg_color=self.master.profile.color, hover_color=self._darken_color(self.master.profile.color, 20))
 
 
 class StreamingServiceApp(ctk.CTk):
