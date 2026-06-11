@@ -236,8 +236,8 @@ class BrowseMenu(ctk.CTkFrame):
                             "Senior Band Camp Performance 2021": {"image": "video_images/bandcamp.png", "genre": "music", "type": "user-made video", "rating": "G"},
                             "Eat This Card": {"image": "video_images/yummycard.png", "genre": "food", "type": "short", "rating": "M"},
                             "7 Hours in the Snack Zone": {"image": "video_images/snackzone.png", "genre": "food", "type": "TV show", "rating": "PG"},
-                            "Film a Bird - Sam's Full Attempt | Nebula Plus": {"image": "video_images/bird_sam.png", "genre": "lifestyle", "type": "TV show", "rating": "PG"},
-                            "Film a Bird - Ben & Adam's Full Attempt | Nebula Plus": {"image": "video_images/bird_badam.png", "genre": "lifestyle", "type": "TV show", "rating": "PG"},
+                            "Film a Bird — Sam’s Full Attempt | Nebula Plus": {"image": "video_images/bird_sam.png", "genre": "lifestyle", "type": "TV show", "rating": "PG"},
+                            "Film a Bird — Ben & Adam’s Full Attempt | Nebula Plus": {"image": "video_images/bird_badam.png", "genre": "lifestyle", "type": "TV show", "rating": "PG"},
                             "How to Embed Audio into a Google Site": {"image": "video_images/embedaudio.png", "genre": "education", "type": "user-made video", "rating": "G"},
                             "どごというおんせん": {"image": "video_images/dogo.png", "genre": "lifestyle", "type": "user-made video", "rating": "R"},
                             "foot": {"image": "video_images/foot.png", "genre": "education", "type": "user-made video", "rating": "R"},
@@ -442,7 +442,7 @@ class SubscriptionFrame(ctk.CTkFrame):
         ctk.CTkLabel(self, text="Input fields have been pre-filled with known information, if any.\nRemember to change if details have changed.\n-----------------").pack(pady=(10,5))
 
         ctk.CTkLabel(self, text="Subscription").pack()
-        self.planbox = ctk.CTkComboBox(self, values=["basic", "premium", "kamisama"])
+        self.planbox = ctk.CTkComboBox(self, values=["basic", "premium", "神様"])
         self.planbox.pack(pady=(0,5))
 
         # label text, placeholder text, hidden with asterisk?
@@ -480,7 +480,7 @@ class SubscriptionFrame(ctk.CTkFrame):
             entry.insert(0, value)
 
     def update_subscription(self):
-        prices = {"basic": 0, "premium": 5, "kamisama": 67}
+        prices = {"basic": 0, "premium": 5, "神様": 67}
         self.master._accounts.update_subscription(self.master.account,
                                                   self.planbox.get(),
                                                   self.subscription_entries["cardholder"].get(),
@@ -489,7 +489,7 @@ class SubscriptionFrame(ctk.CTkFrame):
                                                   self.subscription_entries["security"].get(),
                                                   self.subscription_entries["billing"].get())
         
-        with open(f"{self.master.account}_invoice.txt", "w") as f:
+        with open(f"{self.master.account}_invoice.txt", "w", encoding="utf-8") as f:
             f.write(f"i love {NAME}, you love {NAME}, we love {NAME} streaming service :3\n\n")
 
             f.write("--------------------\n")
@@ -647,14 +647,14 @@ class UserAccounts:
         return list(self._accounts)
     
     def save_to_csv(self):
-        with open(self.filepath, "w", newline="") as f:
+        with open(self.filepath, "w", newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=self.FIELDS)
             writer.writeheader()
             writer.writerows(self._accounts)
 
     def load_from_csv(self):
         colors:dict[list] = {}
-        with open(self.filepath, "r", newline="") as f:
+        with open(self.filepath, "r", newline="", encoding="utf-8") as f:
             reader = csv.DictReader(f)
             for row in reader:
                 self._accounts.append({"username": row["username"],
@@ -721,7 +721,7 @@ class UserProfiles():
         self.color = color or ctk.ThemeManager.theme["CTkButton"]["fg_color"][int(ctk.get_appearance_mode() == "Dark")]
 
     def load_from_csv(account):
-        with open("profiles.csv", "r", newline="") as f:
+        with open("profiles.csv", "r", newline="", encoding="utf-8") as f:
             reader = csv.DictReader(f)
             profiles = account.get_profile_dict()
             for row in reader:
@@ -755,7 +755,7 @@ class UserProfiles():
             wlisttxt = ";67;".join(wlist)
             whistorytxt = ";67;".join(whistorylist)
             plist.append({"name":[*profiles.keys()][i], "wlist":wlisttxt, "whistory":whistorytxt})           
-        with open("profiles.csv", "w", newline="") as f:
+        with open("profiles.csv", "w", newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=["name", "wlist", "whistory"])
             writer.writeheader()
             writer.writerows(plist)

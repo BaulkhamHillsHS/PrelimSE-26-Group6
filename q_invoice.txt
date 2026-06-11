@@ -5,12 +5,12 @@ SUBSCRIPTION INVOICE
 --------------------
 
 Account Name: q
-Plan: UnicodeEncodeError: 'charmap' codec can't encode characters in position 12-13: character maps to <undefined> ($67/month)
-Cardholder: qwer
-Billing Address: qwer
+Plan: 神様 ($67/month)
+Cardholder: rhrar
+Billing Address: dunne's house
 
 ---------------
 VIEWING HISTORY
 ---------------
 - Eat This Card
-- Film a Bird - Ben & Adam�s Full Attempt | Nebula Plus
+- Film a Bird - Ben & Adam's Full Attempt | Nebula Plus
