@@ -707,7 +707,6 @@ class UserAccounts:
             profile_colors = colors[username]
             for i, profile in enumerate(self._profiles[username]):
                 self.update_color(username, profile.name, profile_colors[i])
-                print(username, profile.name, profile.color)
 
 
 class UserProfiles():
