@@ -576,6 +576,7 @@ class StreamingServiceApp(ctk.CTk):
 
     def changeframetologin(self):
         self.main.forget()
+        self.main.historylabel.configure(text="")
         self.main.accountinfowindow.withdraw()
 
     def maintobrowse(self):
