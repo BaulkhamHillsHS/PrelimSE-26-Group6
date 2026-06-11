@@ -514,7 +514,7 @@ class SubscriptionFrame(ctk.CTkFrame):
 
             return True, ""
 
-        except (ValueError, AttributeError):
+        except ValueError:
             return False, "Error: expiry date is not in MM/YY format"
 
     def update_subscription(self):
