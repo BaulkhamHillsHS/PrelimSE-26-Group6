@@ -227,7 +227,6 @@ class AccountInfoWindow(ctk.CTkToplevel):
 class BrowseMenu(ctk.CTkFrame):
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
-        self.mainframe = master
 
         self.video_images = {
                             "Senior Band Camp Performance 2021": {"image": "video_images/bandcamp.png", "genre": "music", "type": "user-made video", "rating": "G"},
@@ -246,15 +245,7 @@ class BrowseMenu(ctk.CTkFrame):
 
         self.window = None
 
-    def open_video_menu(self):
-        self.mainframe.historylabel.configure(text="")
-        self.mainframe.pack_forget()
-        self.mainframe.accountinfowindow.withdraw()
-
-        self.videomenu = ctk.CTkFrame(self.mainframe.master)
-        self.videomenu.pack(fill="both", expand=True)
-
-        self.filter_frame = ctk.CTkFrame(self.videomenu)
+        self.filter_frame = ctk.CTkFrame(self)
         self.filter_frame.grid(row=1, column=1, columnspan=10, padx=10, pady=10, sticky="w")
 
         ctk.CTkLabel(self.filter_frame, text="Genre").pack(side="top", padx=(5, 2))
@@ -272,8 +263,11 @@ class BrowseMenu(ctk.CTkFrame):
         self.rating_filter.set("all")
         self.rating_filter.pack(side="top", padx=5)
 
-        ctk.CTkButton(self.videomenu, text="back", command=self.close_video_menu).grid(row=0, column=0, padx=10, pady=10)
-        ctk.CTkButton(self.videomenu, text="Apply Filters", command=self.refresh_videos).grid(row=1, column=0, padx=10, pady=10)
+        self.back_btn = ctk.CTkButton(self, text="back", command=self.master.browsetomain)
+        self.back_btn.grid(row=0, column=0, padx=10, pady=10)
+
+        self.filter_btn = ctk.CTkButton(self, text="Apply Filters", command=self.refresh_videos)
+        self.filter_btn.grid(row=1, column=0, padx=10, pady=10)
 
         self.refresh_videos()
 
@@ -295,44 +289,40 @@ class BrowseMenu(ctk.CTkFrame):
                 continue
             if rating != "all" and info["rating"] != rating:
                 continue
-            if self.mainframe.master.profile.age < 18 and info["rating"] == "R":
+            if self.master.profile.age < 18 and info["rating"] == "R":
                 continue
-            if self.mainframe.master.profile.age < 15 and info["rating"] in ["R", "MA"]:
+            if self.master.profile.age < 15 and info["rating"] in ["R", "MA"]:
                 continue
 
-            title = ctk.CTkLabel(self.videomenu, text=video)
+            title = ctk.CTkLabel(self, text=video)
             title.grid(row=row, column=0, padx=10, pady=5, sticky="e")
             self.video_buttons.append(title)
 
-            watchbtn = ctk.CTkButton(self.videomenu, text="watch", command=lambda v=video: self.open_video(v))
+            watchbtn = ctk.CTkButton(self, text="watch", command=lambda v=video: self.open_video(v))
             watchbtn.grid(row=row, column=1, padx=5, pady=5)
             self.video_buttons.append(watchbtn)
 
-            watchlaterbtn = ctk.CTkButton(self.videomenu, text=("remove from " if video in self.mainframe.master.profile.get_wlist() else "add to ") + "watch later", command=lambda v=video: self.toggle_watch_later(v))
+            watchlaterbtn = ctk.CTkButton(self, text=("remove from " if video in self.master.profile.get_wlist() else "add to ") + "watch later", command=lambda v=video: self.toggle_watch_later(v))
             watchlaterbtn.grid(row=row, column=2, padx=5, pady=5)
             self.video_buttons.append(watchlaterbtn)
 
             row += 1
 
     def toggle_watch_later(self, video):
-        if video in self.mainframe.master.profile.get_wlist():
-            self.mainframe.master.profile.remove_from_wlist(video)
+        if video in (prof:=self.master.profile).get_wlist():
+            prof.remove_from_wlist(video)
         else:
-            self.mainframe.master.profile.add_to_wlist(video)
+            prof.add_to_wlist(video)
         self.refresh_videos()
 
-    def close_video_menu(self):
-        self.videomenu.destroy()
-        self.mainframe.pack(fill="both", expand=True)
-
     def open_video(self, video):
-        self.mainframe.add_video_to_history(video)
-        if self.mainframe.watchlist_setting.get():
-            self.mainframe.master.profile.remove_from_wlist(video)
+        self.master.main.add_video_to_history(video)
+        if self.master.main.watchlist_setting.get():
+            self.master.profile.remove_from_wlist(video)
             self.refresh_videos()
 
         if self.window == None or not self.window.winfo_exists():
-            self.window = ctk.CTkToplevel(self.mainframe)
+            self.window = ctk.CTkToplevel(self.master)
             self.window.title(video)
 
             image_path = self.video_images[video]["image"]
@@ -348,7 +338,7 @@ class BrowseMenu(ctk.CTkFrame):
             self.open_video(video)
 
 
-class MainFrame(ctk.CTkFrame): # better name than mainframe?
+class MainFrame(ctk.CTkFrame): # better name than master?
     # Frame for after login, watching things idk
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
@@ -366,9 +356,7 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe?
         self.savetocsv = ctk.CTkButton(self, text="save", command=self.savebtn)
         self.savetocsv.grid(row=3, column=3)
 
-        self.browsemenu = BrowseMenu(self)
-
-        self.browsebtn = ctk.CTkButton(self, text="browse", command=self.browsemenu.open_video_menu)
+        self.browsebtn = ctk.CTkButton(self, text="browse", command=self.master.maintobrowse)
         self.browsebtn.grid(row=3, column=4, padx=5)
 
         self.historybtn = ctk.CTkButton(self, text="watch history", command=self.show_history)
@@ -475,6 +463,7 @@ class StreamingServiceApp(ctk.CTk):
         self.main.updateaccounttxt(self.account, self.profile.name)
         self.main.accountinfowindow.updateprofiles(self._accounts.get_profilesnames(username))
         self.main.updateprofilebtn()
+        self.browsemenu = BrowseMenu(self)
 
     def logout(self):
         self.changeframetologin()
@@ -493,6 +482,15 @@ class StreamingServiceApp(ctk.CTk):
         self.main.forget()
         self.main.accountinfowindow.withdraw()
 
+    def maintobrowse(self):
+        self.main.historylabel.configure(text="")
+        self.main.accountinfowindow.withdraw()
+        self.main.forget()
+        self.browsemenu.pack(fill="both", expand=True)
+
+    def browsetomain(self):
+        self.browsemenu.forget()
+        self.main.pack(fill="both", expand=True)
 
 class UserAccounts:
     # Only handles data
