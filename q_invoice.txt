@@ -5,12 +5,12 @@ SUBSCRIPTION INVOICE
 --------------------
 
 Account Name: q
-Plan: 神様 ($67/month)
-Cardholder: rhrar
+Plan: basic ($0/month)
+Cardholder: aa
 Billing Address: dunne's house
 
 ---------------
 VIEWING HISTORY
 ---------------
 - Eat This Card
-- Film a Bird - Ben & Adam's Full Attempt | Nebula Plus
+- Film a Bird — Ben & Adam’s Full Attempt | Nebula Plus

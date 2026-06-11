@@ -471,7 +471,7 @@ class SubscriptionFrame(ctk.CTkFrame):
         self.set_entry(self.subscription_entries["security"], acc.get("securitycode", ""))
         self.set_entry(self.subscription_entries["billing"], acc.get("billingaddress", ""))
 
-        ctk.CTkButton(self, text="Update Subscription", command=self.update_subscription).pack() # currently doesnt validate inputs lol (ill do on thursday)
+        ctk.CTkButton(self, text="Update Subscription", command=self.update_subscription).pack()
 
         ctk.CTkButton(self, text="Back", command=self.master.subscriptiontomain).pack(pady=5)
 
@@ -479,41 +479,50 @@ class SubscriptionFrame(ctk.CTkFrame):
         if value:
             entry.insert(0, value)
 
+    def luhn_verify(self, number): # verifies that it's xxxx xxxx xxxx xxxx and follows Luhn algorithm
+        if len(number) == 19 and all(number[char] == " " for char in (4, 9, 14)) and all(number[char].isdigit() for char in range(19) if char % 5 != 4):
+            self.successlabel.configure(text="maybe works", text_color="red")
+        else:
+            self.successlabel.configure(text="not valid at all", text_color="red")
+
     def update_subscription(self):
         prices = {"basic": 0, "premium": 5, "神様": 67}
-        self.master._accounts.update_subscription(self.master.account,
-                                                  self.planbox.get(),
-                                                  self.subscription_entries["cardholder"].get(),
-                                                  self.subscription_entries["cardnumber"].get(),
-                                                  self.subscription_entries["expiry"].get(),
-                                                  self.subscription_entries["security"].get(),
-                                                  self.subscription_entries["billing"].get())
-        
-        with open(f"{self.master.account}_invoice.txt", "w", encoding="utf-8") as f:
-            f.write(f"i love {NAME}, you love {NAME}, we love {NAME} streaming service :3\n\n")
+        details = (self.subscription_entries["cardholder"].get(),
+                   self.subscription_entries["cardnumber"].get(),
+                   self.subscription_entries["expiry"].get(),
+                   self.subscription_entries["security"].get(),
+                   self.subscription_entries["billing"].get())
+        if all(details):
+            print("worked")
+            self.master._accounts.update_subscription(self.master.account, self.planbox.get(), *details)
 
-            f.write("--------------------\n")
-            f.write("SUBSCRIPTION INVOICE\n")
-            f.write("--------------------\n\n")
+            with open(f"{self.master.account}_invoice.txt", "w", encoding="utf-8") as f:
+                f.write(f"i love {NAME}, you love {NAME}, we love {NAME} streaming service :3\n\n")
 
-            f.write(f"Account Name: {self.master.account}\n")
-            f.write(f"Plan: {self.planbox.get()} (${str(prices[self.planbox.get()])}/month)\n")
-            f.write(f'Cardholder: {self.subscription_entries["cardholder"].get()}\n')
-            f.write(f'Billing Address: {self.subscription_entries["billing"].get()}\n\n')
+                f.write("--------------------\n")
+                f.write("SUBSCRIPTION INVOICE\n")
+                f.write("--------------------\n\n")
 
-            f.write("---------------\n")
-            f.write("VIEWING HISTORY\n")
-            f.write("---------------\n")
+                f.write(f"Account Name: {self.master.account}\n")
+                f.write(f"Plan: {self.planbox.get()} (${str(prices[self.planbox.get()])}/month)\n")
+                f.write(f'Cardholder: {self.subscription_entries["cardholder"].get()}\n')
+                f.write(f'Billing Address: {self.subscription_entries["billing"].get()}\n\n')
 
-            history = self.master.profile.get_whistory()
+                f.write("---------------\n")
+                f.write("VIEWING HISTORY\n")
+                f.write("---------------\n")
 
-            if history:
-                for video in history:
-                    f.write(f"- {video}\n")
-            else:
-                f.write("No viewing history.\n")
+                history = self.master.profile.get_whistory()
 
-        self.successlabel.configure(text="Subscription updated successfully!", text_color="green")
+                if history:
+                    for video in history:
+                        f.write(f"- {video}\n")
+                else:
+                    f.write("No viewing history.\n")
+
+            self.successlabel.configure(text="Subscription updated successfully!", text_color="green")
+        else:
+            self.successlabel.configure(text="Please fill in all fields.", text_color="red")
 
 
 class StreamingServiceApp(ctk.CTk):
