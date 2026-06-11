@@ -224,7 +224,7 @@ class AccountInfoWindow(ctk.CTkToplevel):
         self.master.accountinfowindow.withdraw()
         color = ctkcolor.AskColor().get()
         if color:
-            self.master.master.profile.color = color
+            self.master.master._accounts.update_color((app:=self.master.master).account, app.profile.name, color)
             self.master.updateprofilebtn()
 
 
@@ -600,7 +600,7 @@ class StreamingServiceApp(ctk.CTk):
 
 class UserAccounts:
     # Only handles data
-    FIELDS = ["username", "age", "email", "password", "profiles", "subscription", "cardholder", "cardnumber", "expiry", "securitycode", "billingaddress"]
+    FIELDS = ["username", "age", "email", "password", "profiles", "subscription", "cardholder", "cardnumber", "expiry", "securitycode", "billingaddress", "rgb"]
     filepath = "accounts.csv"
 
     def __init__(self):
@@ -618,7 +618,8 @@ class UserAccounts:
                                "cardnumber": "",
                                "expiry": "",
                                "securitycode": "",
-                               "billingaddress": ""})
+                               "billingaddress": "",
+                               "rgb": ""})
         self._profiles[username] = [UserProfiles(username, age)]
 
     def get_account(self, username) -> dict|None:
@@ -652,6 +653,7 @@ class UserAccounts:
             writer.writerows(self._accounts)
 
     def load_from_csv(self):
+        colors:dict[list] = {}
         with open(self.filepath, "r", newline="", encoding="utf-8") as f:
             reader = csv.DictReader(f)
             for row in reader:
@@ -665,12 +667,15 @@ class UserAccounts:
                                        "cardnumber": row.get("cardnumber", ""),
                                        "expiry": row.get("expiry", ""),
                                        "securitycode": row.get("securitycode", ""),
-                                       "billingaddress": row.get("billingaddress", "")})
+                                       "billingaddress": row.get("billingaddress", ""),
+                                       "rgb": row["rgb"]})
                 self._profiles[row["username"]] = []
                 if row["profiles"]:
                     for profile in row["profiles"].split(";"):
                         # profile should be name:age;name:age
                         self._profiles[row["username"]].append(UserProfiles((plist:=profile.split(":"))[0], int(plist[1]), [], []))
+                colors[row["username"]] = row["rgb"].split(":")
+        self.update_color_all(colors)
 
     def get_subscription(self, username):
         for account in self._accounts:
@@ -688,6 +693,21 @@ class UserAccounts:
                 account["billingaddress"] = billingaddress
                 break
         self.save_to_csv()
+
+    def update_color(self, username, name, rgb):
+        (profiles:=self._profiles[username])[self.get_profilesnames(username).index(name)].color = rgb
+        colors = []
+        for p in profiles:
+            colors.append(p.color)
+        colortxt = ":".join(colors)
+        self._accounts[self.get_usernames().index(username)]["rgb"] = colortxt
+
+    def update_color_all(self, colors):
+        for username in [*self._profiles.keys()]:
+            profile_colors = colors[username]
+            for i, profile in enumerate(self._profiles[username]):
+                self.update_color(username, profile.name, profile_colors[i])
+
 
 class UserProfiles():
 
