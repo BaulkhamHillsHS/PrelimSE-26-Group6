@@ -3,6 +3,7 @@ import tkinter as tk
 import csv
 from PIL import Image # pip install Pillow
 import CTkColorPicker as ctkcolor # pip install ctkcolorpicker
+from datetime import datetime
 
 """
 Notes:
@@ -479,11 +480,42 @@ class SubscriptionFrame(ctk.CTkFrame):
         if value:
             entry.insert(0, value)
 
-    def luhn_verify(self, number): # verifies that it's xxxx xxxx xxxx xxxx and follows Luhn algorithm
-        if len(number) == 19 and all(number[char] == " " for char in (4, 9, 14)) and all(number[char].isdigit() for char in range(19) if char % 5 != 4):
-            self.successlabel.configure(text="maybe works", text_color="red")
-        else:
-            self.successlabel.configure(text="not valid at all", text_color="red")
+    def luhn_verify(self, number): # verifies that number follows Luhn algorithm, returns passed (bool), error (str)
+        if not number.isdigit():
+            return False, "Please enter only digits (no punctuation) for the card number."
+
+        runningtotal = 0
+        payload = list(number[-2::-1])
+        for i in range(len(payload)):
+            currentterm = int(payload[i]) * (2 - i % 2)
+            if currentterm > 9:
+                currentterm -= 9
+            runningtotal += currentterm
+        
+        if int(number[-1]) != (10 - (runningtotal % 10)) % 10:
+            return False, "Error: checksum incorrect. Please make sure you have typed your card number correctly."
+        
+        return True, ""
+        
+    def date_verify(self, date): # verifies that date is a real date (MM/YY) and is not expired, returns passed (bool), error (str)
+        try:
+            month, year = date.split("/")
+            month = int(month)
+            year = 2000 + int(year)
+
+            if not 2000 <= year <= 2099:
+                return False, "Error: expiry year is invalid"
+
+            if not 1 <= month <= 12:
+                return False, "Error: expiry month is invalid"
+
+            if (year, month) < (datetime.now().year, datetime.now().month):
+                return False, "Error: card is expired"
+
+            return True, ""
+
+        except (ValueError, AttributeError):
+            return False, "Error: expiry date is not in MM/YY format"
 
     def update_subscription(self):
         prices = {"basic": 0, "premium": 5, "神様": 67}
@@ -492,37 +524,52 @@ class SubscriptionFrame(ctk.CTkFrame):
                    self.subscription_entries["expiry"].get(),
                    self.subscription_entries["security"].get(),
                    self.subscription_entries["billing"].get())
-        if all(details):
-            print("worked")
-            self.master._accounts.update_subscription(self.master.account, self.planbox.get(), *details)
-
-            with open(f"{self.master.account}_invoice.txt", "w", encoding="utf-8") as f:
-                f.write(f"i love {NAME}, you love {NAME}, we love {NAME} streaming service :3\n\n")
-
-                f.write("--------------------\n")
-                f.write("SUBSCRIPTION INVOICE\n")
-                f.write("--------------------\n\n")
-
-                f.write(f"Account Name: {self.master.account}\n")
-                f.write(f"Plan: {self.planbox.get()} (${str(prices[self.planbox.get()])}/month)\n")
-                f.write(f'Cardholder: {self.subscription_entries["cardholder"].get()}\n')
-                f.write(f'Billing Address: {self.subscription_entries["billing"].get()}\n\n')
-
-                f.write("---------------\n")
-                f.write("VIEWING HISTORY\n")
-                f.write("---------------\n")
-
-                history = self.master.profile.get_whistory()
-
-                if history:
-                    for video in history:
-                        f.write(f"- {video}\n")
-                else:
-                    f.write("No viewing history.\n")
-
-            self.successlabel.configure(text="Subscription updated successfully!", text_color="green")
-        else:
+        
+        if not all(details):
             self.successlabel.configure(text="Please fill in all fields.", text_color="red")
+            return
+
+        passed_luhn, error = self.luhn_verify(details[1])
+        if not passed_luhn:
+            self.successlabel.configure(text=error, text_color="red")
+            return
+
+        passed_date, error = self.date_verify(details[2])
+        if not passed_date:
+            self.successlabel.configure(text=error, text_color="red")
+            return
+
+        if not details[3].isdigit():
+            self.successlabel.configure(text="Error: security code must be a number.", text_color="red")
+            return
+
+        self.master._accounts.update_subscription(self.master.account, self.planbox.get(), *details)
+
+        with open(f"{self.master.account}_invoice.txt", "w", encoding="utf-8") as f:
+            f.write(f"i love {NAME}, you love {NAME}, we love {NAME} streaming service :3\n\n")
+
+            f.write("--------------------\n")
+            f.write("SUBSCRIPTION INVOICE\n")
+            f.write("--------------------\n\n")
+
+            f.write(f"Account Name: {self.master.account}\n")
+            f.write(f"Plan: {self.planbox.get()} (${str(prices[self.planbox.get()])}/month)\n")
+            f.write(f'Cardholder: {details[0]}\n')
+            f.write(f'Billing Address: {details[4]}\n\n')
+
+            f.write("---------------\n")
+            f.write("VIEWING HISTORY\n")
+            f.write("---------------\n")
+
+            history = self.master.profile.get_whistory()
+
+            if history:
+                for video in history:
+                    f.write(f"- {video}\n")
+            else:
+                f.write("No viewing history.\n")
+
+        self.successlabel.configure(text="Subscription updated successfully!", text_color="green")
 
 
 class StreamingServiceApp(ctk.CTk):

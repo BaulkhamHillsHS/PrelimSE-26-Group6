@@ -5,7 +5,7 @@ SUBSCRIPTION INVOICE
 --------------------
 
 Account Name: q
-Plan: basic ($0/month)
+Plan: 神様 ($67/month)
 Cardholder: aa
 Billing Address: dunne's house
 
