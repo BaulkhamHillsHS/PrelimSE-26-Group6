@@ -205,7 +205,7 @@ class AccountInfoWindow(ctk.CTkToplevel):
         self.switchprofilebtn = ctk.CTkButton(self, text="Switch Profile")
         self.switchprofilebtn.grid(row=4, column=0, padx=10, pady=3)
 
-        self.subscriptionbtn = ctk.CTkButton( self, text="Subscription", command=self.master.open_subscription)
+        self.subscriptionbtn = ctk.CTkButton(self, text="Subscription", command=self.master.master.maintosubscription)
         self.subscriptionbtn.grid(row=5, column=0, padx=10, pady=3)
 
         self.logoutbtn = ctk.CTkButton(self, text="Logout", command=master.master.logout)
@@ -236,8 +236,8 @@ class BrowseMenu(ctk.CTkFrame):
                             "Senior Band Camp Performance 2021": {"image": "video_images/bandcamp.png", "genre": "music", "type": "user-made video", "rating": "G"},
                             "Eat This Card": {"image": "video_images/yummycard.png", "genre": "food", "type": "short", "rating": "M"},
                             "7 Hours in the Snack Zone": {"image": "video_images/snackzone.png", "genre": "food", "type": "TV show", "rating": "PG"},
-                            "Film a Bird - Sam’s Full Attempt | Nebula Plus": {"image": "video_images/bird_sam.png", "genre": "lifestyle", "type": "TV show", "rating": "PG"},
-                            "Film a Bird - Ben & Adam’s Full Attempt | Nebula Plus": {"image": "video_images/bird_badam.png", "genre": "lifestyle", "type": "TV show", "rating": "PG"},
+                            "Film a Bird - Sam's Full Attempt | Nebula Plus": {"image": "video_images/bird_sam.png", "genre": "lifestyle", "type": "TV show", "rating": "PG"},
+                            "Film a Bird - Ben & Adam's Full Attempt | Nebula Plus": {"image": "video_images/bird_badam.png", "genre": "lifestyle", "type": "TV show", "rating": "PG"},
                             "How to Embed Audio into a Google Site": {"image": "video_images/embedaudio.png", "genre": "education", "type": "user-made video", "rating": "G"},
                             "どごというおんせん": {"image": "video_images/dogo.png", "genre": "lifestyle", "type": "user-made video", "rating": "R"},
                             "foot": {"image": "video_images/foot.png", "genre": "education", "type": "user-made video", "rating": "R"},
@@ -426,30 +426,24 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe? also this class is 
     def updateprofilebtn(self):
         self.profilebtn.configure(text=self.master.profile.name[0], fg_color=self.master.profile.color, hover_color=self._darken_color(self.master.profile.color, 20))
 
-    def set_entry(self, entry, value):
-        if value:
-            entry.insert(0, value)
 
-    def open_subscription(self):
-        self.accountinfowindow.withdraw()
-        self.pack_forget()
 
-        self.subscriptionframe = ctk.CTkFrame(self.master)
-        self.subscriptionframe.pack(fill="both", expand=True)
+class SubscriptionFrame(ctk.CTkFrame):
+    def __init__(self, master, **kwargs):
+        super().__init__(master, **kwargs)
 
         account = self.master.account
         current_plan = self.master._accounts.get_subscription(account)
 
-        ctk.CTkLabel(self.subscriptionframe, text=f"Current Plan: {current_plan}").pack(pady=10)
+        ctk.CTkLabel(self, text=f"Current Plan: {current_plan}").pack(pady=(10,0))
 
-        ctk.CTkLabel(self.subscriptionframe, text="Available plans: basic (free), premium ($5/month), 神様 ($67/month)").pack(pady=10)
+        ctk.CTkLabel(self, text="Available plans: basic (free), premium ($5/month), 神様 ($67/month)").pack(pady=(10,0))
 
-        ctk.CTkLabel(self.subscriptionframe, text="Input fields have been pre-filled with known information, if any.\nRemember to change if details have changed.\n-----------------").pack(pady=10)
+        ctk.CTkLabel(self, text="Input fields have been pre-filled with known information, if any.\nRemember to change if details have changed.\n-----------------").pack(pady=(10,5))
 
-        self.subscriptionlabel = ctk.CTkLabel(self.subscriptionframe, text="Subscription")
-        self.subscriptionlabel.pack(pady=5)
-        self.planbox = ctk.CTkComboBox(self.subscriptionframe, values=["basic", "premium", "kamisama"])
-        self.planbox.pack(pady=5)
+        ctk.CTkLabel(self, text="Subscription").pack()
+        self.planbox = ctk.CTkComboBox(self, values=["basic", "premium", "kamisama"])
+        self.planbox.pack(pady=(0,5))
 
         # label text, placeholder text, hidden with asterisk?
         fields = {"cardholder": ("Cardholder Name", "e.g. Ryan Dunne", False, 200),
@@ -460,31 +454,30 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe? also this class is 
         self.subscription_entries = {}
 
         for key, (label_text, placeholder, hidden, width) in fields.items():
-            ctk.CTkLabel(self.subscriptionframe, text=label_text).pack(pady=(10, 0))
+            ctk.CTkLabel(self, text=label_text).pack(pady=(5, 0))
 
-            entry = ctk.CTkEntry(self.subscriptionframe, placeholder_text=placeholder, show="*" if hidden else "", width=width)
-            entry.pack(pady=5)
+            entry = ctk.CTkEntry(self, placeholder_text=placeholder, show="*" if hidden else "", width=width)
+            entry.pack(pady=(0,5))
 
             self.subscription_entries[key] = entry
 
-        self.successlabel = ctk.CTkLabel(self.subscriptionframe, text="")
+        self.successlabel = ctk.CTkLabel(self, text="")
         self.successlabel.pack(pady=5)
 
-        acc = self.master._accounts.get_account(account)
+        acc = self.master._accounts.get_account(self.master.account)
         self.set_entry(self.subscription_entries["cardholder"], acc.get("cardholder", ""))
         self.set_entry(self.subscription_entries["cardnumber"], acc.get("cardnumber", ""))
         self.set_entry(self.subscription_entries["expiry"], acc.get("expiry", ""))
         self.set_entry(self.subscription_entries["security"], acc.get("securitycode", ""))
         self.set_entry(self.subscription_entries["billing"], acc.get("billingaddress", ""))
 
-        ctk.CTkButton(self.subscriptionframe, text="Update Subscription", command=self.update_subscription).pack(pady=5) # currently doesnt validate inputs lol (ill do on thursday)
+        ctk.CTkButton(self, text="Update Subscription", command=self.update_subscription).pack() # currently doesnt validate inputs lol (ill do on thursday)
 
-        ctk.CTkButton(self.subscriptionframe, text="Back", command=self.close_subscription).pack(pady=5)
+        ctk.CTkButton(self, text="Back", command=self.master.subscriptiontomain).pack(pady=5)
 
-    def close_subscription(self):
-        self.subscriptionframe.destroy()
-        self.subscriptionframe = None
-        self.pack(fill="both", expand=True)
+    def set_entry(self, entry, value):
+        if value:
+            entry.insert(0, value)
 
     def update_subscription(self):
         prices = {"basic": 0, "premium": 5, "kamisama": 67}
@@ -505,7 +498,7 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe? also this class is 
 
             f.write(f"Account Name: {self.master.account}\n")
             f.write(f"Plan: {self.planbox.get()} (${str(prices[self.planbox.get()])}/month)\n")
-            f.write(f'Cardholder: {self.subscription_entries["Cardholder Name"].get()}\n')
+            f.write(f'Cardholder: {self.subscription_entries["cardholder"].get()}\n')
             f.write(f'Billing Address: {self.subscription_entries["billing"].get()}\n\n')
 
             f.write("---------------\n")
@@ -549,6 +542,7 @@ class StreamingServiceApp(ctk.CTk):
 
         self.main = MainFrame(self)
 
+
     def loggedin(self):
         self.changeframetomain()
         self.account = self.login.accountbox.get()
@@ -565,6 +559,7 @@ class StreamingServiceApp(ctk.CTk):
         self.main.accountinfowindow.updateprofiles(self._accounts.get_profilesnames(username))
         self.main.updateprofilebtn()
         self.browsemenu = BrowseMenu(self)
+        self.subscription = SubscriptionFrame(self)
 
     def logout(self):
         self.changeframetologin()
@@ -593,14 +588,24 @@ class StreamingServiceApp(ctk.CTk):
         self.browsemenu.forget()
         self.main.pack(fill="both", expand=True)
 
+    def maintosubscription(self):
+        self.main.historylabel.configure(text="")
+        self.main.accountinfowindow.withdraw()
+        self.main.forget()
+        self.subscription.pack(fill="both", expand=True)
+
+    def subscriptiontomain(self):
+        self.subscription.forget()
+        self.main.pack(fill="both", expand=True)
+
 class UserAccounts:
     # Only handles data
     FIELDS = ["username", "age", "email", "password", "profiles", "subscription", "cardholder", "cardnumber", "expiry", "securitycode", "billingaddress"]
     filepath = "accounts.csv"
 
     def __init__(self):
-        self._accounts = []
-        self._profiles = {}
+        self._accounts:list[dict] = []
+        self._profiles:dict[list] = {}
 
     def add_account(self, username, age, email, password, subscription="basic"):
         self._accounts.append({"username": username,
@@ -616,7 +621,7 @@ class UserAccounts:
                                "billingaddress": ""})
         self._profiles[username] = [UserProfiles(username, age)]
 
-    def get_account(self, username):
+    def get_account(self, username) -> dict|None:
         for account in self._accounts:
             if account["username"] == username:
                 return account
@@ -664,7 +669,7 @@ class UserAccounts:
                 self._profiles[row["username"]] = []
                 if row["profiles"]:
                     for profile in row["profiles"].split(";"):
-                        # profile should be name:age
+                        # profile should be name:age;name:age
                         self._profiles[row["username"]].append(UserProfiles((plist:=profile.split(":"))[0], int(plist[1]), [], []))
 
     def get_subscription(self, username):
@@ -701,12 +706,12 @@ class UserProfiles():
             profiles = account.get_profile_dict()
             for row in reader:
                 name = row["name"]
-                profiles_watch_list = row["wlist"].split(";")
-                profile_watch_history = row["whistory"].split(";")
+                profiles_watch_list = row["wlist"].split(";67;")
+                profile_watch_history = row["whistory"].split(";67;")
                 for i in range(len(profiles_watch_list)):
                     profile = profiles[name][i]
-                    watch_list = profiles_watch_list[i].split("'") # watch list in the profile in the account
-                    watch_history = profile_watch_history[i].split("'")
+                    watch_list = profiles_watch_list[i].split("|67|") # watch list in the profile in the account
+                    watch_history = profile_watch_history[i].split("|67|")
                     for video in watch_list:
                         profile.add_to_wlist(video)
                     for video in watch_history:
@@ -717,18 +722,18 @@ class UserProfiles():
         profiles = account.get_profile_dict()
         # {name: [UserProfiles(), UserProfiles()], name: [UserProfiles()]}
         plist = []
-        # ; separates the profiles
-        # ' separates the wlist and whistory items
+        # ;67; separates the profiles
+        # |67| separates the wlist and whistory items
         # becomes:
-        # name, age1;age2, video1'video2'video3;video2'video1, video4;video3'video4
+        # name, video1|video2|video3;video2|video1, video4;video3|video4
         for i in range(len(profiles)):
             wlist = []
             whistorylist = []
             for profile in [*profiles.values()][i]:
-                wlist.append("'".join(profile._watch_list))
-                whistorylist.append("'".join(profile._watch_history))
-            wlisttxt = ";".join(wlist)
-            whistorytxt = ";".join(whistorylist)
+                wlist.append(wl if (wl:="|67|".join(profile._watch_list))[:4] != "|67|" else wl[4:])
+                whistorylist.append(wh if (wh:="|67|".join(profile._watch_history))[:4] != "|67|" else wh[4:])
+            wlisttxt = ";67;".join(wlist)
+            whistorytxt = ";67;".join(whistorylist)
             plist.append({"name":[*profiles.keys()][i], "wlist":wlisttxt, "whistory":whistorytxt})           
         with open("profiles.csv", "w", newline="") as f:
             writer = csv.DictWriter(f, fieldnames=["name", "wlist", "whistory"])
