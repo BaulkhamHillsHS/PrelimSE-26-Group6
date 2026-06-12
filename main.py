@@ -3,6 +3,7 @@ import tkinter as tk
 import csv
 from PIL import Image # pip install Pillow
 import CTkColorPicker as ctkcolor # pip install ctkcolorpicker
+from datetime import datetime
 
 """
 Notes:
@@ -58,7 +59,7 @@ class LoginFrame(ctk.CTkFrame):
         self.create_account_button = ctk.CTkButton(self, 300, 50, text="Create an account", command=self.create_signup_form)
         self.create_account_button.grid(row=2, column=0, sticky="nsew", padx=10, columnspan=2)
 
-        self.username = ctk.CTkLabel(self, text="Username")
+        self.username = ctk.CTkLabel(self, text="Username or Email")
         self.username.grid(row=1, column=2)
         self.accountbox = ctk.CTkEntry(self)
         self.accountbox.grid(row=1, column=3, padx=10, pady=10)
@@ -76,11 +77,13 @@ class LoginFrame(ctk.CTkFrame):
 
     def login(self):
         """Used for confirming entries are correct"""
-        if (uname:=self.accountbox.get()) in (unames:=(acc:=self.master._accounts).get_usernames()) and acc._accounts[unames.index(uname)]["password"] == self.passwordbox.get():
-            self.master.loggedin()
-        else:
-            self.feedback.configure(text="Username or password is wrong")
-            self.feedback.after(3000, lambda:self.feedback.configure(text=""))
+        for user in self.master._accounts._accounts:
+            if self.accountbox.get() in (user["username"], user["email"]) and user["password"] == self.passwordbox.get():
+                self.master.loggedin()
+                return
+            
+        self.feedback.configure(text="Username/email or password is wrong")
+        self.feedback.after(3000, lambda:self.feedback.configure(text=""))
 
     def create_signup_form(self):
         """Used for generating a signup form"""
@@ -92,7 +95,7 @@ class LoginFrame(ctk.CTkFrame):
         self.passwordbox.grid_forget()
         if self.signup_form == None:
             self.signup_form = SignupFrame(self)
-            self.signup_form.grid(row=0, column=0, padx=15, pady=15, columnspan=2, rowspan=3, sticky="nesw")
+            self.signup_form.grid(row=0, column=0, padx=15, pady=15, columnspan=2, rowspan=3, sticky="nsew")
 
 
 class SignupFrame(ctk.CTkFrame):
@@ -163,8 +166,12 @@ class SignupFrame(ctk.CTkFrame):
             self.status_label.configure(text="Passwords do not match.", text_color="red")
             return
 
-        if username in self.master.master._accounts.get_usernames():
+        if username in self.master.master._accounts.get_userdetails("username"):
             self.status_label.configure(text=f"Username {username} is taken.", text_color="red")
+            return
+        
+        if email in self.master.master._accounts.get_userdetails("email"):
+            self.status_label.configure(text="Email already linked to an account.\nIf you would like to create new profiles,\nyou can do so in the profile menu.", text_color="red")
             return
 
         self.master.master._accounts.add_account(username, age, email, password, "basic")
@@ -229,7 +236,7 @@ class AccountInfoWindow(ctk.CTkToplevel):
         self.master.accountinfowindow.withdraw()
         color = ctkcolor.AskColor().get()
         if color:
-            self.master.master._accounts.update_color((app:=self.master.master).account, app.profile.name, color)
+            self.master.master.profile.color = color
             self.master.updateprofilebtn()
 
 
@@ -248,6 +255,10 @@ class BrowseMenu(ctk.CTkFrame):
                             "foot": {"image": "video_images/foot.png", "genre": "education", "type": "user-made video", "rating": "R"},
                             "massive and really long foot": {"image": "video_images/bigfoot.png", "genre": "education", "type": "user-made video", "rating": "MA"},
                             }
+
+        self.grid_columnconfigure(0, weight=0)
+        self.grid_columnconfigure(1, weight=1)
+        self.grid_columnconfigure(2, weight=0)
 
         self.videomenu = None
         self.video_buttons = []
@@ -275,12 +286,17 @@ class BrowseMenu(ctk.CTkFrame):
         self.back_btn = ctk.CTkButton(self, text="back", command=self.master.browsetomain)
         self.back_btn.grid(row=0, column=0, padx=10, pady=10)
 
-        self.filter_btn = ctk.CTkButton(self, text="Apply Filters", command=self.refresh_videos)
-        self.filter_btn.grid(row=1, column=0, padx=10, pady=10)
+        self.searchbox = ctk.CTkEntry(self, placeholder_text="Search videos...")
+        self.searchbox.grid(row=1, column=0, padx=10, pady=10, sticky="ew")
+
+        self.filter_btn = ctk.CTkButton(self, text="Apply Search and Filters", command=self.refresh_videos)
+        self.filter_btn.grid(row=1, column=2, padx=10, pady=10)
 
         self.refresh_videos()
 
     def refresh_videos(self):
+        search = self.searchbox.get().lower().strip()
+        
         for btn in self.video_buttons:
             btn.destroy()
 
@@ -292,15 +308,12 @@ class BrowseMenu(ctk.CTkFrame):
 
         row = 2
         for video, info in self.video_images.items():
-            if genre != "all" and info["genre"] != genre:
-                continue
-            if content_type != "all" and info["type"] != content_type:
-                continue
-            if rating != "all" and info["rating"] != rating:
-                continue
-            if self.master.profile.age < 18 and info["rating"] == "R":
-                continue
-            if self.master.profile.age < 15 and info["rating"] in ["R", "MA"]:
+            if any((genre != "all" and info["genre"] != genre,
+                    content_type != "all" and info["type"] != content_type,
+                    rating != "all" and info["rating"] != rating,
+                    search and search not in video.lower(),
+                    self.master.profile.age < 18 and info["rating"] == "R",
+                    self.master.profile.age < 15 and info["rating"] in ["R", "MA"])):
                 continue
 
             title = ctk.CTkLabel(self, text=video)
@@ -347,27 +360,6 @@ class BrowseMenu(ctk.CTkFrame):
             self.open_video(video)
 
 
-class BaseScrollFrame(ctk.CTkScrollableFrame):
-    # Base frame for scrollable frames
-    def __init__(self, master, type_:str=None, filter_:str="", dir:str="", **kwargs):
-        super().__init__(master, orientation="horizontal"if dir =="x"else"vertical", height=150, **kwargs, width=600)
-        self.type = type_ # genre, type or rating or None
-        self.filter = filter_ # a filter in the type or ""
-        if self.type and self.filter:
-            self.text = ctk.CTkLabel(self, text=f"{type_.capitalize()}: {filter_}")
-            self.text.grid(row=0, column=0, columnspan=100, sticky="w")
-        self.buttons = []
-
-    def add_btn(self, image_path, command=lambda:print(f"No command")):
-        if image_path:
-            image = ctk.CTkImage(light_image=Image.open(image_path), size=(200, 110))
-            btn = ctk.CTkButton(self, command=command, width=200, height=110, image=image, text="", fg_color="transparent", hover_color="#515151")
-        else:
-            btn = ctk.CTkButton(self, command=command, width=200, height=110, text="No text")
-        self.buttons.append(btn)
-        btn.grid(row=2, column=len(self.buttons), ipadx=0, ipady=0)
-
-
 class MainFrame(ctk.CTkFrame): # better name than mainframe? also this class is way too long
     # Frame for after login, watching things idk
     def __init__(self, master, **kwargs):
@@ -400,19 +392,7 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe? also this class is 
         self.switch.grid(row=2, column=3, columnspan=3, pady=10)
 
         self.historylabel = ctk.CTkLabel(self, text="")
-        self.historylabel.grid(row=4, column=3, columnspan=3, pady=0)
-
-        self.scrolls = BaseScrollFrame(self, dir="y")
-        self.scrolls.grid(row=5, column=0, columnspan=10, rowspan=2, padx=2, pady=2, sticky="ew")
-
-        self.lifestyle = BaseScrollFrame(self.scrolls, "genre", "lifestyle", "x")
-        self.lifestyle.grid(sticky="ew")
-
-        self.lifestyle.add_btn("video_images/bird_sam.png", lambda:print("sam bird"))
-        self.lifestyle.add_btn("video_images/bird_badam.png", lambda:print("badam bird"))
-
-        self.food = BaseScrollFrame(self.scrolls, "genre", "food", "x")
-        self.food.grid(sticky="ew")
+        self.historylabel.grid(row=4, column=3, columnspan=3)
 
     def make_accountinfowindow(self):
         self.accountinfowindow = AccountInfoWindow(self)
@@ -513,7 +493,7 @@ class SubscriptionFrame(ctk.CTkFrame):
         self.set_entry(self.subscription_entries["security"], acc.get("securitycode", ""))
         self.set_entry(self.subscription_entries["billing"], acc.get("billingaddress", ""))
 
-        ctk.CTkButton(self, text="Update Subscription", command=self.update_subscription).pack() # currently doesnt validate inputs lol (ill do on thursday)
+        ctk.CTkButton(self, text="Update Subscription", command=self.update_subscription).pack()
 
         ctk.CTkButton(self, text="Back", command=self.master.subscriptiontomain).pack(pady=5)
 
@@ -521,16 +501,71 @@ class SubscriptionFrame(ctk.CTkFrame):
         if value:
             entry.insert(0, value)
 
+    def luhn_verify(self, number): # verifies that number follows Luhn algorithm, returns passed (bool), error (str)
+        if not number.isdigit():
+            return False, "Please enter only digits (no punctuation) for the card number."
+
+        runningtotal = 0
+        payload = list(number[-2::-1])
+        for i in range(len(payload)):
+            currentterm = int(payload[i]) * (2 - i % 2)
+            if currentterm > 9:
+                currentterm -= 9
+            runningtotal += currentterm
+        
+        if int(number[-1]) != (10 - (runningtotal % 10)) % 10:
+            return False, "Error: checksum incorrect. Please make sure you have typed your card number correctly."
+        
+        return True, ""
+        
+    def date_verify(self, date): # verifies that date is a real date (MM/YY) and is not expired, returns passed (bool), error (str)
+        try:
+            month, year = date.split("/")
+            month = int(month)
+            year = 2000 + int(year)
+
+            if not 2000 <= year <= 2099:
+                return False, "Error: expiry year is invalid"
+
+            if not 1 <= month <= 12:
+                return False, "Error: expiry month is invalid"
+
+            if (year, month) < (datetime.now().year, datetime.now().month):
+                return False, "Error: card is expired"
+
+            return True, ""
+
+        except ValueError:
+            return False, "Error: expiry date is not in MM/YY format"
+
     def update_subscription(self):
         prices = {"basic": 0, "premium": 5, "神様": 67}
-        self.master._accounts.update_subscription(self.master.account,
-                                                  self.planbox.get(),
-                                                  self.subscription_entries["cardholder"].get(),
-                                                  self.subscription_entries["cardnumber"].get(),
-                                                  self.subscription_entries["expiry"].get(),
-                                                  self.subscription_entries["security"].get(),
-                                                  self.subscription_entries["billing"].get())
+        details = (self.subscription_entries["cardholder"].get(),
+                   self.subscription_entries["cardnumber"].get(),
+                   self.subscription_entries["expiry"].get(),
+                   self.subscription_entries["security"].get(),
+                   self.subscription_entries["billing"].get())
         
+        if not all(details):
+            self.successlabel.configure(text="Please fill in all fields.", text_color="red")
+            return
+
+        passed_luhn, error = self.luhn_verify(details[1])
+        if not passed_luhn:
+            self.successlabel.configure(text=error, text_color="red")
+            return
+
+        passed_date, error = self.date_verify(details[2])
+        if not passed_date:
+            self.successlabel.configure(text=error, text_color="red")
+            return
+
+        if not details[3].isdigit():
+            self.successlabel.configure(text="Error: security code must be a number.", text_color="red")
+            return
+
+        self.master._accounts.update_subscription(self.master.account, self.planbox.get(), *details)
+
         with open(f"{self.master.account}_invoice.txt", "w", encoding="utf-8") as f:
             f.write(f"i love {NAME}, you love {NAME}, we love {NAME} streaming service :3\n\n")
 
@@ -540,8 +575,8 @@ class SubscriptionFrame(ctk.CTkFrame):
 
             f.write(f"Account Name: {self.master.account}\n")
             f.write(f"Plan: {self.planbox.get()} (${str(prices[self.planbox.get()])}/month)\n")
-            f.write(f'Cardholder: {self.subscription_entries["cardholder"].get()}\n')
-            f.write(f'Billing Address: {self.subscription_entries["billing"].get()}\n\n')
+            f.write(f'Cardholder: {details[0]}\n')
+            f.write(f'Billing Address: {details[4]}\n\n')
 
             f.write("---------------\n")
             f.write("VIEWING HISTORY\n")
@@ -632,7 +667,6 @@ class StreamingServiceApp(ctk.CTk):
 
     def changeframetologin(self):
         self.main.forget()
-        self.main.historylabel.configure(text="")
         self.main.accountinfowindow.withdraw()
 
     def maintobrowse(self):
@@ -657,7 +691,7 @@ class StreamingServiceApp(ctk.CTk):
 
 class UserAccounts:
     # Only handles data
-    FIELDS = ["username", "age", "email", "password", "profiles", "subscription", "cardholder", "cardnumber", "expiry", "securitycode", "billingaddress", "rgb"]
+    FIELDS = ["username", "age", "email", "password", "profiles", "subscription", "cardholder", "cardnumber", "expiry", "securitycode", "billingaddress"]
     filepath = "accounts.csv"
 
     def __init__(self):
@@ -675,8 +709,7 @@ class UserAccounts:
                                "cardnumber": "",
                                "expiry": "",
                                "securitycode": "",
-                               "billingaddress": "",
-                               "rgb": ""})
+                               "billingaddress": ""})
         self._profiles[username] = [UserProfiles(username, age)]
 
     def get_account(self, username) -> dict|None:
@@ -685,8 +718,8 @@ class UserAccounts:
                 return account
         return None
 
-    def get_usernames(self) -> list:
-        return [*map(lambda user: user["username"], self._accounts)]
+    def get_userdetails(self, detail) -> list:
+        return [*map(lambda user: user[detail], self._accounts)]
     
     def get_profiles(self, username) -> list:
         try:
@@ -724,15 +757,12 @@ class UserAccounts:
                                        "cardnumber": row.get("cardnumber", ""),
                                        "expiry": row.get("expiry", ""),
                                        "securitycode": row.get("securitycode", ""),
-                                       "billingaddress": row.get("billingaddress", ""),
-                                       "rgb": row["rgb"]})
+                                       "billingaddress": row.get("billingaddress", "")})
                 self._profiles[row["username"]] = []
                 if row["profiles"]:
                     for profile in row["profiles"].split(";"):
                         # profile should be name:age;name:age
                         self._profiles[row["username"]].append(UserProfiles((plist:=profile.split(":"))[0], int(plist[1]), [], []))
-                colors[row["username"]] = row["rgb"].split(":")
-        self.update_color_all(colors)
 
     def get_subscription(self, username:str) -> str:
         for account in self._accounts:
