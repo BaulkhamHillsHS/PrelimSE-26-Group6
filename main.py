@@ -346,7 +346,7 @@ class BrowseMenu(ctk.CTkFrame):
 class BaseScrollFrame(ctk.CTkScrollableFrame):
     # Base frame for scrollable frames
     def __init__(self, master, type_:str=None, filter_:str="", dir:str="", **kwargs):
-        super().__init__(master, orientation="horizontal"if dir =="x"else"vertical", height=150, **kwargs)
+        super().__init__(master, orientation="horizontal"if dir =="x"else"vertical", height=150, **kwargs, width=600)
         self.type = type_ # genre, type or rating or None
         self.filter = filter_ # a filter in the type or ""
         if self.type and self.filter:
@@ -355,14 +355,13 @@ class BaseScrollFrame(ctk.CTkScrollableFrame):
         self.buttons = []
 
     def add_btn(self, image_path, command=lambda:print(f"No command")):
-        btn = ctk.CTkButton(self, command=command, width=200, height=110)
         if image_path:
             image = ctk.CTkImage(light_image=Image.open(image_path), size=(200, 110))
-            btn.image = image 
-            
+            btn = ctk.CTkButton(self, command=command, width=200, height=110, image=image, text="", fg_color="transparent", hover_color="#515151")
         else:
-            btn.configure(text="No text")
-        btn.grid(row=2, column=len(self.buttons))
+            btn = ctk.CTkButton(self, command=command, width=200, height=110, text="No text")
+        self.buttons.append(btn)
+        btn.grid(row=2, column=len(self.buttons), ipadx=0, ipady=0)
 
 
 class MainFrame(ctk.CTkFrame): # better name than mainframe? also this class is way too long
@@ -404,7 +403,9 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe? also this class is 
 
         self.lifestyle = BaseScrollFrame(self.scrolls, "genre", "lifestyle", "x")
         self.lifestyle.grid(sticky="ew")
-        self.lifestyle.add_btn("video_images/bird_sam.png")
+
+        self.lifestyle.add_btn("video_images/bird_sam.png", lambda:print("sam bird"))
+        self.lifestyle.add_btn("video_images/bird_badam.png", lambda:print("badam bird"))
 
         self.food = BaseScrollFrame(self.scrolls, "genre", "food", "x")
         self.food.grid(sticky="ew")
