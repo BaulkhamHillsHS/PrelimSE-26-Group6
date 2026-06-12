@@ -342,6 +342,25 @@ class BrowseMenu(ctk.CTkFrame):
             self.open_video(video)
 
 
+class BaseScrollFrame(ctk.CTkScrollableFrame):
+    # Base frame for scrollable frames
+    def __init__(self, master, type_=None, filter_:str="", dir:str="", **kwargs):
+        super().__init__(master, orientation="horizontal"if dir =="x"else"vertical", **kwargs)
+        self.type = type_ # genre, type or rating or None
+        self.filter = filter_ # a filter in the type or ""
+        if self.type:
+            self.text = ctk.CTkLabel(self, text=f"{type_}: {filter_}")
+            self.text.grid(row=0, column=0, columnspan=100)
+        self.buttons = []
+
+    def add_btn(self, image_path, command):
+        btn = ctk.CTkButton(self, command=command)
+        image = ctk.CTkImage(light_image=Image.open(image_path), size=(440, 225))
+        btn.image = image
+        btn.grid(row=2, column=len(self.buttons))
+
+
+
 class MainFrame(ctk.CTkFrame): # better name than mainframe? also this class is way too long
     # Frame for after login, watching things idk
     def __init__(self, master, **kwargs):
