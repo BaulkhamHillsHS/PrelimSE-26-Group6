@@ -225,7 +225,7 @@ class AccountInfoWindow(ctk.CTkToplevel):
         self.master.accountinfowindow.withdraw()
         color = ctkcolor.AskColor().get()
         if color:
-            self.master.master.profile.color = color
+            self.master.master._accounts.update_color((app:=self.master.master).account, app.profile.name, color)
             self.master.updateprofilebtn()
 
 
@@ -343,6 +343,28 @@ class BrowseMenu(ctk.CTkFrame):
             self.open_video(video)
 
 
+class BaseScrollFrame(ctk.CTkScrollableFrame):
+    # Base frame for scrollable frames
+    def __init__(self, master, type_:str=None, filter_:str="", dir:str="", **kwargs):
+        super().__init__(master, orientation="horizontal"if dir =="x"else"vertical", height=150, **kwargs)
+        self.type = type_ # genre, type or rating or None
+        self.filter = filter_ # a filter in the type or ""
+        if self.type and self.filter:
+            self.text = ctk.CTkLabel(self, text=f"{type_.capitalize()}: {filter_}")
+            self.text.grid(row=0, column=0, columnspan=100, sticky="w")
+        self.buttons = []
+
+    def add_btn(self, image_path, command=lambda:print(f"No command")):
+        btn = ctk.CTkButton(self, command=command, width=200, height=110)
+        if image_path:
+            image = ctk.CTkImage(light_image=Image.open(image_path), size=(200, 110))
+            btn.image = image 
+            
+        else:
+            btn.configure(text="No text")
+        btn.grid(row=2, column=len(self.buttons))
+
+
 class MainFrame(ctk.CTkFrame): # better name than mainframe? also this class is way too long
     # Frame for after login, watching things idk
     def __init__(self, master, **kwargs):
@@ -375,7 +397,17 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe? also this class is 
         self.switch.grid(row=2, column=3, columnspan=3, pady=10)
 
         self.historylabel = ctk.CTkLabel(self, text="")
-        self.historylabel.grid(row=4, column=3, columnspan=3)
+        self.historylabel.grid(row=4, column=3, columnspan=3, pady=0)
+
+        self.scrolls = BaseScrollFrame(self, dir="y")
+        self.scrolls.grid(row=5, column=0, columnspan=10, rowspan=2, padx=2, pady=2, sticky="ew")
+
+        self.lifestyle = BaseScrollFrame(self.scrolls, "genre", "lifestyle", "x")
+        self.lifestyle.grid(sticky="ew")
+        self.lifestyle.add_btn("video_images/bird_sam.png")
+
+        self.food = BaseScrollFrame(self.scrolls, "genre", "food", "x")
+        self.food.grid(sticky="ew")
 
     def updateaccounttxt(self, account, profile):
         self.accountinfowindow.accountnametxt.configure(text="Account: "+account)
@@ -632,6 +664,7 @@ class StreamingServiceApp(ctk.CTk):
 
     def changeframetologin(self):
         self.main.forget()
+        self.main.historylabel.configure(text="")
         self.main.accountinfowindow.withdraw()
 
     def maintobrowse(self):
@@ -656,7 +689,7 @@ class StreamingServiceApp(ctk.CTk):
 
 class UserAccounts:
     # Only handles data
-    FIELDS = ["username", "age", "email", "password", "profiles", "subscription", "cardholder", "cardnumber", "expiry", "securitycode", "billingaddress"]
+    FIELDS = ["username", "age", "email", "password", "profiles", "subscription", "cardholder", "cardnumber", "expiry", "securitycode", "billingaddress", "rgb"]
     filepath = "accounts.csv"
 
     def __init__(self):
@@ -674,7 +707,8 @@ class UserAccounts:
                                "cardnumber": "",
                                "expiry": "",
                                "securitycode": "",
-                               "billingaddress": ""})
+                               "billingaddress": "",
+                               "rgb": ""})
         self._profiles[username] = [UserProfiles(username, age)]
 
     def get_account(self, username) -> dict|None:
@@ -708,6 +742,7 @@ class UserAccounts:
             writer.writerows(self._accounts)
 
     def load_from_csv(self):
+        colors:dict[list] = {}
         with open(self.filepath, "r", newline="", encoding="utf-8") as f:
             reader = csv.DictReader(f)
             for row in reader:
@@ -721,12 +756,15 @@ class UserAccounts:
                                        "cardnumber": row.get("cardnumber", ""),
                                        "expiry": row.get("expiry", ""),
                                        "securitycode": row.get("securitycode", ""),
-                                       "billingaddress": row.get("billingaddress", "")})
+                                       "billingaddress": row.get("billingaddress", ""),
+                                       "rgb": row["rgb"]})
                 self._profiles[row["username"]] = []
                 if row["profiles"]:
                     for profile in row["profiles"].split(";"):
                         # profile should be name:age;name:age
                         self._profiles[row["username"]].append(UserProfiles((plist:=profile.split(":"))[0], int(plist[1]), [], []))
+                colors[row["username"]] = row["rgb"].split(":")
+        self.update_color_all(colors)
 
     def get_subscription(self, username):
         for account in self._accounts:
@@ -744,6 +782,21 @@ class UserAccounts:
                 account["billingaddress"] = billingaddress
                 break
         self.save_to_csv()
+
+    def update_color(self, username, name, rgb):
+        (profiles:=self._profiles[username])[self.get_profilesnames(username).index(name)].color = rgb
+        colors = []
+        for p in profiles:
+            colors.append(p.color)
+        colortxt = ":".join(colors)
+        self._accounts[self.get_usernames().index(username)]["rgb"] = colortxt
+
+    def update_color_all(self, colors):
+        for username in [*self._profiles.keys()]:
+            profile_colors = colors[username]
+            for i, profile in enumerate(self._profiles[username]):
+                self.update_color(username, profile.name, profile_colors[i])
+
 
 class UserProfiles():
 
