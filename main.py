@@ -87,12 +87,8 @@ class LoginFrame(ctk.CTkFrame):
 
     def create_signup_form(self):
         """Used for generating a signup form"""
-        self.create_account_button.grid_forget()
-        self.loginbtn.grid_forget()
-        self.username.grid_forget()
-        self.accountbox.grid_forget()
-        self.password.grid_forget()
-        self.passwordbox.grid_forget()
+        for widget in self.winfo_children():
+            widget.grid_forget()
         if self.signup_form == None:
             self.signup_form = SignupFrame(self)
             self.signup_form.grid(row=0, column=0, padx=15, pady=15, columnspan=2, rowspan=3, sticky="nsew")
@@ -398,10 +394,11 @@ class BaseScrollFrame(ctk.CTkScrollableFrame):
         btn.grid(row=2, column=len(self.buttons), ipadx=0, ipady=0)
 
 
-class MainFrame(ctk.CTkFrame): # better name than mainframe? also this class is way too long
+class MainFrame(ctk.CTkFrame): # better name than mainframe?
     # Frame for after login, watching things idk
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
+        self.current_display = None
         self.grid_columnconfigure(10, weight=1)
         self.grid_rowconfigure(5, weight=1)
 
@@ -429,11 +426,13 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe? also this class is 
         self.switch = ctk.CTkSwitch(self, text="when watching video, remove from Watch Later", variable=self.watchlist_setting, onvalue=True, offvalue=False)
         self.switch.grid(row=2, column=3, columnspan=3, pady=10)
 
-        self.historylabel = ctk.CTkLabel(self, text="")
-        self.historylabel.grid(row=4, column=3, columnspan=3, pady=0)
+        self.historyframe = BaseScrollFrame(self, dir="y", width=350, height=250)
+        self.historyframe.grid(row=4, column=3, columnspan=4, rowspan=2, padx=10, pady=10, sticky="nsew")
+
+        self.history_widgets = []
 
         self.scrolls = BaseScrollFrame(self, dir="y")
-        self.scrolls.grid(row=5, column=0, columnspan=10, rowspan=2, padx=2, pady=2, sticky="ew")
+        self.scrolls.grid(row=6, column=0, columnspan=10, rowspan=2, padx=2, pady=2, sticky="ew")
 
         self.lifestyle = BaseScrollFrame(self.scrolls, "genre", "lifestyle", "x")
         self.lifestyle.grid(sticky="ew")
@@ -459,32 +458,58 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe? also this class is 
         else:
             self.accountinfowindow.withdraw()
 
+    def update_history_display(self, title, items):
+        for widget in self.history_widgets:
+            widget.destroy()
+
+        self.history_widgets.clear()
+
+        heading = ctk.CTkLabel(self.historyframe, text=title)
+        heading.grid(row=0, column=0, sticky="w", padx=5, pady=(5, 10))
+
+        self.history_widgets.append(heading)
+
+        if not items:
+            label = ctk.CTkLabel(self.historyframe, text=f"No videos in {title}")
+            label.grid(row=1, column=0, sticky="w", padx=5)
+            self.history_widgets.append(label)
+            return
+
+        for row, video in enumerate(items, start=1):
+            label = ctk.CTkLabel(self.historyframe, text=video, anchor="w")
+            label.grid(row=row, column=0, sticky="w", padx=5, pady=2)
+
+            self.history_widgets.append(label)
+
     def add_video_to_history(self, video):
         self.master.profile.add_to_whistory(video)
 
     def show_history(self):
-        if (t:=self.historylabel.cget("text")) and "watch history" in t.lower():
-            self.historylabel.configure(text="")
+        if self.current_display == "history":
+            self.clear_history_display()
             return
-        history = self.master.profile.get_whistory()
-        history = [x for x in history if x]
 
-        if history:
-            self.historylabel.configure(text="Watch History:\n"+"\n".join(history))
-        else:
-            self.historylabel.configure(text="No watch history")
+        self.current_display = "history"
+
+        history = [v for v in self.master.profile.get_whistory()]
+        self.update_history_display("Watch History", history)
 
     def show_watch_later(self):
-        if (t:=self.historylabel.cget("text")) and "watch later" in t.lower():
-            self.historylabel.configure(text="")
+        if self.current_display == "watchlater":
+            self.clear_history_display()
             return
-        wlist = self.master.profile.get_wlist()
-        wlist = [x for x in wlist if x]
 
-        if wlist:
-            self.historylabel.configure(text="Watch Later:\n"+"\n".join(wlist))
-        else:
-            self.historylabel.configure(text="No videos in Watch Later")
+        self.current_display = "watchlater"
+
+        wlist = [v for v in self.master.profile.get_wlist()]
+        self.update_history_display("Watch Later", wlist)
+
+    def clear_history_display(self):
+        for widget in self.history_widgets:
+            widget.destroy()
+
+        self.history_widgets.clear()
+        self.current_display = None
 
     def savebtn(self):
         self.master._accounts.save_to_csv()
@@ -707,7 +732,7 @@ class StreamingServiceApp(ctk.CTk):
                 self.main.updateaccounttxt(self.account, self.profile.name)
                 self.main.updateprofilebtn()
                 self.main.accountinfowindow.updateprofiles(self.profile.name, self._accounts.get_profilesnames(self.account))
-                self.main.historylabel.configure(text="")
+                self.main.clear_history_display()
                 self.browsemenu.refresh_videos()
                 break
 
@@ -726,11 +751,11 @@ class StreamingServiceApp(ctk.CTk):
 
     def changeframetologin(self):
         self.main.forget()
-        self.main.historylabel.configure(text="")
+        self.main.clear_history_display()
         self.main.accountinfowindow.withdraw()
 
     def maintobrowse(self):
-        self.main.historylabel.configure(text="")
+        self.main.clear_history_display()
         self.main.accountinfowindow.withdraw()
         self.main.forget()
         self.browsemenu.pack(fill="both", expand=True)
@@ -740,7 +765,7 @@ class StreamingServiceApp(ctk.CTk):
         self.main.pack(fill="both", expand=True)
 
     def maintosubscription(self):
-        self.main.historylabel.configure(text="")
+        self.main.clear_history_display()
         self.main.accountinfowindow.withdraw()
         self.main.forget()
         self.subscription.pack(fill="both", expand=True)
