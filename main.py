@@ -281,7 +281,7 @@ class BrowseMenu(ctk.CTkFrame):
         self.back_btn = ctk.CTkButton(self, text="back", command=self.master.browsetomain)
         self.back_btn.grid(row=0, column=0, padx=10, pady=10)
 
-        self.searchbox = ctk.CTkEntry(self, placeholder_text="Search videos...")
+        self.searchbox = ctk.CTkEntry(self, placeholder_text="Search videos...", width=200)
         self.searchbox.grid(row=1, column=0, padx=10, pady=10, sticky="ew")
 
         self.filter_btn = ctk.CTkButton(self, text="Apply Search and Filters", command=self.refresh_videos)
