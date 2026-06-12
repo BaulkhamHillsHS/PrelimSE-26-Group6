@@ -251,6 +251,10 @@ class BrowseMenu(ctk.CTkFrame):
                             "massive and really long foot": {"image": "video_images/bigfoot.png", "genre": "education", "type": "user-made video", "rating": "MA"},
                             }
 
+        self.grid_columnconfigure(0, weight=0)
+        self.grid_columnconfigure(1, weight=1)
+        self.grid_columnconfigure(2, weight=0)
+
         self.videomenu = None
         self.video_buttons = []
 
@@ -277,12 +281,17 @@ class BrowseMenu(ctk.CTkFrame):
         self.back_btn = ctk.CTkButton(self, text="back", command=self.master.browsetomain)
         self.back_btn.grid(row=0, column=0, padx=10, pady=10)
 
-        self.filter_btn = ctk.CTkButton(self, text="Apply Filters", command=self.refresh_videos)
-        self.filter_btn.grid(row=1, column=0, padx=10, pady=10)
+        self.searchbox = ctk.CTkEntry(self, placeholder_text="Search videos...")
+        self.searchbox.grid(row=1, column=0, padx=10, pady=10, sticky="ew")
+
+        self.filter_btn = ctk.CTkButton(self, text="Apply Search and Filters", command=self.refresh_videos)
+        self.filter_btn.grid(row=1, column=2, padx=10, pady=10)
 
         self.refresh_videos()
 
     def refresh_videos(self):
+        search = self.searchbox.get().lower().strip()
+        
         for btn in self.video_buttons:
             btn.destroy()
 
@@ -294,15 +303,12 @@ class BrowseMenu(ctk.CTkFrame):
 
         row = 2
         for video, info in self.video_images.items():
-            if genre != "all" and info["genre"] != genre:
-                continue
-            if content_type != "all" and info["type"] != content_type:
-                continue
-            if rating != "all" and info["rating"] != rating:
-                continue
-            if self.master.profile.age < 18 and info["rating"] == "R":
-                continue
-            if self.master.profile.age < 15 and info["rating"] in ["R", "MA"]:
+            if any((genre != "all" and info["genre"] != genre,
+                    content_type != "all" and info["type"] != content_type,
+                    rating != "all" and info["rating"] != rating,
+                    search and search not in video.lower(),
+                    self.master.profile.age < 18 and info["rating"] == "R",
+                    self.master.profile.age < 15 and info["rating"] in ["R", "MA"])):
                 continue
 
             title = ctk.CTkLabel(self, text=video)
