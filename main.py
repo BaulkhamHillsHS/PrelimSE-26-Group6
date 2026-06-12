@@ -202,7 +202,7 @@ class AccountInfoWindow(ctk.CTkToplevel):
         self.colorbtn = ctk.CTkButton(self, text="Change Profile Colour", command=self.pick_color)
         self.colorbtn.grid(row=3, column=0, padx=10, pady=3)
 
-        self.switchprofilebtn = ctk.CTkButton(self, text="Switch Profile")
+        self.switchprofilebtn = ctk.CTkButton(self, text="Switch Profile", command=lambda:self.master.master.switch_profile(self.profilelist.get()))
         self.switchprofilebtn.grid(row=4, column=0, padx=10, pady=3)
 
         self.subscriptionbtn = ctk.CTkButton(self, text="Subscription", command=self.master.master.maintosubscription)
@@ -216,9 +216,14 @@ class AccountInfoWindow(ctk.CTkToplevel):
         self.profilebtn = self.master.profilebtn
         self.geometry(f"160x300+{self.profilebtn.winfo_rootx() - 80}+{self.profilebtn.winfo_rooty() + self.profilebtn.winfo_height() + 10}")
 
-    def updateprofiles(self, profiles):
-        self.profilelist.configure(values=profiles)
-        self.profilelist.set(profiles[0])
+    def updateprofiles(self, profile, profiles:list):
+        profiles.remove(profile)
+        if profiles:
+            self.profilelist.configure(values=profiles) 
+            self.profilelist.set(profiles[0])
+        else:
+            self.profilelist.grid_forget()
+            self.switchprofilebtn.grid_forget()
 
     def pick_color(self):
         self.master.accountinfowindow.withdraw()
@@ -409,6 +414,10 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe? also this class is 
         self.food = BaseScrollFrame(self.scrolls, "genre", "food", "x")
         self.food.grid(sticky="ew")
 
+    def make_accountinfowindow(self):
+        self.accountinfowindow = AccountInfoWindow(self)
+        self.accountinfowindow.withdraw()
+
     def updateaccounttxt(self, account, profile):
         self.accountinfowindow.accountnametxt.configure(text="Account: "+account)
         self.accountinfowindow.profilenametxt.configure(text="Profile: "+profile)
@@ -575,7 +584,6 @@ class StreamingServiceApp(ctk.CTk):
 
         self.main = MainFrame(self)
 
-
     def loggedin(self):
         self.changeframetomain()
         self.account = self.login.accountbox.get()
@@ -588,11 +596,26 @@ class StreamingServiceApp(ctk.CTk):
 
     def loginupdate(self, username):
         self.profile = self._accounts.get_profiles(self.account)[0]
-        self.main.updateaccounttxt(self.account, self.profile.name)
-        self.main.accountinfowindow.updateprofiles(self._accounts.get_profilesnames(username))
+        self.main.updateaccounttxt(self.account, (pname:=self.profile.name))
+        self.main.accountinfowindow.updateprofiles(pname, self._accounts.get_profilesnames(username))
         self.main.updateprofilebtn()
+        self.update_profiles()
         self.browsemenu = BrowseMenu(self)
         self.subscription = SubscriptionFrame(self)
+
+    def update_profiles(self):
+        self.profiles = self._accounts.get_profiles(self.account)
+
+    def switch_profile(self, profile:str):
+        for i, p in enumerate(map(lambda p:p.name,self._accounts.get_profiles(self.account))):
+            if p == profile:
+                self.profile = self.profiles[i]
+                self.main.updateaccounttxt(self.account, self.profile.name)
+                self.main.updateprofilebtn()
+                self.main.accountinfowindow.updateprofiles(self.profile.name, self._accounts.get_profilesnames(self.account))
+                self.main.historylabel.configure(text="")
+                self.browsemenu.refresh_videos()
+                break
 
     def logout(self):
         self.changeframetologin()
