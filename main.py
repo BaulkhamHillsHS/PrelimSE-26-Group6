@@ -209,7 +209,7 @@ class AccountInfoWindow(ctk.CTkToplevel):
         self.colorbtn = ctk.CTkButton(self, text="Change Profile Colour", command=self.pick_color)
         self.colorbtn.grid(row=3, column=0, padx=10, pady=3)
 
-        self.switchprofilebtn = ctk.CTkButton(self, text="Switch Profile")
+        self.switchprofilebtn = ctk.CTkButton(self, text="Switch Profile", command=lambda:self.master.master.switch_profile(self.profilelist.get()))
         self.switchprofilebtn.grid(row=4, column=0, padx=10, pady=3)
 
         self.subscriptionbtn = ctk.CTkButton(self, text="Subscription", command=self.master.master.maintosubscription)
@@ -223,9 +223,14 @@ class AccountInfoWindow(ctk.CTkToplevel):
         self.profilebtn = self.master.profilebtn
         self.geometry(f"160x300+{self.profilebtn.winfo_rootx() - 80}+{self.profilebtn.winfo_rooty() + self.profilebtn.winfo_height() + 10}")
 
-    def updateprofiles(self, profiles):
-        self.profilelist.configure(values=profiles)
-        self.profilelist.set(profiles[0])
+    def updateprofiles(self, profile, profiles:list):
+        profiles.remove(profile)
+        if profiles:
+            self.profilelist.configure(values=profiles) 
+            self.profilelist.set(profiles[0])
+        else:
+            self.profilelist.grid_forget()
+            self.switchprofilebtn.grid_forget()
 
     def pick_color(self):
         self.master.accountinfowindow.withdraw()
@@ -325,14 +330,14 @@ class BrowseMenu(ctk.CTkFrame):
 
             row += 1
 
-    def toggle_watch_later(self, video):
+    def toggle_watch_later(self, video:str):
         if video in (prof:=self.master.profile).get_wlist():
             prof.remove_from_wlist(video)
         else:
             prof.add_to_wlist(video)
         self.refresh_videos()
 
-    def open_video(self, video):
+    def open_video(self, video:str):
         self.master.main.add_video_to_history(video)
         if self.master.main.watchlist_setting.get():
             self.master.profile.remove_from_wlist(video)
@@ -388,6 +393,10 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe? also this class is 
 
         self.historylabel = ctk.CTkLabel(self, text="")
         self.historylabel.grid(row=4, column=3, columnspan=3)
+
+    def make_accountinfowindow(self):
+        self.accountinfowindow = AccountInfoWindow(self)
+        self.accountinfowindow.withdraw()
 
     def updateaccounttxt(self, account, profile):
         self.accountinfowindow.accountnametxt.configure(text="Account: "+account)
@@ -610,7 +619,6 @@ class StreamingServiceApp(ctk.CTk):
 
         self.main = MainFrame(self)
 
-
     def loggedin(self):
         self.changeframetomain()
         self.account = self.login.accountbox.get()
@@ -623,11 +631,26 @@ class StreamingServiceApp(ctk.CTk):
 
     def loginupdate(self, username):
         self.profile = self._accounts.get_profiles(self.account)[0]
-        self.main.updateaccounttxt(self.account, self.profile.name)
-        self.main.accountinfowindow.updateprofiles(self._accounts.get_profilesnames(username))
+        self.main.updateaccounttxt(self.account, (pname:=self.profile.name))
+        self.main.accountinfowindow.updateprofiles(pname, self._accounts.get_profilesnames(username))
         self.main.updateprofilebtn()
+        self.update_profiles()
         self.browsemenu = BrowseMenu(self)
         self.subscription = SubscriptionFrame(self)
+
+    def update_profiles(self):
+        self.profiles = self._accounts.get_profiles(self.account)
+
+    def switch_profile(self, profile:str):
+        for i, p in enumerate(map(lambda p:p.name,self._accounts.get_profiles(self.account))):
+            if p == profile:
+                self.profile = self.profiles[i]
+                self.main.updateaccounttxt(self.account, self.profile.name)
+                self.main.updateprofilebtn()
+                self.main.accountinfowindow.updateprofiles(self.profile.name, self._accounts.get_profilesnames(self.account))
+                self.main.historylabel.configure(text="")
+                self.browsemenu.refresh_videos()
+                break
 
     def logout(self):
         self.changeframetologin()
@@ -720,6 +743,7 @@ class UserAccounts:
             writer.writerows(self._accounts)
 
     def load_from_csv(self):
+        colors:dict[list[str]] = {}
         with open(self.filepath, "r", newline="", encoding="utf-8") as f:
             reader = csv.DictReader(f)
             for row in reader:
@@ -740,7 +764,7 @@ class UserAccounts:
                         # profile should be name:age;name:age
                         self._profiles[row["username"]].append(UserProfiles((plist:=profile.split(":"))[0], int(plist[1]), [], []))
 
-    def get_subscription(self, username):
+    def get_subscription(self, username:str) -> str:
         for account in self._accounts:
             if account["username"] == username:
                 return account["subscription"]
@@ -757,18 +781,33 @@ class UserAccounts:
                 break
         self.save_to_csv()
 
+    def update_color(self, username:str, name:str, rgb):
+        (profiles:=self._profiles[username])[self.get_profilesnames(username).index(name)].color = rgb
+        colors = []
+        for p in profiles:
+            colors.append(p.color)
+        colortxt = ":".join(colors)
+        self._accounts[self.get_usernames().index(username)]["rgb"] = colortxt
+
+    def update_color_all(self, colors:dict[list[str]]):
+        for username in [*self._profiles.keys()]:
+            profile_colors = colors[username]
+            for i, profile in enumerate(self._profiles[username]):
+                self.update_color(username, profile.name, profile_colors[i])
+
+
 class UserProfiles():
 
     FIELDS = ["name", "wlist", "whistory"]
 
-    def __init__(self, name, age:int, wlist:list, whistory:list, color=None):
+    def __init__(self, name:str, age:int, wlist:list, whistory:list, color=None):
         self.name = name
         self.age = age
         self._watch_list = wlist
         self._watch_history = whistory
         self.color = color or ctk.ThemeManager.theme["CTkButton"]["fg_color"][int(ctk.get_appearance_mode() == "Dark")]
 
-    def load_from_csv(account):
+    def load_from_csv(account:UserAccounts):
         with open("profiles.csv", "r", newline="", encoding="utf-8") as f:
             reader = csv.DictReader(f)
             profiles = account.get_profile_dict()
@@ -785,7 +824,7 @@ class UserProfiles():
                     for video in watch_history:
                         profile.add_to_whistory(video)
 
-    def save_to_csv(account):
+    def save_to_csv(account:UserAccounts):
         # Change UserProfiles class into a dict
         profiles = account.get_profile_dict()
         # {name: [UserProfiles(), UserProfiles()], name: [UserProfiles()]}
@@ -808,22 +847,22 @@ class UserProfiles():
             writer.writeheader()
             writer.writerows(plist)
 
-    def add_to_whistory(self, id):
+    def add_to_whistory(self, id:str):
         self.remove_from_whistory(id)
         self._watch_history.append(id)
         
-    def remove_from_whistory(self, id):
+    def remove_from_whistory(self, id:str):
         if id in self._watch_history:
             self._watch_history.remove(id)
     
     def get_whistory(self) -> list:
         return self._watch_history
 
-    def add_to_wlist(self, id):
+    def add_to_wlist(self, id:str):
         self.remove_from_wlist(id)
         self._watch_list.append(id)
 
-    def remove_from_wlist(self, id):
+    def remove_from_wlist(self, id:str):
         if id in self._watch_list:
             self._watch_list.remove(id)
 
