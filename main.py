@@ -317,14 +317,14 @@ class BrowseMenu(ctk.CTkFrame):
 
             row += 1
 
-    def toggle_watch_later(self, video):
+    def toggle_watch_later(self, video:str):
         if video in (prof:=self.master.profile).get_wlist():
             prof.remove_from_wlist(video)
         else:
             prof.add_to_wlist(video)
         self.refresh_videos()
 
-    def open_video(self, video):
+    def open_video(self, video:str):
         self.master.main.add_video_to_history(video)
         if self.master.main.watchlist_setting.get():
             self.master.profile.remove_from_wlist(video)
@@ -710,7 +710,7 @@ class UserAccounts:
             writer.writerows(self._accounts)
 
     def load_from_csv(self):
-        colors:dict[list] = {}
+        colors:dict[list[str]] = {}
         with open(self.filepath, "r", newline="", encoding="utf-8") as f:
             reader = csv.DictReader(f)
             for row in reader:
@@ -734,7 +734,7 @@ class UserAccounts:
                 colors[row["username"]] = row["rgb"].split(":")
         self.update_color_all(colors)
 
-    def get_subscription(self, username):
+    def get_subscription(self, username:str) -> str:
         for account in self._accounts:
             if account["username"] == username:
                 return account["subscription"]
@@ -751,7 +751,7 @@ class UserAccounts:
                 break
         self.save_to_csv()
 
-    def update_color(self, username, name, rgb):
+    def update_color(self, username:str, name:str, rgb):
         (profiles:=self._profiles[username])[self.get_profilesnames(username).index(name)].color = rgb
         colors = []
         for p in profiles:
@@ -759,7 +759,7 @@ class UserAccounts:
         colortxt = ":".join(colors)
         self._accounts[self.get_usernames().index(username)]["rgb"] = colortxt
 
-    def update_color_all(self, colors):
+    def update_color_all(self, colors:dict[list[str]]):
         for username in [*self._profiles.keys()]:
             profile_colors = colors[username]
             for i, profile in enumerate(self._profiles[username]):
@@ -770,14 +770,14 @@ class UserProfiles():
 
     FIELDS = ["name", "wlist", "whistory"]
 
-    def __init__(self, name, age:int, wlist:list, whistory:list, color=None):
+    def __init__(self, name:str, age:int, wlist:list, whistory:list, color=None):
         self.name = name
         self.age = age
         self._watch_list = wlist
         self._watch_history = whistory
         self.color = color or ctk.ThemeManager.theme["CTkButton"]["fg_color"][int(ctk.get_appearance_mode() == "Dark")]
 
-    def load_from_csv(account):
+    def load_from_csv(account:UserAccounts):
         with open("profiles.csv", "r", newline="", encoding="utf-8") as f:
             reader = csv.DictReader(f)
             profiles = account.get_profile_dict()
@@ -794,7 +794,7 @@ class UserProfiles():
                     for video in watch_history:
                         profile.add_to_whistory(video)
 
-    def save_to_csv(account):
+    def save_to_csv(account:UserAccounts):
         # Change UserProfiles class into a dict
         profiles = account.get_profile_dict()
         # {name: [UserProfiles(), UserProfiles()], name: [UserProfiles()]}
@@ -817,22 +817,22 @@ class UserProfiles():
             writer.writeheader()
             writer.writerows(plist)
 
-    def add_to_whistory(self, id):
+    def add_to_whistory(self, id:str):
         self.remove_from_whistory(id)
         self._watch_history.append(id)
         
-    def remove_from_whistory(self, id):
+    def remove_from_whistory(self, id:str):
         if id in self._watch_history:
             self._watch_history.remove(id)
     
     def get_whistory(self) -> list:
         return self._watch_history
 
-    def add_to_wlist(self, id):
+    def add_to_wlist(self, id:str):
         self.remove_from_wlist(id)
         self._watch_list.append(id)
 
-    def remove_from_wlist(self, id):
+    def remove_from_wlist(self, id:str):
         if id in self._watch_list:
             self._watch_list.remove(id)
 
