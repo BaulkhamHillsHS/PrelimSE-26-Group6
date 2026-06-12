@@ -79,7 +79,7 @@ class LoginFrame(ctk.CTkFrame):
         """Used for confirming entries are correct"""
         for user in self.master._accounts._accounts:
             if self.accountbox.get() in (user["username"], user["email"]) and user["password"] == self.passwordbox.get():
-                self.master.loggedin()
+                self.master.loggedin(user["username"])
                 return
             
         self.feedback.configure(text="Username/email or password is wrong")
@@ -256,19 +256,8 @@ class BrowseMenu(ctk.CTkFrame):
         self.grid_columnconfigure(1, weight=1)
         self.grid_columnconfigure(2, weight=0)
 
-        self.video_list_frame = ctk.CTkScrollableFrame(
-    self,
-    width=650,
-    height=500
-)
-        self.video_list_frame.grid(
-            row=2,
-            column=0,
-            columnspan=3,
-            padx=10,
-            pady=10,
-            sticky="nsew"
-        )
+        self.video_list_frame = ctk.CTkScrollableFrame(self, width=650, height=500)
+        self.video_list_frame.grid(row=2, column=0, columnspan=3, padx=10, pady=10, sticky="nsew")
 
         self.grid_rowconfigure(2, weight=1)
 
