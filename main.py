@@ -344,21 +344,24 @@ class BrowseMenu(ctk.CTkFrame):
 
 class BaseScrollFrame(ctk.CTkScrollableFrame):
     # Base frame for scrollable frames
-    def __init__(self, master, type_=None, filter_:str="", dir:str="", **kwargs):
-        super().__init__(master, orientation="horizontal"if dir =="x"else"vertical", **kwargs)
+    def __init__(self, master, type_:str=None, filter_:str="", dir:str="", **kwargs):
+        super().__init__(master, orientation="horizontal"if dir =="x"else"vertical", height=150, **kwargs)
         self.type = type_ # genre, type or rating or None
         self.filter = filter_ # a filter in the type or ""
-        if self.type:
-            self.text = ctk.CTkLabel(self, text=f"{type_}: {filter_}")
-            self.text.grid(row=0, column=0, columnspan=100)
+        if self.type and self.filter:
+            self.text = ctk.CTkLabel(self, text=f"{type_.capitalize()}: {filter_}")
+            self.text.grid(row=0, column=0, columnspan=100, sticky="w")
         self.buttons = []
 
-    def add_btn(self, image_path, command):
-        btn = ctk.CTkButton(self, command=command)
-        image = ctk.CTkImage(light_image=Image.open(image_path), size=(440, 225))
-        btn.image = image
+    def add_btn(self, image_path, command=lambda:print(f"No command")):
+        btn = ctk.CTkButton(self, command=command, width=200, height=110)
+        if image_path:
+            image = ctk.CTkImage(light_image=Image.open(image_path), size=(200, 110))
+            btn.image = image 
+            
+        else:
+            btn.configure(text="No text")
         btn.grid(row=2, column=len(self.buttons))
-
 
 
 class MainFrame(ctk.CTkFrame): # better name than mainframe? also this class is way too long
@@ -393,7 +396,17 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe? also this class is 
         self.switch.grid(row=2, column=3, columnspan=3, pady=10)
 
         self.historylabel = ctk.CTkLabel(self, text="")
-        self.historylabel.grid(row=4, column=3, columnspan=3)
+        self.historylabel.grid(row=4, column=3, columnspan=3, pady=0)
+
+        self.scrolls = BaseScrollFrame(self, dir="y")
+        self.scrolls.grid(row=5, column=0, columnspan=10, rowspan=2, padx=2, pady=2, sticky="ew")
+
+        self.lifestyle = BaseScrollFrame(self.scrolls, "genre", "lifestyle", "x")
+        self.lifestyle.grid(sticky="ew")
+        self.lifestyle.add_btn("video_images/bird_sam.png")
+
+        self.food = BaseScrollFrame(self.scrolls, "genre", "food", "x")
+        self.food.grid(sticky="ew")
 
     def updateaccounttxt(self, account, profile):
         self.accountinfowindow.accountnametxt.configure(text="Account: "+account)
