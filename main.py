@@ -79,7 +79,7 @@ class LoginFrame(ctk.CTkFrame):
         """Used for confirming entries are correct"""
         for user in self.master._accounts._accounts:
             if self.accountbox.get() in (user["username"], user["email"]) and user["password"] == self.passwordbox.get():
-                self.master.loggedin()
+                self.master.loggedin(user["username"])
                 return
             
         self.feedback.configure(text="Username/email or password is wrong")
@@ -87,12 +87,8 @@ class LoginFrame(ctk.CTkFrame):
 
     def create_signup_form(self):
         """Used for generating a signup form"""
-        self.create_account_button.grid_forget()
-        self.loginbtn.grid_forget()
-        self.username.grid_forget()
-        self.accountbox.grid_forget()
-        self.password.grid_forget()
-        self.passwordbox.grid_forget()
+        for widget in self.winfo_children():
+            widget.grid_forget()
         if self.signup_form == None:
             self.signup_form = SignupFrame(self)
             self.signup_form.grid(row=0, column=0, padx=15, pady=15, columnspan=2, rowspan=3, sticky="nsew")
@@ -260,6 +256,11 @@ class BrowseMenu(ctk.CTkFrame):
         self.grid_columnconfigure(1, weight=1)
         self.grid_columnconfigure(2, weight=0)
 
+        self.video_list_frame = ctk.CTkScrollableFrame(self, width=650, height=500)
+        self.video_list_frame.grid(row=2, column=0, columnspan=3, padx=10, pady=10, sticky="nsew")
+
+        self.grid_rowconfigure(2, weight=1)
+
         self.videomenu = None
         self.video_buttons = []
 
@@ -286,7 +287,7 @@ class BrowseMenu(ctk.CTkFrame):
         self.back_btn = ctk.CTkButton(self, text="back", command=self.master.browsetomain)
         self.back_btn.grid(row=0, column=0, padx=10, pady=10)
 
-        self.searchbox = ctk.CTkEntry(self, placeholder_text="Search videos...")
+        self.searchbox = ctk.CTkEntry(self, placeholder_text="Search videos...", width=200)
         self.searchbox.grid(row=1, column=0, padx=10, pady=10, sticky="ew")
 
         self.filter_btn = ctk.CTkButton(self, text="Apply Search and Filters", command=self.refresh_videos)
@@ -297,8 +298,8 @@ class BrowseMenu(ctk.CTkFrame):
     def refresh_videos(self):
         search = self.searchbox.get().lower().strip()
         
-        for btn in self.video_buttons:
-            btn.destroy()
+        for widget in self.video_list_frame.winfo_children():
+            widget.destroy()
 
         self.video_buttons.clear()
 
@@ -316,17 +317,19 @@ class BrowseMenu(ctk.CTkFrame):
                     self.master.profile.age < 15 and info["rating"] in ["R", "MA"])):
                 continue
 
-            title = ctk.CTkLabel(self, text=video)
-            title.grid(row=row, column=0, padx=10, pady=5, sticky="e")
-            self.video_buttons.append(title)
+            video_row = ctk.CTkFrame(self.video_list_frame)
+            video_row.grid(row=row, column=0, sticky="ew", padx=5, pady=3)
 
-            watchbtn = ctk.CTkButton(self, text="watch", command=lambda v=video: self.open_video(v))
-            watchbtn.grid(row=row, column=1, padx=5, pady=5)
-            self.video_buttons.append(watchbtn)
+            video_row.grid_columnconfigure(0, weight=1)
 
-            watchlaterbtn = ctk.CTkButton(self, text=("remove from " if video in self.master.profile.get_wlist() else "add to ") + "watch later", command=lambda v=video: self.toggle_watch_later(v))
-            watchlaterbtn.grid(row=row, column=2, padx=5, pady=5)
-            self.video_buttons.append(watchlaterbtn)
+            title = ctk.CTkLabel(video_row, text=video, anchor="w")
+            title.grid(row=0, column=0, padx=10, pady=5, sticky="ew")
+
+            watchbtn = ctk.CTkButton(video_row, text="Watch", width=100, command=lambda v=video: self.open_video(v))
+            watchbtn.grid(row=0, column=1, padx=5)
+
+            watchlaterbtn = ctk.CTkButton(video_row, text=("Remove from" if video in self.master.profile.get_wlist() else "Add to") + "\nWatch Later", width=120, command=lambda v=video: self.toggle_watch_later(v))
+            watchlaterbtn.grid(row=0, column=2, padx=5)
 
             row += 1
 
@@ -363,7 +366,7 @@ class BrowseMenu(ctk.CTkFrame):
 class BaseScrollFrame(ctk.CTkScrollableFrame):
     # Base frame for scrollable frames
     def __init__(self, master, type_:str=None, filter_:str="", dir:str="", **kwargs):
-        super().__init__(master, orientation="horizontal"if dir =="x"else"vertical", height=150, **kwargs, width=600)
+        super().__init__(master, orientation="horizontal"if dir =="x"else"vertical", **kwargs)
         self.type = type_ # genre, type or rating or None
         self.filter = filter_ # a filter in the type or ""
         if self.type and self.filter:
@@ -380,10 +383,11 @@ class BaseScrollFrame(ctk.CTkScrollableFrame):
         btn.grid(row=2, column=len(self.buttons), ipadx=0, ipady=0)
 
 
-class MainFrame(ctk.CTkFrame): # better name than mainframe? also this class is way too long
+class MainFrame(ctk.CTkFrame): # better name than mainframe?
     # Frame for after login, watching things idk
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
+        self.current_display = None
         self.grid_columnconfigure(10, weight=1)
         self.grid_rowconfigure(5, weight=1)
 
@@ -411,11 +415,13 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe? also this class is 
         self.switch = ctk.CTkSwitch(self, text="when watching video, remove from Watch Later", variable=self.watchlist_setting, onvalue=True, offvalue=False)
         self.switch.grid(row=2, column=3, columnspan=3, pady=10)
 
-        self.historylabel = ctk.CTkLabel(self, text="")
-        self.historylabel.grid(row=4, column=3, columnspan=3, pady=0)
+        self.historyframe = BaseScrollFrame(self, dir="y", width=350, height=250)
+        self.historyframe.grid(row=4, column=3, columnspan=4, rowspan=2, padx=10, pady=10, sticky="nsew")
+
+        self.history_widgets = []
 
         self.scrolls = BaseScrollFrame(self, dir="y")
-        self.scrolls.grid(row=5, column=0, columnspan=10, rowspan=2, padx=2, pady=2, sticky="ew")
+        self.scrolls.grid(row=6, column=0, columnspan=10, rowspan=2, padx=2, pady=2, sticky="ew")
 
         self.lifestyle = BaseScrollFrame(self.scrolls, "genre", "lifestyle", "x")
         self.lifestyle.grid(sticky="ew")
@@ -441,32 +447,58 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe? also this class is 
         else:
             self.accountinfowindow.withdraw()
 
+    def update_history_display(self, title, items):
+        for widget in self.history_widgets:
+            widget.destroy()
+
+        self.history_widgets.clear()
+
+        heading = ctk.CTkLabel(self.historyframe, text=title)
+        heading.grid(row=0, column=0, sticky="w", padx=5, pady=(5, 10))
+
+        self.history_widgets.append(heading)
+
+        if not items:
+            label = ctk.CTkLabel(self.historyframe, text=f"No videos in {title}")
+            label.grid(row=1, column=0, sticky="w", padx=5)
+            self.history_widgets.append(label)
+            return
+
+        for row, video in enumerate(items, start=1):
+            label = ctk.CTkLabel(self.historyframe, text=video, anchor="w")
+            label.grid(row=row, column=0, sticky="w", padx=5, pady=2)
+
+            self.history_widgets.append(label)
+
     def add_video_to_history(self, video):
         self.master.profile.add_to_whistory(video)
 
     def show_history(self):
-        if (t:=self.historylabel.cget("text")) and "watch history" in t.lower():
-            self.historylabel.configure(text="")
+        if self.current_display == "history":
+            self.clear_history_display()
             return
-        history = self.master.profile.get_whistory()
-        history = [x for x in history if x]
 
-        if history:
-            self.historylabel.configure(text="Watch History:\n"+"\n".join(history))
-        else:
-            self.historylabel.configure(text="No watch history")
+        self.current_display = "history"
+
+        history = [v for v in self.master.profile.get_whistory()]
+        self.update_history_display("Watch History", history)
 
     def show_watch_later(self):
-        if (t:=self.historylabel.cget("text")) and "watch later" in t.lower():
-            self.historylabel.configure(text="")
+        if self.current_display == "watchlater":
+            self.clear_history_display()
             return
-        wlist = self.master.profile.get_wlist()
-        wlist = [x for x in wlist if x]
 
-        if wlist:
-            self.historylabel.configure(text="Watch Later:\n"+"\n".join(wlist))
-        else:
-            self.historylabel.configure(text="No videos in Watch Later")
+        self.current_display = "watchlater"
+
+        wlist = [v for v in self.master.profile.get_wlist()]
+        self.update_history_display("Watch Later", wlist)
+
+    def clear_history_display(self):
+        for widget in self.history_widgets:
+            widget.destroy()
+
+        self.history_widgets.clear()
+        self.current_display = None
 
     def savebtn(self):
         self.master._accounts.save_to_csv()
@@ -488,18 +520,25 @@ class SubscriptionFrame(ctk.CTkFrame):
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
 
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_columnconfigure(0, weight=1)
+
+        self.form_frame = BaseScrollFrame(self, dir="y", height=500, width=650)
+
+        self.form_frame.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
+
         account = self.master.account
         current_plan = self.master._accounts.get_subscription(account)
 
-        ctk.CTkLabel(self, text=f"Current Plan: {current_plan}").pack(pady=(10,0))
+        ctk.CTkLabel(self.form_frame, text=f"Current Plan: {current_plan}").pack(pady=(10,0))
 
-        ctk.CTkLabel(self, text="Available plans: basic (free), premium ($5/month), 神様 ($67/month)").pack(pady=(10,0))
+        ctk.CTkLabel(self.form_frame, text="Available plans: basic (free), premium ($5/month), 神様 ($67/month)").pack(pady=(10,0))
 
-        ctk.CTkLabel(self, text="Input fields have been pre-filled with known information, if any.\nRemember to change if details have changed.\n-----------------").pack(pady=(10,5))
+        ctk.CTkLabel(self.form_frame, text="Input fields have been pre-filled with known information, if any.\nRemember to change if details have changed.\n-----------------").pack(pady=(10,5))
 
-        ctk.CTkLabel(self, text="Subscription").pack()
-        self.planbox = ctk.CTkComboBox(self, values=["basic", "premium", "神様"])
-        self.planbox.pack(pady=(0,5))
+        ctk.CTkLabel(self.form_frame, text="Subscription").pack()
+        self.form_frame.planbox = ctk.CTkComboBox(self.form_frame, values=["basic", "premium", "神様"])
+        self.form_frame.planbox.pack(pady=(0,5))
 
         # label text, placeholder text, hidden with asterisk?
         fields = {"cardholder": ("Cardholder Name", "e.g. Ryan Dunne", False, 200),
@@ -510,15 +549,15 @@ class SubscriptionFrame(ctk.CTkFrame):
         self.subscription_entries = {}
 
         for key, (label_text, placeholder, hidden, width) in fields.items():
-            ctk.CTkLabel(self, text=label_text).pack(pady=(5, 0))
+            ctk.CTkLabel(self.form_frame, text=label_text).pack(pady=(5, 0))
 
-            entry = ctk.CTkEntry(self, placeholder_text=placeholder, show="*" if hidden else "", width=width)
+            entry = ctk.CTkEntry(self.form_frame, placeholder_text=placeholder, show="*" if hidden else "", width=width)
             entry.pack(pady=(0,5))
 
             self.subscription_entries[key] = entry
 
         self.successlabel = ctk.CTkLabel(self, text="")
-        self.successlabel.pack(pady=5)
+        self.successlabel.grid(row=1, column=0, pady=5)
 
         acc = self.master._accounts.get_account(self.master.account)
         self.set_entry(self.subscription_entries["cardholder"], acc.get("cardholder", ""))
@@ -527,9 +566,9 @@ class SubscriptionFrame(ctk.CTkFrame):
         self.set_entry(self.subscription_entries["security"], acc.get("securitycode", ""))
         self.set_entry(self.subscription_entries["billing"], acc.get("billingaddress", ""))
 
-        ctk.CTkButton(self, text="Update Subscription", command=self.update_subscription).pack()
+        ctk.CTkButton(self, text="Update Subscription", command=self.update_subscription).grid(row=2, column=0, pady=5)
 
-        ctk.CTkButton(self, text="Back", command=self.master.subscriptiontomain).pack(pady=5)
+        ctk.CTkButton(self, text="Back", command=self.master.subscriptiontomain).grid(row=3, column=0, pady=5)
 
     def set_entry(self, entry, value):
         if value:
@@ -598,7 +637,7 @@ class SubscriptionFrame(ctk.CTkFrame):
             self.successlabel.configure(text="Error: security code must be a number.", text_color="red")
             return
 
-        self.master._accounts.update_subscription(self.master.account, self.planbox.get(), *details)
+        self.master._accounts.update_subscription(self.master.account, self.form_frame.planbox.get(), *details)
 
         with open(f"{self.master.account}_invoice.txt", "w", encoding="utf-8") as f:
             f.write(f"i love {NAME}, you love {NAME}, we love {NAME} streaming service :3\n\n")
@@ -608,7 +647,7 @@ class SubscriptionFrame(ctk.CTkFrame):
             f.write("--------------------\n\n")
 
             f.write(f"Account Name: {self.master.account}\n")
-            f.write(f"Plan: {self.planbox.get()} (${str(prices[self.planbox.get()])}/month)\n")
+            f.write(f"Plan: {self.form_frame.planbox.get()} (${str(prices[self.form_frame.planbox.get()])}/month)\n")
             f.write(f'Cardholder: {details[0]}\n')
             f.write(f'Billing Address: {details[4]}\n\n')
 
@@ -682,7 +721,7 @@ class StreamingServiceApp(ctk.CTk):
                 self.main.updateaccounttxt(self.account, self.profile.name)
                 self.main.updateprofilebtn()
                 self.main.accountinfowindow.updateprofiles(self.profile.name, self._accounts.get_profilesnames(self.account))
-                self.main.historylabel.configure(text="")
+                self.main.clear_history_display()
                 self.browsemenu.refresh_videos()
                 break
 
@@ -701,11 +740,11 @@ class StreamingServiceApp(ctk.CTk):
 
     def changeframetologin(self):
         self.main.forget()
-        self.main.historylabel.configure(text="")
+        self.main.clear_history_display()
         self.main.accountinfowindow.withdraw()
 
     def maintobrowse(self):
-        self.main.historylabel.configure(text="")
+        self.main.clear_history_display()
         self.main.accountinfowindow.withdraw()
         self.main.forget()
         self.browsemenu.pack(fill="both", expand=True)
@@ -715,7 +754,7 @@ class StreamingServiceApp(ctk.CTk):
         self.main.pack(fill="both", expand=True)
 
     def maintosubscription(self):
-        self.main.historylabel.configure(text="")
+        self.main.clear_history_display()
         self.main.accountinfowindow.withdraw()
         self.main.forget()
         self.subscription.pack(fill="both", expand=True)
