@@ -75,7 +75,7 @@ class LoginFrame(ctk.CTkFrame):
         """Used for confirming entries are correct"""
         for user in self.master._accounts._accounts:
             if self.accountbox.get() in (user["username"], user["email"]) and user["password"] == self.passwordbox.get():
-                self.master.loggedin()
+                self.master.loggedin(user["username"])
                 return
             
         self.feedback.configure(text="Username/email or password is wrong")
@@ -693,9 +693,9 @@ class StreamingServiceApp(ctk.CTk):
 
         self.main = MainFrame(self)
 
-    def loggedin(self):
+    def loggedin(self, username):
         self.changeframetomain()
-        self.account = self.login.accountbox.get()
+        self.account = username
         self.loginupdate(self.account)
 
     def newaccountloggedin(self):
