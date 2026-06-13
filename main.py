@@ -244,17 +244,7 @@ class BrowseMenu(ctk.CTkFrame):
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
 
-        self.video_images = {
-                            "Senior Band Camp Performance 2021": {"image": "video_images/bandcamp.png", "genre": "music", "type": "user-made video", "rating": "G"},
-                            "Eat This Card": {"image": "video_images/yummycard.png", "genre": "food", "type": "short", "rating": "M"},
-                            "7 Hours in the Snack Zone": {"image": "video_images/snackzone.png", "genre": "food", "type": "TV show", "rating": "PG"},
-                            "Film a Bird — Sam’s Full Attempt | Nebula Plus": {"image": "video_images/bird_sam.png", "genre": "lifestyle", "type": "TV show", "rating": "PG"},
-                            "Film a Bird — Ben & Adam’s Full Attempt | Nebula Plus": {"image": "video_images/bird_badam.png", "genre": "lifestyle", "type": "TV show", "rating": "PG"},
-                            "How to Embed Audio into a Google Site": {"image": "video_images/embedaudio.png", "genre": "education", "type": "user-made video", "rating": "G"},
-                            "どごというおんせん": {"image": "video_images/dogo.png", "genre": "lifestyle", "type": "user-made video", "rating": "R"},
-                            "foot": {"image": "video_images/foot.png", "genre": "education", "type": "user-made video", "rating": "R"},
-                            "massive and really long foot": {"image": "video_images/bigfoot.png", "genre": "education", "type": "user-made video", "rating": "MA"},
-                            }
+        self.video_images = self.load_video_details()
 
         self.grid_columnconfigure(0, weight=0)
         self.grid_columnconfigure(1, weight=1)
@@ -298,6 +288,18 @@ class BrowseMenu(ctk.CTkFrame):
         self.filter_btn.grid(row=1, column=2, padx=10, pady=10)
 
         self.refresh_videos()
+    
+    def load_video_details(self):
+        videos = {}
+        with open("video_details.csv", "r", newline="", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                videos[row["title"]] = {"image": row["image"],
+                                        "genre": row["genre"],
+                                        "type": row["type"],
+                                        "rating": row["rating"]}
+        print(videos)
+        return videos
 
     def refresh_videos(self):
         search = self.searchbox.get().lower().strip()
