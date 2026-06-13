@@ -291,30 +291,17 @@ class BrowseMenu(ctk.CTkFrame):
 
     def load_video_details(self, type:str="all") -> dict[dict]:
         videos:dict[dict] = {}
-        if type == "all" or type == "usermade":
-            with open("video_details/usermade.csv", "r", newline="", encoding="utf-8") as f:
-                reader = csv.DictReader(f)
-                for row in reader:
-                    videos[row["title"]] = {"image": "video_images/" + row["image"],
-                                            "genre": row["genre"],
-                                            "type": "user-made video",
-                                            "rating": row["rating"]}
-        if type == "all" or type == "tvshow":
-            with open("video_details/tvshow_details.csv", "r", newline="", encoding="utf-8") as f:
-                reader = csv.DictReader(f)
-                for row in reader:
-                    videos[row["title"]] = {"image": "video_images/" + row["image"],
-                                            "genre": row["genre"],
-                                            "type": "TV show",
-                                            "rating": row["rating"]}
-        if type == "all" or type == "short":
-            with open("video_details/short_details.csv", "r", newline="", encoding="utf-8") as f:
-                reader = csv.DictReader(f)
-                for row in reader:
-                    videos[row["title"]] = {"image": "video_images/" + row["image"],
-                                            "genre": row["genre"],
-                                            "type": "short",
-                                            "rating": row["rating"]}
+        # id, actual name
+        ids = [("usermade", "user-made video"), ("tvshow", "TV show"), ("short", "short")]
+        for id, name in ids:
+            if type == "all" or type == id:
+                with open(f"video_details/{id}_details.csv", "r", newline="", encoding="utf-8") as f:
+                    reader = csv.DictReader(f)
+                    for row in reader:
+                        videos[row["title"]] = {"image": "video_images/" + row["image"],
+                                                "genre": row["genre"],
+                                                "type": name,
+                                                "rating": row["rating"]}
         return videos
 
     def refresh_videos(self):
