@@ -146,10 +146,6 @@ class SignupFrame(ctk.CTkFrame):
             self.status_label.configure(text="Please fill in all fields.", text_color="red")
             return
         
-        if "@" in username:
-            self.status_label.configure(text="Username cannot contain @", text_color="red")
-            return
-
         try:
             age = int(age)
             if age <= 0:
@@ -158,10 +154,6 @@ class SignupFrame(ctk.CTkFrame):
             self.status_label.configure(text="Please enter a positive whole number for age", text_color="red")
             return
         
-        if not "@" in email:
-            self.status_label.configure(text="Email must contain @", text_color="red")
-            return
-
         if password != confirm_password:
             self.status_label.configure(text="Passwords do not match.", text_color="red")
             return
@@ -244,7 +236,17 @@ class BrowseMenu(ctk.CTkFrame):
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
 
-        self.video_images = self.load_video_details()
+        self.video_images = {
+                            "Senior Band Camp Performance 2021": {"image": "video_images/bandcamp.png", "genre": "music", "type": "user-made video", "rating": "G"},
+                            "Eat This Card": {"image": "video_images/yummycard.png", "genre": "food", "type": "short", "rating": "M"},
+                            "7 Hours in the Snack Zone": {"image": "video_images/snackzone.png", "genre": "food", "type": "TV show", "rating": "PG"},
+                            "Film a Bird — Sam’s Full Attempt | Nebula Plus": {"image": "video_images/bird_sam.png", "genre": "lifestyle", "type": "TV show", "rating": "PG"},
+                            "Film a Bird — Ben & Adam’s Full Attempt | Nebula Plus": {"image": "video_images/bird_badam.png", "genre": "lifestyle", "type": "TV show", "rating": "PG"},
+                            "How to Embed Audio into a Google Site": {"image": "video_images/embedaudio.png", "genre": "education", "type": "user-made video", "rating": "G"},
+                            "どごというおんせん": {"image": "video_images/dogo.png", "genre": "lifestyle", "type": "user-made video", "rating": "R"},
+                            "foot": {"image": "video_images/foot.png", "genre": "education", "type": "user-made video", "rating": "R"},
+                            "massive and really long foot": {"image": "video_images/bigfoot.png", "genre": "education", "type": "user-made video", "rating": "MA"},
+                            }
 
         self.grid_columnconfigure(0, weight=0)
         self.grid_columnconfigure(1, weight=1)
@@ -288,17 +290,6 @@ class BrowseMenu(ctk.CTkFrame):
         self.filter_btn.grid(row=1, column=2, padx=10, pady=10)
 
         self.refresh_videos()
-    
-    def load_video_details(self):
-        videos = {}
-        with open("video_details.csv", "r", newline="", encoding="utf-8") as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                videos[row["title"]] = {"image": "video_images/" + row["image"],
-                                        "genre": row["genre"],
-                                        "type": row["type"],
-                                        "rating": row["rating"]}
-        return videos
 
     def refresh_videos(self):
         search = self.searchbox.get().lower().strip()
@@ -695,8 +686,7 @@ class StreamingServiceApp(ctk.CTk):
         self.profile = ""
         UserProfiles.load_from_csv(self._accounts)
 
-        self.logo = ctk.CTkImage(light_image=Image.open("logo.png"), size=(40, 40))
-        ctk.CTkLabel(self, text=NAME, text_color="pink", image=self.logo, compound="left").pack(side="top", pady=(10, 10))
+        ctk.CTkLabel(self, text=NAME, text_color="pink").pack(side="top", pady=(10, 10))
 
         self.login = LoginFrame(self)
         self.login.pack(fill="both", expand=True, padx=40, pady=(10, 20))
@@ -960,4 +950,5 @@ class UserProfiles():
 
 
 app = StreamingServiceApp()
+app.after(0, lambda: app.state("zoomed"))
 app.mainloop()
