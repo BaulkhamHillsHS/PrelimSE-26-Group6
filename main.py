@@ -43,7 +43,7 @@ class LoginFrame(ctk.CTkFrame):
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
         self.grid_rowconfigure(5, weight=2)
-        self.grid_columnconfigure(4, weight=2)
+        self.grid_columnconfigure(2, weight=2)
 
         self.signup_form = None
         self.buildui()
@@ -54,26 +54,22 @@ class LoginFrame(ctk.CTkFrame):
             self.signup_form.destroy()
             self.signup_form = None
         self.logintitle = ctk.CTkLabel(self, text="Login", font=("Roboto", 50))
-        self.logintitle.grid(row=0, column=0, columnspan=4, sticky="nsew", pady=(30, 60))
+        self.logintitle.grid(row=0, column=0, columnspan=2, sticky="nsew", pady=(30, 60))
 
         self.create_account_button = ctk.CTkButton(self, 300, 50, text="Create an account", command=self.create_signup_form)
-        self.create_account_button.grid(row=2, column=0, sticky="nsew", padx=10, columnspan=2)
+        self.create_account_button.grid(row=2, column=0, sticky="nsew", padx=10)
 
-        self.username = ctk.CTkLabel(self, text="Username or Email")
-        self.username.grid(row=1, column=2)
-        self.accountbox = ctk.CTkEntry(self)
-        self.accountbox.grid(row=1, column=3, padx=10, pady=10)
+        self.accountbox = ctk.CTkEntry(self, placeholder_text="Username or Email", width=280)
+        self.accountbox.grid(row=1, column=1, padx=10, pady=10)
 
-        self.password = ctk.CTkLabel(self, text="Password")
-        self.password.grid(row=2, column=2)
-        self.passwordbox = ctk.CTkEntry(self, show="*")
-        self.passwordbox.grid(row=2, column=3)
+        self.passwordbox = ctk.CTkEntry(self, placeholder_text="Password", show="*", width=280)
+        self.passwordbox.grid(row=2, column=1)
 
         self.feedback = ctk.CTkLabel(self, text="", text_color="red")
-        self.feedback.grid(row=3, column=2, columnspan=2)
+        self.feedback.grid(row=3, column=1)
 
-        self.loginbtn = ctk.CTkButton(self, 300, 50, text="login", command=self.login)
-        self.loginbtn.grid(row=4, column=2, sticky="nsew", padx=10, columnspan=2)
+        self.loginbtn = ctk.CTkButton(self, 300, 50, text="Login", command=self.login)
+        self.loginbtn.grid(row=4, column=1, sticky="nsew", padx=10)
 
     def login(self):
         """Used for confirming entries are correct"""
@@ -189,7 +185,7 @@ class AccountInfoWindow(ctk.CTkToplevel):
     # Frame for showing account information
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
-        self.grid_rowconfigure(6, weight=1)
+        self.grid_rowconfigure(7, weight=1)
         self.grid_columnconfigure(1, weight=1)
 
         self.title(NAME + " account info")
@@ -203,17 +199,17 @@ class AccountInfoWindow(ctk.CTkToplevel):
         self.profilenametxt = ctk.CTkLabel(self, text="Profile: "+self.master.master.profile)
         self.profilenametxt.grid(row=1, column=0, padx=10, pady=(0,3))
 
-        self.profilelist = ctk.CTkComboBox(self, values=self.master.master.profiles)
-        self.profilelist.grid(row=2, column=0, padx=10, pady=3)
-
         self.colorbtn = ctk.CTkButton(self, text="Change Profile Colour", command=self.pick_color)
-        self.colorbtn.grid(row=3, column=0, padx=10, pady=3)
-
-        self.switchprofilebtn = ctk.CTkButton(self, text="Switch Profile", command=lambda:self.master.master.switch_profile(self.profilelist.get()))
-        self.switchprofilebtn.grid(row=4, column=0, padx=10, pady=3)
+        self.colorbtn.grid(row=2, column=0, padx=10, pady=3)
 
         self.subscriptionbtn = ctk.CTkButton(self, text="Subscription", command=self.master.master.maintosubscription)
-        self.subscriptionbtn.grid(row=5, column=0, padx=10, pady=3)
+        self.subscriptionbtn.grid(row=3, column=0, padx=10, pady=3)
+
+        self.profilelist = ctk.CTkComboBox(self, values=self.master.master.profiles)
+        self.profilelist.grid(row=4, column=0, padx=10, pady=(30, 3))
+
+        self.switchprofilebtn = ctk.CTkButton(self, text="Switch Profile", command=lambda:self.master.master.switch_profile(self.profilelist.get()))
+        self.switchprofilebtn.grid(row=5, column=0, padx=10, pady=3)
 
         self.logoutbtn = ctk.CTkButton(self, text="Logout", command=master.master.logout)
         self.logoutbtn.grid(row=6, column=0, padx=10, pady=3)
