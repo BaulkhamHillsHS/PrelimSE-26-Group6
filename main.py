@@ -1,9 +1,9 @@
-import customtkinter as ctk
-import tkinter as tk
 import csv
-from PIL import Image # pip install Pillow
 import CTkColorPicker as ctkcolor # pip install ctkcolorpicker
+import customtkinter as ctk
 from datetime import datetime
+from PIL import Image # pip install Pillow
+import tkinter as tk
 
 """
 Notes:
@@ -23,8 +23,6 @@ encapsulation - more protected things? currently only _accounts
 
 polymorphism - multiple classes containing same method
 - easy imo, because video and tv show are going to be inheriting from the same abstract class
-
-
 
 
 
@@ -389,6 +387,30 @@ class BaseScrollFrame(ctk.CTkScrollableFrame):
             btn = ctk.CTkButton(self, command=command, width=200, height=110, text="No text")
         self.buttons.append(btn)
         btn.grid(row=2, column=len(self.buttons), ipadx=0, ipady=0)
+
+class BaseVideoFrame(ctk.CTkFrame):
+    def __init__(self, master, image_path:str, name:str, type:str, **kwargs):
+        super().__init__(master, **kwargs)
+        self.grid_rowconfigure(6, weight=1)
+        self.grid_columnconfigure(4, weight=1)
+        ctk.CTkLabel(self, text="", image=ctk.CTkImage(light_image=Image.open(image_path), size=(440, 225))).grid(row=0, column=0, rowspan=3, columnspan=2, padx=5, pady=5)
+        ctk.CTkLabel(self, text=name).grid(row=3, column=0, columnspan=2, pady=2)
+        ctk.CTkLabel(self, text=type).grid(row=5, column=0, columnspan=3, pady=2)
+        ctk.CTkButton(self, text="Watch", command=lambda:print("watch")).grid(row=0, column=2, columnspan=2, padx=10, pady=5)
+        ctk.CTkButton(self, text="Add to watch later", command=lambda:print("watch_later")).grid(row=1, column=2, columnspan=2, padx=10, pady=5)
+        ctk.CTkButton(self, text="Back", command=lambda:print("Back")).grid(row=5, column=2, columnspan=2, padx=5, pady=4)
+
+        
+
+class TVShowFrame(BaseVideoFrame):
+    def __init__(self, master, image_path, name, type, epnumber:int, epbefore:BaseVideoFrame, epafter:BaseVideoFrame, serieslen:int, **kwargs):
+        super().__init__(master, image_path, name, type, **kwargs)
+        if epnumber != 1:
+            ctk.CTkButton(self, text="Previous Episode", command=lambda:print("Previous Episode")).grid(row=2, column=2, padx=5, pady=5)
+        if epnumber != serieslen:
+            ctk.CTkButton(self, text="Next Episode", command=lambda:print("Next Episode")).grid(row=2, column=3, padx=5, pady=5)
+            
+
 
 
 class MainFrame(ctk.CTkFrame): # better name than mainframe?
