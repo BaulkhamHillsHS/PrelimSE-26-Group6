@@ -75,7 +75,7 @@ class LoginFrame(ctk.CTkFrame):
         """Used for confirming entries are correct"""
         for user in self.master._accounts._accounts:
             if self.accountbox.get() in (user["username"], user["email"]) and user["password"] == self.passwordbox.get():
-                self.master.loggedin(user["username"])
+                self.master.loggedin()
                 return
             
         self.feedback.configure(text="Username/email or password is wrong")
@@ -360,15 +360,18 @@ class BrowseMenu(ctk.CTkFrame):
 
 
 class BaseScrollFrame(ctk.CTkScrollableFrame):
-    # Base frame for scrollable frames
-    def __init__(self, master, type_:str=None, filter_:str="", dir:str="", **kwargs):
+    """Base frame for scrollable frames"""
+    def __init__(self, master, type_:str=None, filter_:str="", dir:str="", video=False, **kwargs):
         super().__init__(master, orientation="horizontal"if dir =="x"else"vertical", **kwargs)
         self.type = type_ # genre, type or rating or None
         self.filter = filter_ # a filter in the type or ""
         if self.type and self.filter:
             self.text = ctk.CTkLabel(self, text=f"{type_.capitalize()}: {filter_}")
             self.text.grid(row=0, column=0, columnspan=100, sticky="w")
+        if video:
+            self.configure(width=650, height=120)
         self.buttons = []
+        
     def add_btn(self, image_path, command=lambda:print(f"No command")):
         if image_path:
             image = ctk.CTkImage(light_image=Image.open(image_path), size=(200, 110))
@@ -419,13 +422,13 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe?
         self.scrolls = BaseScrollFrame(self, dir="y")
         self.scrolls.grid(row=6, column=0, columnspan=10, rowspan=2, padx=2, pady=2, sticky="ew")
 
-        self.lifestyle = BaseScrollFrame(self.scrolls, "genre", "lifestyle", "x")
+        self.lifestyle = BaseScrollFrame(self.scrolls, "genre", "lifestyle", "x", video=True)
         self.lifestyle.grid(sticky="ew")
 
         self.lifestyle.add_btn("video_images/bird_sam.png", lambda:print("sam bird"))
         self.lifestyle.add_btn("video_images/bird_badam.png", lambda:print("badam bird"))
 
-        self.food = BaseScrollFrame(self.scrolls, "genre", "food", "x")
+        self.food = BaseScrollFrame(self.scrolls, "genre", "food", "x", video=True)
         self.food.grid(sticky="ew")
 
     def make_accountinfowindow(self):
@@ -449,16 +452,18 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe?
 
         self.history_widgets.clear()
 
-        heading = ctk.CTkLabel(self.historyframe, text=title)
-        heading.grid(row=0, column=0, sticky="w", padx=5, pady=(5, 10))
-
-        self.history_widgets.append(heading)
+        items = [x for x in items if x]
 
         if not items:
             label = ctk.CTkLabel(self.historyframe, text=f"No videos in {title}")
             label.grid(row=1, column=0, sticky="w", padx=5)
             self.history_widgets.append(label)
             return
+        
+        heading = ctk.CTkLabel(self.historyframe, text=title)
+        heading.grid(row=0, column=0, sticky="w", padx=5, pady=(5, 10))
+
+        self.history_widgets.append(heading)
 
         for row, video in enumerate(items, start=1):
             label = ctk.CTkLabel(self.historyframe, text=video, anchor="w")
