@@ -1,9 +1,9 @@
-import customtkinter as ctk
-import tkinter as tk
 import csv
-from PIL import Image # pip install Pillow
 import CTkColorPicker as ctkcolor # pip install ctkcolorpicker
+import customtkinter as ctk
 from datetime import datetime
+from PIL import Image # pip install Pillow
+import tkinter as tk
 
 """
 Notes:
@@ -23,8 +23,6 @@ encapsulation - more protected things? currently only _accounts
 
 polymorphism - multiple classes containing same method
 - easy imo, because video and tv show are going to be inheriting from the same abstract class
-
-
 
 
 
@@ -287,20 +285,27 @@ class BrowseMenu(ctk.CTkFrame):
         self.filter_btn = ctk.CTkButton(self, text="Apply Search and Filters", command=self.refresh_videos)
         self.filter_btn.grid(row=1, column=2, padx=10, pady=10)
 
+        self.feedback = ctk.CTkLabel(self, text="No videos found. Try widening your search or filters.")
+
         self.refresh_videos()
 
-    def load_video_details(self):
+    def load_video_details(self, type:str="all") -> dict[dict]:
         videos:dict[dict] = {}
-        with open("video_details.csv", "r", newline="", encoding="utf-8") as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                videos[row["title"]] = {"image": "video_images/" + row["image"],
-                                        "genre": row["genre"],
-                                        "type": row["type"],
-                                        "rating": row["rating"]}
+        # id, actual name
+        ids = [("usermade", "user-made video"), ("tvshow", "TV show"), ("short", "short")]
+        for id, name in ids:
+            if type == "all" or type == id:
+                with open(f"video_details/{id}_details.csv", "r", newline="", encoding="utf-8") as f:
+                    reader = csv.DictReader(f)
+                    for row in reader:
+                        videos[row["title"]] = {"image": "video_images/" + row["image"],
+                                                "genre": row["genre"],
+                                                "type": name,
+                                                "rating": row["rating"]}
         return videos
 
     def refresh_videos(self):
+        self.feedback.grid_forget()
         search = self.searchbox.get().lower().strip()
         
         for widget in self.video_list_frame.winfo_children():
@@ -337,6 +342,8 @@ class BrowseMenu(ctk.CTkFrame):
             watchlaterbtn.grid(row=0, column=2, padx=5)
 
             row += 1
+        if row == 2:
+            self.feedback.grid(row=2, column=0, columnspan=3)
 
     def toggle_watch_later(self, video:str):
         if video in (prof:=self.master.profile).get_wlist():
@@ -389,6 +396,30 @@ class BaseScrollFrame(ctk.CTkScrollableFrame):
             btn = ctk.CTkButton(self, command=command, width=200, height=110, text="No text")
         self.buttons.append(btn)
         btn.grid(row=2, column=len(self.buttons), ipadx=0, ipady=0)
+
+class BaseVideoFrame(ctk.CTkFrame):
+    def __init__(self, master, image_path:str, name:str, type:str, **kwargs):
+        super().__init__(master, **kwargs)
+        self.grid_rowconfigure(6, weight=1)
+        self.grid_columnconfigure(4, weight=1)
+        ctk.CTkLabel(self, text="", image=ctk.CTkImage(light_image=Image.open(image_path), size=(440, 225))).grid(row=0, column=0, rowspan=3, columnspan=2, padx=5, pady=5)
+        ctk.CTkLabel(self, text=name).grid(row=3, column=0, columnspan=2, pady=2)
+        ctk.CTkLabel(self, text=type).grid(row=5, column=0, columnspan=3, pady=2)
+        ctk.CTkButton(self, text="Watch", command=lambda:print("watch")).grid(row=0, column=2, columnspan=2, padx=10, pady=5)
+        ctk.CTkButton(self, text="Add to watch later", command=lambda:print("watch_later")).grid(row=1, column=2, columnspan=2, padx=10, pady=5)
+        ctk.CTkButton(self, text="Back", command=lambda:print("Back")).grid(row=5, column=2, columnspan=2, padx=5, pady=4)
+
+        
+
+class TVShowFrame(BaseVideoFrame):
+    def __init__(self, master, image_path, name, type, epnumber:int, epbefore:BaseVideoFrame, epafter:BaseVideoFrame, serieslen:int, **kwargs):
+        super().__init__(master, image_path, name, type, **kwargs)
+        if epnumber != 1:
+            ctk.CTkButton(self, text="Previous Episode", command=lambda:print("Previous Episode")).grid(row=2, column=2, padx=5, pady=5)
+        if epnumber != serieslen:
+            ctk.CTkButton(self, text="Next Episode", command=lambda:print("Next Episode")).grid(row=2, column=3, padx=5, pady=5)
+            
+
 
 
 class MainFrame(ctk.CTkFrame): # better name than mainframe?
@@ -759,9 +790,15 @@ class StreamingServiceApp(ctk.CTk):
         self.main.accountinfowindow.withdraw()
         self.main.forget()
         self.browsemenu.pack(fill="both", expand=True)
+        self.browsemenu.refresh_videos()
 
     def browsetomain(self):
         self.browsemenu.forget()
+        self.browsemenu.feedback.grid_forget()
+        self.browsemenu.searchbox.delete(0, "end")
+        self.browsemenu.type_filter.set("all")
+        self.browsemenu.genre_filter.set("all")
+        self.browsemenu.rating_filter.set("all")
         self.main.pack(fill="both", expand=True)
 
     def maintosubscription(self):
