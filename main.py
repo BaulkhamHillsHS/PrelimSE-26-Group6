@@ -285,27 +285,40 @@ class BrowseMenu(ctk.CTkFrame):
         self.filter_btn = ctk.CTkButton(self, text="Apply Search and Filters", command=self.refresh_videos)
         self.filter_btn.grid(row=1, column=2, padx=10, pady=10)
 
+        self.feedback = ctk.CTkLabel(self, text="No videos found. Try widening your search or filters.")
+
         self.refresh_videos()
 
-    def load_video_details(self) -> dict[dict]:
+    def load_video_details(self, type:str="all") -> dict[dict]:
         videos:dict[dict] = {}
-        with open("video_details.csv", "r", newline="", encoding="utf-8") as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                videos[row["title"]] = {"image": "video_images/" + row["image"],
-                                        "genre": row["genre"],
-                                        "type": row["type"],
-                                        "rating": row["rating"]}
-        with open("tvshow_details.csv", "r", newline="", encoding="utf-8") as f: # Same as above but will be different soon
-            reader = csv.DictReader(f)
-            for row in reader:
-                videos[row["title"]] = {"image": "video_images/" + row["image"],
-                                        "genre": row["genre"],
-                                        "type": "TV show",
-                                        "rating": row["rating"]}
+        if type == "all" or type == "usermade":
+            with open("video_details/usermade.csv", "r", newline="", encoding="utf-8") as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    videos[row["title"]] = {"image": "video_images/" + row["image"],
+                                            "genre": row["genre"],
+                                            "type": "user-made video",
+                                            "rating": row["rating"]}
+        if type == "all" or type == "tvshow":
+            with open("video_details/tvshow_details.csv", "r", newline="", encoding="utf-8") as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    videos[row["title"]] = {"image": "video_images/" + row["image"],
+                                            "genre": row["genre"],
+                                            "type": "TV show",
+                                            "rating": row["rating"]}
+        if type == "all" or type == "short":
+            with open("video_details/short_details.csv", "r", newline="", encoding="utf-8") as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    videos[row["title"]] = {"image": "video_images/" + row["image"],
+                                            "genre": row["genre"],
+                                            "type": "short",
+                                            "rating": row["rating"]}
         return videos
 
     def refresh_videos(self):
+        self.feedback.grid_forget()
         search = self.searchbox.get().lower().strip()
         
         for widget in self.video_list_frame.winfo_children():
@@ -342,6 +355,8 @@ class BrowseMenu(ctk.CTkFrame):
             watchlaterbtn.grid(row=0, column=2, padx=5)
 
             row += 1
+        if row == 2:
+            self.feedback.grid(row=2, column=0, columnspan=3)
 
     def toggle_watch_later(self, video:str):
         if video in (prof:=self.master.profile).get_wlist():
@@ -788,9 +803,15 @@ class StreamingServiceApp(ctk.CTk):
         self.main.accountinfowindow.withdraw()
         self.main.forget()
         self.browsemenu.pack(fill="both", expand=True)
+        self.browsemenu.refresh_videos()
 
     def browsetomain(self):
         self.browsemenu.forget()
+        self.browsemenu.feedback.grid_forget()
+        self.browsemenu.searchbox.delete(0, "end")
+        self.browsemenu.type_filter.set("all")
+        self.browsemenu.genre_filter.set("all")
+        self.browsemenu.rating_filter.set("all")
         self.main.pack(fill="both", expand=True)
 
     def maintosubscription(self):
