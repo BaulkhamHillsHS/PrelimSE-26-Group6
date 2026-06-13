@@ -146,6 +146,10 @@ class SignupFrame(ctk.CTkFrame):
             self.status_label.configure(text="Please fill in all fields.", text_color="red")
             return
         
+        if "@" in username:
+            self.status_label.configure(text="Username cannot contain @", text_color="red")
+            return
+
         try:
             age = int(age)
             if age <= 0:
@@ -154,6 +158,10 @@ class SignupFrame(ctk.CTkFrame):
             self.status_label.configure(text="Please enter a positive whole number for age", text_color="red")
             return
         
+        if not "@" in email:
+            self.status_label.configure(text="Email must contain @", text_color="red")
+            return
+
         if password != confirm_password:
             self.status_label.configure(text="Passwords do not match.", text_color="red")
             return
