@@ -294,11 +294,10 @@ class BrowseMenu(ctk.CTkFrame):
         with open("video_details.csv", "r", newline="", encoding="utf-8") as f:
             reader = csv.DictReader(f)
             for row in reader:
-                videos[row["title"]] = {"image": row["image"],
+                videos[row["title"]] = {"image": "video_images/" + row["image"],
                                         "genre": row["genre"],
                                         "type": row["type"],
                                         "rating": row["rating"]}
-        print(videos)
         return videos
 
     def refresh_videos(self):
@@ -696,7 +695,8 @@ class StreamingServiceApp(ctk.CTk):
         self.profile = ""
         UserProfiles.load_from_csv(self._accounts)
 
-        ctk.CTkLabel(self, text=NAME, text_color="pink").pack(side="top", pady=(10, 10))
+        self.logo = ctk.CTkImage(light_image=Image.open("logo.png"), size=(40, 40))
+        ctk.CTkLabel(self, text=NAME, text_color="pink", image=self.logo, compound="left").pack(side="top", pady=(10, 10))
 
         self.login = LoginFrame(self)
         self.login.pack(fill="both", expand=True, padx=40, pady=(10, 20))
