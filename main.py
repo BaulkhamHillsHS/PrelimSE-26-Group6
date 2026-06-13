@@ -287,7 +287,7 @@ class BrowseMenu(ctk.CTkFrame):
 
         self.refresh_videos()
 
-    def load_video_details(self):
+    def load_video_details(self) -> dict[dict]:
         videos:dict[dict] = {}
         with open("video_details.csv", "r", newline="", encoding="utf-8") as f:
             reader = csv.DictReader(f)
@@ -295,6 +295,13 @@ class BrowseMenu(ctk.CTkFrame):
                 videos[row["title"]] = {"image": "video_images/" + row["image"],
                                         "genre": row["genre"],
                                         "type": row["type"],
+                                        "rating": row["rating"]}
+        with open("tvshow_details.csv", "r", newline="", encoding="utf-8") as f: # Same as above but will be different soon
+            reader = csv.DictReader(f)
+            for row in reader:
+                videos[row["title"]] = {"image": "video_images/" + row["image"],
+                                        "genre": row["genre"],
+                                        "type": "TV show",
                                         "rating": row["rating"]}
         return videos
 
