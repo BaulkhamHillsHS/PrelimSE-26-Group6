@@ -362,14 +362,11 @@ class BrowseMenu(ctk.CTkFrame):
 
 class BaseScrollFrame(ctk.CTkScrollableFrame):
     """Base frame for scrollable frames"""
-    def __init__(self, master, type_:str=None, filter_:str="", dir:str="", video=False, **kwargs):
+    def __init__(self, master, string:str="", dir:str="", video=False, **kwargs):
         super().__init__(master, orientation="horizontal"if dir =="x"else"vertical", **kwargs)
-        self.type = type_ # genre, type or rating or None
-        self.filter = filter_ # a filter in the type or ""
-        if self.type and self.filter:
-            self.text = ctk.CTkLabel(self, text=f"{type_.capitalize()}: {filter_}")
-            self.text.grid(row=0, column=0, columnspan=100, sticky="w")
-        if video:
+        if string:
+            ctk.CTkLabel(self, text=string).grid(row=0, column=0, columnspan=100, sticky="w")
+        if video: # If frame is used for displaying video buttons
             self.configure(width=650, height=120)
         self.buttons = []
         
@@ -390,24 +387,54 @@ class BaseVideoFrame(ctk.CTkFrame):
         self.name = name
         self.image = ctk.CTkLabel(self, text="", image=ctk.CTkImage(light_image=Image.open(image_path), size=(440, 225)))
         self.image.grid(row=0, column=0, rowspan=3, columnspan=2, padx=5, pady=5)
-        ctk.CTkLabel(self, text=name).grid(row=3, column=0, columnspan=2, pady=2)
-        ctk.CTkLabel(self, text=type).grid(row=5, column=0, columnspan=3, pady=2)
-        ctk.CTkButton(self, text="Watch", command=lambda:print("watch")).grid(row=0, column=2, columnspan=2, padx=10, pady=5)
-        ctk.CTkButton(self, text="Add to watch later", command=lambda:print("watch_later")).grid(row=1, column=2, columnspan=2, padx=10, pady=5)
-        ctk.CTkButton(self, text="Back", command=lambda:print("Back")).grid(row=5, column=2, columnspan=2, padx=5, pady=4)
 
-    def loadnew(self, image_path:str):
-        self.image.configure(image=ctk.CTkImage(light_image=Image.open(image_path), size=(440, 225)))
-        
+        self.textlabel = ctk.CTkLabel(self, text=name)
+        self.textlabel.grid(row=3, column=0, columnspan=2, pady=2)
 
-class TVShowFrame(BaseVideoFrame):
-    def __init__(self, master, image_path, name, type, epnumber:int, epbefore:BaseVideoFrame, epafter:BaseVideoFrame, serieslen:int, **kwargs):
+        self.typelabel = ctk.CTkLabel(self, text=type)
+        self.typelabel.grid(row=5, column=0, columnspan=3, pady=2)
+
+        self.watchbtn = ctk.CTkButton(self, text="Watch", command=lambda:print("watch"))
+        self.watchbtn.grid(row=0, column=2, columnspan=2, padx=10, pady=5)
+
+        self.watchlaterbtn = ctk.CTkButton(self, text="Add to watch later", command=lambda:print("watch_later"))
+        self.watchlaterbtn.grid(row=1, column=2, columnspan=2, padx=10, pady=5)
+
+        self.backbtn = ctk.CTkButton(self, text="Back", command=lambda:self.master.videotomain(self))
+        self.backbtn.grid(row=5, column=2, columnspan=2, padx=5, pady=4)
+
+
+class TVShowVideoFrame(BaseVideoFrame):
+    def __init__(self, master, image_path, name, type, epnumber:int, epbefore:BaseVideoFrame|None, epafter:BaseVideoFrame|None, serieslen:int, **kwargs):
         super().__init__(master, image_path, name, type, **kwargs)
+        self.epafter = epafter
         if epnumber != 1:
             ctk.CTkButton(self, text="Previous Episode", command=lambda:print(f"Previous Episode: {epbefore.name}")).grid(row=2, column=2, padx=5, pady=5)
         if epnumber != serieslen:
-            ctk.CTkButton(self, text="Next Episode", command=lambda:print(f"Next Episode: {epafter.name}")).grid(row=2, column=3, padx=5, pady=5)
-            
+            ctk.CTkButton(self, text="Next Episode", command=lambda:print(f"Next Episode: {self.epafter.name}")).grid(row=2, column=3, padx=5, pady=5)
+        
+    def setepafter(self, epafter:BaseVideoFrame):
+        self.epafter = epafter
+
+class TVShowFrame(BaseVideoFrame):
+    def __init__(self, master, image_path, name, type, eps:dict[dict], **kwargs):
+        super().__init__(master, image_path, name, type, **kwargs)
+        self.typelabel.grid_forget()
+        self.watchlaterbtn.grid_forget()
+        self.backbtn.grid_forget()
+        self.backbtn.grid(row=1, column=2, columnspan=2, padx=5, pady=4)
+        videos = BaseScrollFrame(self, "x")
+        i = 1
+        frames:list[TVShowVideoFrame] = []
+        for ep, details in eps.items():
+            frame = TVShowVideoFrame(master, details["image"], ep, "TV show", details["episodenum"], None if i==1 or i==(showlen:=len(eps))else frames[i-2], None, showlen)
+            frames.append(frame)
+            videos.add_btn(details["image"], command=lambda:master.maintovideo(frame))
+            i += 1
+        for i in range(showlen-1):
+            frames[i].setepafter(frames[i+1])
+
+
 
 
 
@@ -716,6 +743,8 @@ class StreamingServiceApp(ctk.CTk):
 
         self.main = MainFrame(self)
 
+        self.generate_scroll("food")
+
     def loggedin(self, username):
         self.changeframetomain()
         self.account = username
@@ -793,6 +822,14 @@ class StreamingServiceApp(ctk.CTk):
         self.subscription.forget()
         self.main.pack(fill="both", expand=True)
 
+    def videotomain(self, videoframe:BaseVideoFrame):
+        videoframe.forget()
+        self.main.pack(fill="both", expand=True)
+
+    def maintovideo(self, videoframe:BaseVideoFrame):
+        self.main.forget()
+        videoframe.pack(fill="both", expand=True)
+
     def load_video_details(self, type:str="all") -> dict[dict]:
         videos:dict[dict] = {}
         if type == "all" or type == "short":
@@ -835,6 +872,35 @@ class StreamingServiceApp(ctk.CTk):
     #                 episodes[ep] = details
     #         # Creates tv show button for each episode
     #         for episode in episodes:
+                
+    def generate_scroll(self, genre:str="", video_type:str="", rating:str=""):
+        """
+        Generates a scroll frame with the window buttons based on the filters\n
+        genre: food, music, education, lifestyle, None(default -> all)\n
+        video_type: usermade, short, None(default -> all)\n
+        rating: G, PG, M, MA, R, None(default -> all)
+        """
+        typetxt = {"usermade": "user-made videos", "short": "shorts", "": "videos"}
+        string = f"{rating}{" rated "if rating else""}{genre} {typetxt[video_type]}"        
+        scroll = BaseScrollFrame(self.main.scrolls, string, "x", True)
+        scroll.pack()
+        if not genre and not video_type and not rating:
+            return
+        if video_type:
+            videos = self.load_video_details(video_type)
+        else:
+            videos = self.load_video_details("usermade") | self.load_video_details("short")
+        videos_filtered = {}
+        for video, details in videos.items():
+            # DOSENT WORK BECAUSE CANNOT BE SEPERATE IF CHECKS
+            # ALSO NEED TO TAKE INTO ACCOUNT THE PROFILE AGE
+            if not genre or details["genre"] == genre:
+                videos_filtered[video] = details
+            if not rating or details["rating"] == rating:
+                videos_filtered[video] = details
+        for video, details in videos_filtered.items():
+            frame = BaseVideoFrame(self, details["image"], video, details["type"])
+            scroll.add_btn(details["image"], command=lambda:self.maintovideo(frame))
                 
 
 class UserAccounts:
