@@ -242,7 +242,7 @@ class BrowseMenu(ctk.CTkFrame):
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
 
-        self.video_images = self.load_video_details()
+        self.video_images = self.master.load_video_details()
 
         self.grid_columnconfigure(0, weight=0)
         self.grid_columnconfigure(1, weight=1)
@@ -288,21 +288,6 @@ class BrowseMenu(ctk.CTkFrame):
         self.feedback = ctk.CTkLabel(self, text="No videos found. Try widening your search or filters.")
 
         self.refresh_videos()
-
-    def load_video_details(self, type:str="all") -> dict[dict]:
-        videos:dict[dict] = {}
-        # id, actual name
-        ids = [("usermade", "user-made video"), ("tvshow", "TV show"), ("short", "short")]
-        for id, name in ids:
-            if type == "all" or type == id:
-                with open(f"video_details/{id}_details.csv", "r", newline="", encoding="utf-8") as f:
-                    reader = csv.DictReader(f)
-                    for row in reader:
-                        videos[row["title"]] = {"image": "video_images/" + row["image"],
-                                                "genre": row["genre"],
-                                                "type": name,
-                                                "rating": row["rating"]}
-        return videos
 
     def refresh_videos(self):
         self.feedback.grid_forget()
@@ -402,22 +387,26 @@ class BaseVideoFrame(ctk.CTkFrame):
         super().__init__(master, **kwargs)
         self.grid_rowconfigure(6, weight=1)
         self.grid_columnconfigure(4, weight=1)
-        ctk.CTkLabel(self, text="", image=ctk.CTkImage(light_image=Image.open(image_path), size=(440, 225))).grid(row=0, column=0, rowspan=3, columnspan=2, padx=5, pady=5)
+        self.name = name
+        self.image = ctk.CTkLabel(self, text="", image=ctk.CTkImage(light_image=Image.open(image_path), size=(440, 225)))
+        self.image.grid(row=0, column=0, rowspan=3, columnspan=2, padx=5, pady=5)
         ctk.CTkLabel(self, text=name).grid(row=3, column=0, columnspan=2, pady=2)
         ctk.CTkLabel(self, text=type).grid(row=5, column=0, columnspan=3, pady=2)
         ctk.CTkButton(self, text="Watch", command=lambda:print("watch")).grid(row=0, column=2, columnspan=2, padx=10, pady=5)
         ctk.CTkButton(self, text="Add to watch later", command=lambda:print("watch_later")).grid(row=1, column=2, columnspan=2, padx=10, pady=5)
         ctk.CTkButton(self, text="Back", command=lambda:print("Back")).grid(row=5, column=2, columnspan=2, padx=5, pady=4)
 
+    def loadnew(self, image_path:str):
+        self.image.configure(image=ctk.CTkImage(light_image=Image.open(image_path), size=(440, 225)))
         
 
 class TVShowFrame(BaseVideoFrame):
     def __init__(self, master, image_path, name, type, epnumber:int, epbefore:BaseVideoFrame, epafter:BaseVideoFrame, serieslen:int, **kwargs):
         super().__init__(master, image_path, name, type, **kwargs)
         if epnumber != 1:
-            ctk.CTkButton(self, text="Previous Episode", command=lambda:print("Previous Episode")).grid(row=2, column=2, padx=5, pady=5)
+            ctk.CTkButton(self, text="Previous Episode", command=lambda:print(f"Previous Episode: {epbefore.name}")).grid(row=2, column=2, padx=5, pady=5)
         if epnumber != serieslen:
-            ctk.CTkButton(self, text="Next Episode", command=lambda:print("Next Episode")).grid(row=2, column=3, padx=5, pady=5)
+            ctk.CTkButton(self, text="Next Episode", command=lambda:print(f"Next Episode: {epafter.name}")).grid(row=2, column=3, padx=5, pady=5)
             
 
 
@@ -461,15 +450,6 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe?
 
         self.scrolls = BaseScrollFrame(self, dir="y")
         self.scrolls.grid(row=6, column=0, columnspan=10, rowspan=2, padx=2, pady=2, sticky="ew")
-
-        self.lifestyle = BaseScrollFrame(self.scrolls, "genre", "lifestyle", "x", video=True)
-        self.lifestyle.grid(sticky="ew")
-
-        self.lifestyle.add_btn("video_images/bird_sam.png", lambda:print("sam bird"))
-        self.lifestyle.add_btn("video_images/bird_badam.png", lambda:print("badam bird"))
-
-        self.food = BaseScrollFrame(self.scrolls, "genre", "food", "x", video=True)
-        self.food.grid(sticky="ew")
 
     def make_accountinfowindow(self):
         self.accountinfowindow = AccountInfoWindow(self)
@@ -718,6 +698,8 @@ class StreamingServiceApp(ctk.CTk):
         self.geometry(f"{self.WIDTH}x{self.HEIGHT}+{self.X}+{self.Y}")
 
         self.watchlist_setting = ctk.BooleanVar(value=False)
+        self.videos:dict[list[dict]] = {} # {showtype: [{class:class, moreinfo: info}], showtype: [{}]}
+        # eg. {tvshow: [{class:class, show:showname, epnum:1}]}
 
         self._accounts = UserAccounts()
         self._accounts.load_from_csv()
@@ -810,6 +792,50 @@ class StreamingServiceApp(ctk.CTk):
     def subscriptiontomain(self):
         self.subscription.forget()
         self.main.pack(fill="both", expand=True)
+
+    def load_video_details(self, type:str="all") -> dict[dict]:
+        videos:dict[dict] = {}
+        if type == "all" or type == "short":
+            with open("video_details/short_details.csv", "r", newline="", encoding="utf-8") as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    videos[row["title"]] = {"image": "video_images/" + row["image"],
+                                            "genre": row["genre"],
+                                            "type": "short",
+                                            "rating": row["rating"]}
+        if type == "all" or type == "tvshow":
+            with open("video_details/tvshow_details.csv", "r", newline="", encoding="utf-8") as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    videos[row["title"]] = {"image": "video_images/" + row["image"],
+                                            "genre": row["genre"],
+                                            "type": "TV show",
+                                            "rating": row["rating"],
+                                            "show": row["show"],
+                                            "epnum": int(row["episodenum"])}
+        if type == "all" or type == "usermade":
+            with open("video_details/usermade_details.csv", "r", newline="", encoding="utf-8") as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    videos[row["title"]] = {"image": "video_images/" + row["image"],
+                                            "genre": row["genre"],
+                                            "type": "user-made video",
+                                            "rating": row["rating"],
+                                            "user": row["user"]}
+        return videos
+    
+    # def load_tvshows(self):
+    #     tvshoweps = self.load_video_details("tvshow")
+    #     tvshows = set(map(lambda vals:vals["show"], tvshoweps.values()))
+    #     for show in tvshows:
+    #         episodes = {}
+    #         # Gets only the episodes in the show
+    #         for ep, details in tvshoweps.items():
+    #             if details["show"] == show:
+    #                 episodes[ep] = details
+    #         # Creates tv show button for each episode
+    #         for episode in episodes:
+                
 
 class UserAccounts:
     # Only handles data
