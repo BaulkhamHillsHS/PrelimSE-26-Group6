@@ -339,22 +339,37 @@ class BrowseMenu(ctk.CTkFrame):
 
     def open_video(self, video:str):
         self.master.main.add_video_to_history(video)
+
         if self.master.main.watchlist_setting.get():
             self.master.profile.remove_from_wlist(video)
             self.refresh_videos()
 
-        if self.window == None or not self.window.winfo_exists():
+        info = self.video_images[video]
+
+        if info["type"] == "TV show":
+            shows = self.master.load_tvshow_episodes()
+            show_name = info["show"]
+
+            episodes = shows[show_name]
+
+            index = next(i for i, ep in enumerate(episodes) if video == ep[1])
+
+            self.window = TVEpisodeView(self.master, show_name, episodes, index)
+            return
+
+        if self.window is None or not self.window.winfo_exists():
             self.window = ctk.CTkToplevel(self.master)
             self.window.title(video)
 
-            image_path = self.video_images[video]["image"]
-            image = ctk.CTkImage(light_image=Image.open(image_path), size=(400, 225))
+            image = ctk.CTkImage(light_image=Image.open(info["image"]), size=(400, 225))
 
             label = ctk.CTkLabel(self.window, text="", image=image)
             label.image = image
             label.pack(padx=10, pady=10, fill="both", expand=True)
+
         elif self.window.title() == video:
             self.window.focus()
+
         else:
             self.window.destroy()
             self.open_video(video)
@@ -382,11 +397,19 @@ class BaseScrollFrame(ctk.CTkScrollableFrame):
 class BaseVideoFrame(ctk.CTkFrame):
     def __init__(self, master, image_path:str, name:str, type:str, **kwargs):
         super().__init__(master, **kwargs)
-        self.grid_rowconfigure(6, weight=1)
-        self.grid_columnconfigure(4, weight=1)
+        self.grid_rowconfigure(0, weight=3)
+        self.grid_rowconfigure(1, weight=0)
+        self.grid_rowconfigure(2, weight=0)
+        self.grid_rowconfigure(3, weight=0)
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_columnconfigure(1, weight=1)
+
         self.name = name
         self.image = ctk.CTkLabel(self, text="", image=ctk.CTkImage(light_image=Image.open(image_path), size=(440, 225)))
-        self.image.grid(row=0, column=0, rowspan=3, columnspan=2, padx=5, pady=5)
+        self.img_pil = Image.open(image_path)
+
+        self.image = ctk.CTkLabel(self, text="")
+        self.image.grid(row=0, column=0, rowspan=3, columnspan=2, padx=5, pady=5, sticky="nsew")
 
         self.textlabel = ctk.CTkLabel(self, text=name)
         self.textlabel.grid(row=3, column=0, columnspan=2, pady=2)
@@ -394,16 +417,38 @@ class BaseVideoFrame(ctk.CTkFrame):
         self.typelabel = ctk.CTkLabel(self, text=type)
         self.typelabel.grid(row=5, column=0, columnspan=3, pady=2)
 
-        self.watchbtn = ctk.CTkButton(self, text="Watch", command=lambda:print("watch"))
-        self.watchbtn.grid(row=0, column=2, columnspan=2, padx=10, pady=5)
+        # don't need these? user clicks on video to watch it and they can add to watch later in the menu
 
-        self.watchlaterbtn = ctk.CTkButton(self, text="Add to watch later", command=lambda:print("watch_later"))
-        self.watchlaterbtn.grid(row=1, column=2, columnspan=2, padx=10, pady=5)
+        #self.watchbtn = ctk.CTkButton(self, text="Watch", command=lambda:print("watch"))
+        #self.watchbtn.grid(row=0, column=2, columnspan=2, padx=10, pady=5)
 
-        self.backbtn = ctk.CTkButton(self, text="Back", command=lambda:self.master.videotomain(self))
-        self.backbtn.grid(row=5, column=2, columnspan=2, padx=5, pady=4)
+        #self.watchlaterbtn = ctk.CTkButton(self, text="Add to Watch Later", command=lambda:print("watch_later"))
+        #self.watchlaterbtn.grid(row=1, column=2, columnspan=2, padx=10, pady=5)
+
+        self.bind("<Configure>", self.resize_image)
+
+    def resize_image(self, event=None):
+        if hasattr(self, "_resize_needed"):
+            self.after_cancel(self._resize_needed)
+
+        self._resize_needed = self.after(50, self._do_resize)
+
+    def _do_resize(self):
+        w = self.image.winfo_width()
+        h = self.image.winfo_height()
+
+        if w < 10 or h < 10:
+            return
+
+        img = self.img_pil.copy()
+        img.thumbnail((w, h))
+
+        ctk_img = ctk.CTkImage(light_image=img, size=img.size)
+        self.image.configure(image=ctk_img)
+        self.image.image = ctk_img
 
 
+'''
 class TVShowVideoFrame(BaseVideoFrame):
     def __init__(self, master, image_path, name, type, epnumber:int, epbefore:BaseVideoFrame|None, epafter:BaseVideoFrame|None, serieslen:int, **kwargs):
         super().__init__(master, image_path, name, type, **kwargs)
@@ -433,10 +478,66 @@ class TVShowFrame(BaseVideoFrame):
             i += 1
         for i in range(showlen-1):
             frames[i].setepafter(frames[i+1])
+'''
+class TVEpisodeView(ctk.CTkToplevel):
+    def __init__(self, master, show_name, episodes, start_index=0):
+        super().__init__(master)
 
+        self.show_name = show_name
+        self.episodes = episodes
+        self.index = start_index
 
+        self.title(show_name)
+        self.geometry("440x440")
 
+        self.content = BaseVideoFrame(self, episodes[self.index][2]["image"], episodes[self.index][1], "TV show")
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_rowconfigure(1, weight=0)
+        self.grid_rowconfigure(2, weight=0)
 
+        self.grid_columnconfigure(0, weight=1)
+
+        self.content.grid(row=0, column=0, columnspan=3, sticky="nsew", padx=10, pady=10)
+
+        self.next_btn = ctk.CTkButton(self, text="Next Episode", command=self.next_ep)
+        self.prev_btn = ctk.CTkButton(self, text="Previous Episode", command=self.prev_ep)
+        self.back_btn = ctk.CTkButton(self, text="Back", command=lambda: self.destroy())
+
+        self.prev_btn.grid(row=1, column=0, padx=10, pady=10, sticky="w")
+        self.next_btn.grid(row=1, column=2, padx=10, pady=10, sticky="e")
+        self.back_btn.grid(row=2, column=0, columnspan=3, pady=10)
+
+        self.update_buttons()
+
+    def load_episode(self):
+        ep_info = self.episodes[self.index][2]
+
+        image = ctk.CTkImage(light_image=Image.open(ep_info["image"]), size=(440, 225))
+
+        self.content.image.configure(image=image)
+        self.content.img_pil = Image.open(ep_info["image"])
+        self.content.image.image = image
+
+        self.content.textlabel.configure(text=self.episodes[self.index][1])
+        if hasattr(self.content, "_resize_needed"):
+            self.content.after_cancel(self.content._resize_needed)
+            self.content.resize_image()
+
+    def next_ep(self):
+        if self.index < len(self.episodes) - 1:
+            self.index += 1
+            self.load_episode()
+            self.update_buttons()
+
+    def prev_ep(self):
+        if self.index > 0:
+            self.index -= 1
+            self.load_episode()
+            self.update_buttons()
+
+    def update_buttons(self):
+        self.prev_btn.configure(state="normal" if self.index > 0 else "disabled")
+        self.next_btn.configure(state="normal" if self.index < len(self.episodes) - 1 else "disabled")
 
 class MainFrame(ctk.CTkFrame): # better name than mainframe?
     # Frame for after login, watching things idk
@@ -743,12 +844,11 @@ class StreamingServiceApp(ctk.CTk):
 
         self.main = MainFrame(self)
 
-        self.generate_scroll("food")
-
     def loggedin(self, username):
         self.changeframetomain()
         self.account = username
         self.loginupdate(self.account)
+        self.generate_scroll("food")
 
     def newaccountloggedin(self):
         self.changeframetomain()
@@ -881,7 +981,7 @@ class StreamingServiceApp(ctk.CTk):
         rating: G, PG, M, MA, R, None(default -> all)
         """
         typetxt = {"usermade": "user-made videos", "short": "shorts", "": "videos"}
-        string = f"{rating}{" rated "if rating else""}{genre} {typetxt[video_type]}"        
+        string = f"{rating}{' rated ' if rating else ''}{genre} {typetxt[video_type]}"       
         scroll = BaseScrollFrame(self.main.scrolls, string, "x", True)
         scroll.pack()
         if not genre and not video_type and not rating:
@@ -890,17 +990,32 @@ class StreamingServiceApp(ctk.CTk):
             videos = self.load_video_details(video_type)
         else:
             videos = self.load_video_details("usermade") | self.load_video_details("short")
-        videos_filtered = {}
+
         for video, details in videos.items():
-            # DOSENT WORK BECAUSE CANNOT BE SEPERATE IF CHECKS
-            # ALSO NEED TO TAKE INTO ACCOUNT THE PROFILE AGE
-            if not genre or details["genre"] == genre:
-                videos_filtered[video] = details
-            if not rating or details["rating"] == rating:
-                videos_filtered[video] = details
-        for video, details in videos_filtered.items():
+            if any((genre and details["genre"] != genre,
+                    rating and details["rating"] != rating,
+                    self.profile.age < 18 and details["rating"] == "R",
+                    self.profile.age < 15 and details["rating"] in ["R", "MA"])):
+                continue
+
             frame = BaseVideoFrame(self, details["image"], video, details["type"])
-            scroll.add_btn(details["image"], command=lambda:self.maintovideo(frame))
+
+            scroll.add_btn(details["image"], command=lambda f=frame: self.maintovideo(f))
+
+    def load_tvshow_episodes(self):
+        episodes = self.load_video_details("tvshow")
+
+        shows = {}
+        for title, info in episodes.items():
+            show = info["show"]
+            if not show in shows:
+                shows[show] = []
+            shows[show].append((info["epnum"], title, info))
+
+        for show in shows:
+            shows[show].sort(key=lambda x: x[0])
+
+        return shows
                 
 
 class UserAccounts:
