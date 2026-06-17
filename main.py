@@ -992,12 +992,12 @@ class StreamingServiceApp(ctk.CTk):
             self.window = ShortView(self.master, video, info)
             return
 
-        else:
-            self.window.destroy()
-            self.open_video(video)
         if info["type"] == "user-made video":
             self.window = UserMadeView(self.master, video, info)
             return
+
+        else:
+            self.window.destroy()
 
     # def load_tvshows(self):
     #     tvshoweps = self.load_video_details("tvshow")
