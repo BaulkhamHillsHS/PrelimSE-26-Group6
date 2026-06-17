@@ -31,6 +31,7 @@ polymorphism - multiple classes containing same method
 
 
 
+
 https://youtu.be/uGI0tkmyogU?t=1590 "We should blur this on YouTube and make it unblurred on Nebula."
 """
 
@@ -256,8 +257,6 @@ class BrowseMenu(ctk.CTkFrame):
         self.videomenu = None
         self.video_buttons = []
 
-        self.window = None
-
         self.filter_frame = ctk.CTkFrame(self)
         self.filter_frame.grid(row=1, column=1, columnspan=10, padx=10, pady=10, sticky="w")
 
@@ -320,7 +319,7 @@ class BrowseMenu(ctk.CTkFrame):
             title = ctk.CTkLabel(video_row, text=video, anchor="w")
             title.grid(row=0, column=0, padx=10, pady=5, sticky="ew")
 
-            watchbtn = ctk.CTkButton(video_row, text="Watch", width=100, command=lambda v=video: self.open_video(v))
+            watchbtn = ctk.CTkButton(video_row, text="Watch", width=100, command=lambda v=video: self.master.open_video(v))
             watchbtn.grid(row=0, column=1, padx=5)
 
             watchlaterbtn = ctk.CTkButton(video_row, text=("Remove from" if video in self.master.profile.get_wlist() else "Add to") + "\nWatch Later", width=120, command=lambda v=video: self.toggle_watch_later(v))
@@ -338,40 +337,15 @@ class BrowseMenu(ctk.CTkFrame):
         UserProfiles.save_to_csv(self.master._accounts)
         self.refresh_videos()
 
-    def open_video(self, video:str):
-        if self.window and self.window.winfo_exists():
-            self.window.destroy()
+    def open_tvshow(self, info, video):
+        shows = self.master.load_tvshow_episodes()
+        show_name = info["show"]
 
-        self.master.main.add_video_to_history(video)
+        episodes = shows[show_name]
 
-        if self.master.main.watchlist_setting.get():
-            self.master.profile.remove_from_wlist(video)
-            self.refresh_videos()
+        index = next(i for i, ep in enumerate(episodes) if video == ep[1])
 
-        info = self.video_images[video]
-
-        if info["type"] == "TV show":
-            shows = self.master.load_tvshow_episodes()
-            show_name = info["show"]
-
-            episodes = shows[show_name]
-
-            index = next(i for i, ep in enumerate(episodes) if video == ep[1])
-
-            self.window = TVEpisodeView(self.master, show_name, episodes, index)
-            return
-
-        if info["type"] == "Movie":
-            self.window = MovieView(self.master, video, info)
-            return
-
-        if info["type"] == "short":
-            self.window = ShortView(self.master, video, info)
-            return
-
-        if info["type"] == "user-made video":
-            self.window = UserMadeView(self.master, video, info)
-            return
+        self.master.window = TVEpisodeView(self.master, show_name, episodes, index)
 
 
 class BaseScrollFrame(ctk.CTkScrollableFrame):
@@ -396,56 +370,27 @@ class BaseScrollFrame(ctk.CTkScrollableFrame):
 class BaseVideoFrame(ctk.CTkFrame):
     def __init__(self, master, image_path:str, name:str, type:str, **kwargs):
         super().__init__(master, **kwargs)
-        self.grid_rowconfigure(0, weight=3)
-        self.grid_rowconfigure(1, weight=0)
-        self.grid_rowconfigure(2, weight=0)
-        self.grid_rowconfigure(3, weight=0)
-        self.grid_columnconfigure(0, weight=1)
-        self.grid_columnconfigure(1, weight=1)
+        self.grid_rowconfigure(6, weight=1)
+        self.grid_columnconfigure(4, weight=1)
 
         self.name = name
-        self.image = ctk.CTkLabel(self, text="", image=ctk.CTkImage(light_image=Image.open(image_path), size=(440, 225)))
-        self.img_pil = Image.open(image_path)
+        self.image = ctk.CTkLabel(self, text="", image=ctk.CTkImage(light_image=Image.open(image_path), size=(800, 450)))
+        self.image.grid(row=0, column=0, rowspan=3, columnspan=2, padx=30, pady=30, sticky="nsew")
 
-        self.image = ctk.CTkLabel(self, text="")
-        self.image.grid(row=0, column=0, rowspan=3, columnspan=2, padx=5, pady=5, sticky="nsew")
+        self.textlabel = ctk.CTkLabel(self, text=name, font=("Roboto", 36))
+        self.textlabel.grid(row=3, column=0, columnspan=2, pady=10, padx=30, sticky="w")
 
-        self.textlabel = ctk.CTkLabel(self, text=name, font=("Roboto", 16))
-        self.textlabel.grid(row=3, column=0, columnspan=2, pady=2, padx=(10,0), sticky="w")
+        self.typelabel = ctk.CTkLabel(self, text=type, font=("Roboto", 36))
+        self.typelabel.grid(row=5, column=0, columnspan=2, pady=10, padx=30, sticky="w")
 
-        self.typelabel = ctk.CTkLabel(self, text=type, font=("Roboto", 16))
-        self.typelabel.grid(row=5, column=0, columnspan=2, pady=2, padx=(10, 0), sticky="w")
+        self.watchbtn = ctk.CTkButton(self, 400, 75, text="Watch", command=lambda:master.open_video(name))
+        self.watchbtn.grid(row=0, column=2, columnspan=2, padx=10, pady=5)
 
-        # don't need these? user clicks on video to watch it and they can add to watch later in the menu
+        self.watchlaterbtn = ctk.CTkButton(self, 400, 75, text="Add to Watch Later", command=lambda:print("watch_later"))
+        self.watchlaterbtn.grid(row=1, column=2, columnspan=2, padx=10, pady=5)
 
-        #self.watchbtn = ctk.CTkButton(self, text="Watch", command=lambda:print("watch"))
-        #self.watchbtn.grid(row=0, column=2, columnspan=2, padx=10, pady=5)
-
-        #self.watchlaterbtn = ctk.CTkButton(self, text="Add to Watch Later", command=lambda:print("watch_later"))
-        #self.watchlaterbtn.grid(row=1, column=2, columnspan=2, padx=10, pady=5)
-
-        self.bind("<Configure>", self.resize_image)
-
-    def resize_image(self, event=None):
-        if hasattr(self, "_resize_needed"):
-            self.after_cancel(self._resize_needed)
-
-        self._resize_needed = self.after(50, self._do_resize)
-
-    def _do_resize(self):
-        w = self.image.winfo_width()
-        h = self.image.winfo_height()
-
-        if w < 10 or h < 10:
-            return
-
-        img = self.img_pil.copy()
-        img.thumbnail((w, h))
-
-        ctk_img = ctk.CTkImage(light_image=img, size=img.size)
-        self.image.configure(image=ctk_img)
-        self.image.image = ctk_img
-
+        self.backbtn = ctk.CTkButton(self, 400, 75, text="Back", command=lambda:self.master.videotomain(self))
+        self.backbtn.grid(row=5, column=2, columnspan=2, padx=5, pady=4)
 
 '''
 class TVShowVideoFrame(BaseVideoFrame):
@@ -485,7 +430,15 @@ class VideoView(ctk.CTkToplevel):
         self.title(title)
         self.geometry("440x440")
 
+        self.content = ctk.CTkFrame(self, 440, 225)
+        self.image = ctk.CTkLabel(self.content,440, 225, text="", image=ctk.CTkImage(light_image=Image.open(episodes[self.index][2]["image"]), size=(440, 225)))
+        self.image.pack()
+        self.text = ctk.CTkLabel(self.content, text=f"Episode {episodes[self.index][2]['epnum']}: {episodes[self.index][1]}")
+        self.text.pack()
+
         self.grid_rowconfigure(0, weight=1)
+        self.grid_rowconfigure((1,2), weight=0)
+
         self.grid_columnconfigure(0, weight=1)
 
         self.content = BaseVideoFrame(self, image_path, title, video_type)
@@ -523,16 +476,13 @@ class TVEpisodeView(VideoView):
 
         image = ctk.CTkImage(light_image=Image.open(ep_info["image"]), size=(440, 225))
 
-        self.content.image.configure(image=image)
-        self.content.img_pil = Image.open(ep_info["image"])
-        self.content.image.image = image
+        self.image.configure(image=image)
 
-        self.content.textlabel.configure(text=self.episodes[self.index][1])
+        self.text.configure(text=f"Episode {self.episodes[self.index][2]['epnum']}: {self.episodes[self.index][1]}")
 
-        if hasattr(self.content, "_resize_needed"):
-            self.content.after_cancel(self.content._resize_needed)
-
-        self.content.resize_image()
+        if hasattr(self.image, "_resize_needed"):
+            self.image.after_cancel(self.image._resize_needed)
+            self.image.resize_image()
 
     def next_ep(self):
         if self.index < len(self.episodes) - 1:
@@ -874,6 +824,8 @@ class StreamingServiceApp(ctk.CTk):
         self.videos:dict[list[dict]] = {} # {showtype: [{class:class, moreinfo: info}], showtype: [{}]}
         # eg. {tvshow: [{class:class, show:showname, epnum:1}]}
 
+        self.window = None
+
         self._accounts = UserAccounts()
         self._accounts.load_from_csv()
         self.account = ""
@@ -893,7 +845,6 @@ class StreamingServiceApp(ctk.CTk):
         self.changeframetomain()
         self.account = username
         self.loginupdate(self.account)
-        self.generate_scroll("food")
 
     def newaccountloggedin(self):
         self.changeframetomain()
@@ -908,6 +859,8 @@ class StreamingServiceApp(ctk.CTk):
         self.update_profiles()
         self.browsemenu = BrowseMenu(self)
         self.subscription = SubscriptionFrame(self)
+        self.generate_scroll("food")
+        self.generate_scroll(video_type="usermade")
 
     def update_profiles(self):
         self.profiles = self._accounts.get_profiles(self.account)
@@ -1013,6 +966,37 @@ class StreamingServiceApp(ctk.CTk):
                                             "type": "Movie",
                                             "rating": row["rating"]}
         return videos
+    
+    def open_video(self, video:str):
+        if self.window.title() == video:
+            self.window.focus()
+        else:
+            self.window.destroy()
+            self.open_video(video)
+      
+        self.main.add_video_to_history(video)
+
+        if self.watchlist_setting.get():
+            self.profile.remove_from_wlist(video)
+            self.main.refresh_videos()
+
+        info = self.browsemenu.video_images[video]
+
+        if info["type"] == "TV show":
+            self.browsemenu.open_tvshow(info, video)
+            return
+          
+        if info["type"] == "Movie":
+            self.window = MovieView(self.master, video, info)
+            return
+
+        if info["type"] == "short":
+            self.window = ShortView(self.master, video, info)
+            return
+
+        if info["type"] == "user-made video":
+            self.window = UserMadeView(self.master, video, info)
+            return
     
     # def load_tvshows(self):
     #     tvshoweps = self.load_video_details("tvshow")
