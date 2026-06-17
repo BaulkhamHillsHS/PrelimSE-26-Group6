@@ -1,5 +1,13 @@
-title,image,genre,rating
-testmovie1,bandcamp.png,education,PG
-testmovie2,bandcamp.png,food,G
-testmovie3,bandcamp.png,music,G
-testmovie4,bandcamp.png,lifestyle,PG
+title,image,genre,director,rating
+Michael,michael.png,music,Antoine Fuqua,PG
+Finding Nemo,nemo.png,adventure,Andrew Stanton,G
+A Minecraft Movie,minecraft.png,adventure,Jared Hess,PG
+Star Wars: Episode I - The Phantom Menace,starwars.png,adventure,George Lucas,PG
+Romeo + Juliet,rplusj.png,romance,Baz Luhrmann,M
+Clueless,clueless.png,romance,Amy Heckerling,M
+Five Nights at Freddy's,freddy.png,horror,Emma Tammi,M
+Fifty Shades of Grey,fiftyshades.png,romance,Sam Taylor-Johnson,MA
+Deadpool,deadpool.png,adventure,Tim Miller,MA
+Joker,joker.png,adventure,Todd Phillips,R
+Django Unchanged,django.png,adventure,Quentin Tarantino,R
+Oppenheimer,oppenheimer.png,adventure,Christopher Nolan,R

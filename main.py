@@ -262,7 +262,7 @@ class BrowseMenu(ctk.CTkFrame):
         self.filter_frame.grid(row=1, column=1, columnspan=10, padx=10, pady=10, sticky="w")
 
         ctk.CTkLabel(self.filter_frame, text="Genre").pack(side="top", padx=(5, 2))
-        self.genre_filter = ctk.CTkComboBox(self.filter_frame, values=["all", "music", "food", "lifestyle", "education"])
+        self.genre_filter = ctk.CTkComboBox(self.filter_frame, values=["all", "music", "food", "lifestyle", "education", "adventure", "romance", "horror", "action"])
         self.genre_filter.set("all")
         self.genre_filter.pack(side="top", padx=5)
 
@@ -983,6 +983,7 @@ class StreamingServiceApp(ctk.CTk):
                     videos[row["title"]] = {"image": "video_images/" + row["image"],
                                             "genre": row["genre"],
                                             "type": "short",
+                                            "user": row["user"],
                                             "rating": row["rating"]}
         if type == "all" or type == "tvshow":
             with open("video_details/tvshow_details.csv", "r", newline="", encoding="utf-8") as f:
@@ -1010,6 +1011,7 @@ class StreamingServiceApp(ctk.CTk):
                     videos[row["title"]] = {"image": "video_images/" + row["image"],
                                             "genre": row["genre"],
                                             "type": "Movie",
+                                            "director": row["director"],
                                             "rating": row["rating"]}
         return videos
     
