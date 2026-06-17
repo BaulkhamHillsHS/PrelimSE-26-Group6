@@ -1,4 +1,22 @@
 show,episodenum,title,image,genre,rating
 Film a Bird,1,Film a Bird — Sam’s Full Attempt | Nebula Plus,bird_sam.png,lifestyle,PG
 Film a Bird,2,Film a Bird — Ben & Adam’s Full Attempt | Nebula Plus,bird_badam.png,lifestyle,PG
-Snack Zone,1,7 Hours in the Snack Zone,snackzone.png,food,PG
+The Snack Zone,1,Sam Lures Ben Into Choo Choo Chew!,choochoochew.png,food,PG
+The Snack Zone,2,7 Hours in the Snack Zone,snackzone.png,food,PG
+Jet Lag: The Game Season 3,1,We Played a 72 Hour Game of Tag Across Europe,tag_ep1.png,adventure,PG
+Jet Lag: The Game Season 3,2,72 Hr Game of Tag - Sam heads the wrong direction?,tag_ep2.png,adventure,PG
+Jet Lag: The Game Season 3,3,72 Hr Game of Tag - Adam's disguise,tag_ep3.png,adventure,PG
+Jet Lag: The Game Season 3,4,72 Hr Game of Tag - Ben attempts to get out of Paris.,tag_ep4.png,adventure,PG
+Jet Lag: The Game Season 3,5,72 Hr Game of Tag - Sam and Adam try to recover.,tag_ep5.png,adventure,PG
+Jet Lag: The Game Season 3,6,72 Hr Game of Tag - Rush to Frankfurt,tag_ep6.png,adventure,PG
+Jet Lag: The Game Season 3,7,72 Hr Game of Tag - Adam's trapped on the wrong train.,tag_ep7.png,adventure,PG
+Among Us,1,A Pizza Party Where Nothing Bad Happens,among_ep1.png,action,MA
+Among Us,1,You Can't Be Hot And Smart,among_ep2.png,action,MA
+Among Us,1,Chaos Has Found A New Home,among_ep3.png,action,MA
+Among Us,1,And They Like To Kill!,among_ep4.png,action,MA
+Among Us,1,Good Vibes Only,among_ep5.png,action,MA
+Among Us,1,Insecurity In Security,among_ep6.png,action,MA
+Among Us,1,6 Angry Crewmates,among_ep7.png,action,MA
+Among Us,1,Impostor Syndrome,among_ep8.png,action,MA
+Among Us,1,I'm Just Venting,among_ep9.png,action,MA
+Among Us,1,Everyone Is Still Alive. No One Is Dead.,among_ep10.png,action,MA
