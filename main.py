@@ -388,11 +388,11 @@ class BaseVideoFrame(ctk.CTkFrame):
         self.image = ctk.CTkLabel(self, text="", image=ctk.CTkImage(light_image=Image.open(image_path), size=(440, 225)))
         self.image.grid(row=0, column=0, rowspan=3, columnspan=2, padx=5, pady=5)
 
-        self.textlabel = ctk.CTkLabel(self, text=name)
-        self.textlabel.grid(row=3, column=0, columnspan=2, pady=2)
+        self.textlabel = ctk.CTkLabel(self, text=name, font=("Roboto", 16))
+        self.textlabel.grid(row=3, column=0, columnspan=2, pady=2, padx=(10,0), sticky="w")
 
-        self.typelabel = ctk.CTkLabel(self, text=type)
-        self.typelabel.grid(row=5, column=0, columnspan=3, pady=2)
+        self.typelabel = ctk.CTkLabel(self, text=type, font=("Roboto", 16))
+        self.typelabel.grid(row=5, column=0, columnspan=2, pady=2, padx=(10, 0), sticky="w")
 
         self.watchbtn = ctk.CTkButton(self, text="Watch", command=lambda:print("watch"))
         self.watchbtn.grid(row=0, column=2, columnspan=2, padx=10, pady=5)
@@ -722,6 +722,7 @@ class StreamingServiceApp(ctk.CTk):
         self.HEIGHT = 1080
         self.X = 100
         self.Y = 100
+        self.resizable(False, False)
         self.geometry(f"{self.WIDTH}x{self.HEIGHT}+{self.X}+{self.Y}")
 
         self.watchlist_setting = ctk.BooleanVar(value=False)
