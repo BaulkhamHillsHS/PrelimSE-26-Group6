@@ -912,6 +912,12 @@ class StreamingServiceApp(ctk.CTk):
         return videos
     
     def open_video(self, video:str):
+        if self.window.title() == video:
+            self.window.focus()
+        else:
+            self.window.destroy()
+            self.open_video(video)
+      
         self.main.add_video_to_history(video)
 
         if self.watchlist_setting.get():
@@ -923,23 +929,18 @@ class StreamingServiceApp(ctk.CTk):
         if info["type"] == "TV show":
             self.browsemenu.open_tvshow(info, video)
             return
+          
+        # if info["type"] == "Movie":
+        #     self.window = MovieView(self.master, video, info)
+        #     return
 
-        if self.window is None or not self.window.winfo_exists():
-            self.window = ctk.CTkToplevel(self.master)
-            self.window.title(video)
+        # if info["type"] == "short":
+        #     self.window = ShortView(self.master, video, info)
+        #     return
 
-            image = ctk.CTkImage(light_image=Image.open(info["image"]), size=(400, 225))
-
-            label = ctk.CTkLabel(self.window, text="", image=image)
-            label.image = image
-            label.pack(padx=10, pady=10, fill="both", expand=True)
-
-        elif self.window.title() == video:
-            self.window.focus()
-
-        else:
-            self.window.destroy()
-            self.open_video(video)
+        # if info["type"] == "user-made video":
+        #     self.window = UserMadeView(self.master, video, info)
+        #     return
     
     # def load_tvshows(self):
     #     tvshoweps = self.load_video_details("tvshow")
