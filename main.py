@@ -246,7 +246,7 @@ class BrowseMenu(ctk.CTkFrame):
         self.video_images = self.master.load_video_details()
 
         self.grid_columnconfigure(0, weight=0)
-        self.grid_columnconfigure(1, weight=1)
+        self.grid_columnconfigure(1, weight=0)
         self.grid_columnconfigure(2, weight=0)
 
         self.video_list_frame = ctk.CTkScrollableFrame(self, width=650, height=500)
@@ -266,7 +266,7 @@ class BrowseMenu(ctk.CTkFrame):
         self.genre_filter.pack(side="top", padx=5)
 
         ctk.CTkLabel(self.filter_frame, text="Type").pack(side="top", padx=(10, 2))
-        self.type_filter = ctk.CTkComboBox(self.filter_frame, values=["all", "user-made video", "short", "TV show"])
+        self.type_filter = ctk.CTkComboBox(self.filter_frame, values=["all", "user-made video", "short", "TV show", "Movie"])
         self.type_filter.set("all")
         self.type_filter.pack(side="top", padx=5)
 
@@ -282,7 +282,7 @@ class BrowseMenu(ctk.CTkFrame):
         self.searchbox.grid(row=1, column=0, padx=10, pady=10, sticky="ew")
 
         self.filter_btn = ctk.CTkButton(self, text="Apply Search and Filters", command=self.refresh_videos)
-        self.filter_btn.grid(row=1, column=2, padx=10, pady=10)
+        self.filter_btn.grid(row=1, column=2, padx=10, pady=10, sticky="e")
 
         self.feedback = ctk.CTkLabel(self, text="No videos found. Try widening your search or filters.")
 
@@ -334,6 +334,7 @@ class BrowseMenu(ctk.CTkFrame):
             prof.remove_from_wlist(video)
         else:
             prof.add_to_wlist(video)
+        UserProfiles.save_to_csv(self.master._accounts)
         self.refresh_videos()
 
     def open_tvshow(self, info, video):
@@ -422,15 +423,11 @@ class TVShowFrame(BaseVideoFrame):
         for i in range(showlen-1):
             frames[i].setepafter(frames[i+1])
 '''
-class TVEpisodeView(ctk.CTkToplevel):
-    def __init__(self, master, show_name, episodes, start_index=0):
+class VideoView(ctk.CTkToplevel):
+    def __init__(self, master, title, image_path, video_type):
         super().__init__(master)
 
-        self.show_name = show_name
-        self.episodes = episodes
-        self.index = start_index
-
-        self.title(show_name)
+        self.title(title)
         self.geometry("440x440")
 
         self.content = ctk.CTkFrame(self, 440, 225)
@@ -444,17 +441,35 @@ class TVEpisodeView(ctk.CTkToplevel):
 
         self.grid_columnconfigure(0, weight=1)
 
+        self.content = BaseVideoFrame(self, image_path, title, video_type)
+
         self.content.grid(row=0, column=0, columnspan=3, sticky="nsew", padx=10, pady=10)
 
-        self.next_btn = ctk.CTkButton(self, text="Next Episode", command=self.next_ep)
+        self.back_btn = ctk.CTkButton(self, text="Back", command=self.destroy)
+
+        self.create_navigation()
+
+    def create_navigation(self):
+        pass
+
+class TVEpisodeView(VideoView):
+    def __init__(self, master, show_name, episodes, start_index=0):
+        self.show_name = show_name
+        self.episodes = episodes
+        self.index = start_index
+
+        super().__init__(master, episodes[self.index][1], episodes[self.index][2]["image"], "TV show")
+
+        self.update_buttons()
+
+    def create_navigation(self):
         self.prev_btn = ctk.CTkButton(self, text="Previous Episode", command=self.prev_ep)
-        self.back_btn = ctk.CTkButton(self, text="Back", command=lambda: self.destroy())
+
+        self.next_btn = ctk.CTkButton(self, text="Next Episode", command=self.next_ep)
 
         self.prev_btn.grid(row=1, column=0, padx=10, pady=10, sticky="w")
         self.next_btn.grid(row=1, column=2, padx=10, pady=10, sticky="e")
         self.back_btn.grid(row=2, column=0, columnspan=3, pady=10)
-
-        self.update_buttons()
 
     def load_episode(self):
         ep_info = self.episodes[self.index][2]
@@ -485,6 +500,38 @@ class TVEpisodeView(ctk.CTkToplevel):
         self.prev_btn.configure(state="normal" if self.index > 0 else "disabled")
         self.next_btn.configure(state="normal" if self.index < len(self.episodes) - 1 else "disabled")
 
+
+class MovieView(VideoView):
+    def __init__(self, master, movie_name, movie_info):
+        self.movie_name = movie_name
+        self.movie_info = movie_info
+
+        super().__init__(master, movie_name, movie_info["image"], "Movie")
+
+    def create_navigation(self):
+        self.back_btn.grid(row=1, column=0, pady=10)
+
+
+class ShortView(VideoView):
+    def __init__(self, master, title, info):
+        self.info = info
+
+        super().__init__(master, title, info["image"], "Short")
+
+    def create_navigation(self):
+        self.back_btn.grid(row=1, column=0, pady=10)
+
+
+class UserMadeView(VideoView):
+    def __init__(self, master, title, info):
+        self.info = info
+
+        super().__init__(master, title, info["image"], "User-made Video")
+
+    def create_navigation(self):
+        self.back_btn.grid(row=1, column=0, pady=10)
+
+
 class MainFrame(ctk.CTkFrame): # better name than mainframe?
     # Frame for after login, watching things idk
     def __init__(self, master, **kwargs):
@@ -502,7 +549,7 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe?
         self.profilebtn = ctk.CTkButton(self, text="", width=60, height=60, corner_radius=30, command=self._open_account_info)
         self.profilebtn.grid(row=0, column=10)
 
-        self.savetocsv = ctk.CTkButton(self, text="save", command=self.savebtn)
+        self.savetocsv = ctk.CTkButton(self, text="save", command=self.savebtn) # dont need anymore?
         self.savetocsv.grid(row=3, column=3)
 
         self.browsebtn = ctk.CTkButton(self, text="browse", command=self.master.maintobrowse)
@@ -567,6 +614,7 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe?
 
     def add_video_to_history(self, video):
         self.master.profile.add_to_whistory(video)
+        UserProfiles.save_to_csv(self.master._accounts)
 
     def show_history(self):
         if self.current_display == "history":
@@ -909,9 +957,23 @@ class StreamingServiceApp(ctk.CTk):
                                             "type": "user-made video",
                                             "rating": row["rating"],
                                             "user": row["user"]}
+        if type == "all" or type == "movie":
+            with open("video_details/movie_details.csv", "r", newline="", encoding="utf-8") as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    videos[row["title"]] = {"image": "video_images/" + row["image"],
+                                            "genre": row["genre"],
+                                            "type": "Movie",
+                                            "rating": row["rating"]}
         return videos
     
     def open_video(self, video:str):
+        if self.window.title() == video:
+            self.window.focus()
+        else:
+            self.window.destroy()
+            self.open_video(video)
+      
         self.main.add_video_to_history(video)
 
         if self.watchlist_setting.get():
@@ -923,23 +985,18 @@ class StreamingServiceApp(ctk.CTk):
         if info["type"] == "TV show":
             self.browsemenu.open_tvshow(info, video)
             return
+          
+        if info["type"] == "Movie":
+            self.window = MovieView(self.master, video, info)
+            return
 
-        if self.window is None or not self.window.winfo_exists():
-            self.window = ctk.CTkToplevel(self.master)
-            self.window.title(video)
+        if info["type"] == "short":
+            self.window = ShortView(self.master, video, info)
+            return
 
-            image = ctk.CTkImage(light_image=Image.open(info["image"]), size=(400, 225))
-
-            label = ctk.CTkLabel(self.window, text="", image=image)
-            label.image = image
-            label.pack(padx=10, pady=10, fill="both", expand=True)
-
-        elif self.window.title() == video:
-            self.window.focus()
-
-        else:
-            self.window.destroy()
-            self.open_video(video)
+        if info["type"] == "user-made video":
+            self.window = UserMadeView(self.master, video, info)
+            return
     
     # def load_tvshows(self):
     #     tvshoweps = self.load_video_details("tvshow")
