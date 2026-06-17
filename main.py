@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 import csv
 import CTkColorPicker as ctkcolor # pip install ctkcolorpicker
 import customtkinter as ctk
@@ -76,7 +77,7 @@ class LoginFrame(ctk.CTkFrame):
             if self.accountbox.get() in (user["username"], user["email"]) and user["password"] == self.passwordbox.get():
                 self.master.loggedin(user["username"])
                 return
-            
+
         self.feedback.configure(text="Username/email or password is wrong")
         self.feedback.after(3000, lambda:self.feedback.configure(text=""))
 
@@ -123,7 +124,7 @@ class SignupFrame(ctk.CTkFrame):
         self.confirm_password_label.grid(row=5, column=0, padx=(10, 0))
         self.confirm_password_entry = ctk.CTkEntry(self, show="*")
         self.confirm_password_entry.grid(row=5, column=1, padx=10, pady=10)
-        
+
         self.status_label = ctk.CTkLabel(self, text="")
         self.status_label.grid(row=6, column=0, columnspan=2)
 
@@ -144,11 +145,11 @@ class SignupFrame(ctk.CTkFrame):
         if any(var == "" for var in (username, age, email, password, confirm_password)):
             self.status_label.configure(text="Please fill in all fields.", text_color="red")
             return
-        
+
         if "@" in username:
             self.status_label.configure(text="Username cannot contain @", text_color="red")
             return
-        
+
         try:
             age = int(age)
             if age <= 0:
@@ -156,11 +157,11 @@ class SignupFrame(ctk.CTkFrame):
         except:
             self.status_label.configure(text="Please enter a positive whole number for age", text_color="red")
             return
-        
+
         if not "@" in email:
             self.status_label.configure(text="Email must contain @", text_color="red")
             return
-        
+
         if password != confirm_password:
             self.status_label.configure(text="Passwords do not match.", text_color="red")
             return
@@ -168,7 +169,7 @@ class SignupFrame(ctk.CTkFrame):
         if username in self.master.master._accounts.get_userdetails("username"):
             self.status_label.configure(text=f"Username {username} is taken.", text_color="red")
             return
-        
+
         if email in self.master.master._accounts.get_userdetails("email"):
             self.status_label.configure(text="Email already linked to an account.\nIf you would like to create new profiles,\nyou can do so in the profile menu.", text_color="red")
             return
@@ -245,8 +246,6 @@ class BrowseMenu(ctk.CTkFrame):
 
         self.video_images = self.master.load_video_details()
 
-        self.grid_columnconfigure(0, weight=0)
-        self.grid_columnconfigure(1, weight=0)
         self.grid_columnconfigure(2, weight=0)
 
         self.video_list_frame = ctk.CTkScrollableFrame(self, width=650, height=500)
@@ -291,7 +290,7 @@ class BrowseMenu(ctk.CTkFrame):
     def refresh_videos(self):
         self.feedback.grid_forget()
         search = self.searchbox.get().lower().strip()
-        
+
         for widget in self.video_list_frame.winfo_children():
             widget.destroy()
 
@@ -357,7 +356,7 @@ class BaseScrollFrame(ctk.CTkScrollableFrame):
         if video: # If frame is used for displaying video buttons
             self.configure(width=650, height=120)
         self.buttons = []
-        
+
     def add_btn(self, image_path, command=lambda:print(f"No command")):
         if image_path:
             image = ctk.CTkImage(light_image=Image.open(image_path), size=(200, 110))
@@ -423,25 +422,20 @@ class TVShowFrame(BaseVideoFrame):
         for i in range(showlen-1):
             frames[i].setepafter(frames[i+1])
 '''
-class VideoView(ctk.CTkToplevel):
+class VideoView(ctk.CTkToplevel, ABC):
     def __init__(self, master, title, image_path, video_type):
         super().__init__(master)
 
         self.title(title)
         self.geometry("440x440")
-
-        self.content = ctk.CTkFrame(self, 440, 225)
-        self.image = ctk.CTkLabel(self.content,440, 225, text="", image=ctk.CTkImage(light_image=Image.open(episodes[self.index][2]["image"]), size=(440, 225)))
-        self.image.pack()
-        self.text = ctk.CTkLabel(self.content, text=f"Episode {episodes[self.index][2]['epnum']}: {episodes[self.index][1]}")
-        self.text.pack()
-
         self.grid_rowconfigure(0, weight=1)
         self.grid_rowconfigure((1,2), weight=0)
 
         self.grid_columnconfigure(0, weight=1)
 
-        self.content = BaseVideoFrame(self, image_path, title, video_type)
+        self.content = ctk.CTkFrame(self, 440, 225)
+        self.image = ctk.CTkLabel(self.content,440, 225, text="", image=ctk.CTkImage(light_image=Image.open(image_path), size=(440, 225)))
+        self.image.pack()
 
         self.content.grid(row=0, column=0, columnspan=3, sticky="nsew", padx=10, pady=10)
 
@@ -449,6 +443,7 @@ class VideoView(ctk.CTkToplevel):
 
         self.create_navigation()
 
+    @abstractmethod
     def create_navigation(self):
         pass
 
@@ -459,6 +454,9 @@ class TVEpisodeView(VideoView):
         self.index = start_index
 
         super().__init__(master, episodes[self.index][1], episodes[self.index][2]["image"], "TV show")
+
+        self.text = ctk.CTkLabel(self.content, text=f"Episode {episodes[self.index][2]['epnum']}: {episodes[self.index][1]}")
+        self.text.pack()
 
         self.update_buttons()
 
@@ -506,7 +504,7 @@ class MovieView(VideoView):
         self.movie_name = movie_name
         self.movie_info = movie_info
 
-        super().__init__(master, movie_name, movie_info["image"], "Movie")
+        super().__init__(master, movie_name, movie_info["image"], "movie")
 
     def create_navigation(self):
         self.back_btn.grid(row=1, column=0, pady=10)
@@ -516,7 +514,7 @@ class ShortView(VideoView):
     def __init__(self, master, title, info):
         self.info = info
 
-        super().__init__(master, title, info["image"], "Short")
+        super().__init__(master, title, info["image"], "short")
 
     def create_navigation(self):
         self.back_btn.grid(row=1, column=0, pady=10)
@@ -526,7 +524,7 @@ class UserMadeView(VideoView):
     def __init__(self, master, title, info):
         self.info = info
 
-        super().__init__(master, title, info["image"], "User-made Video")
+        super().__init__(master, title, info["image"], "user-made video")
 
     def create_navigation(self):
         self.back_btn.grid(row=1, column=0, pady=10)
@@ -600,7 +598,7 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe?
             label.grid(row=1, column=0, sticky="w", padx=5)
             self.history_widgets.append(label)
             return
-        
+
         heading = ctk.CTkLabel(self.historyframe, text=title)
         heading.grid(row=0, column=0, sticky="w", padx=5, pady=(5, 10))
 
@@ -728,12 +726,12 @@ class SubscriptionFrame(ctk.CTkFrame):
             if currentterm > 9:
                 currentterm -= 9
             runningtotal += currentterm
-        
+
         if int(number[-1]) != (10 - (runningtotal % 10)) % 10:
             return False, "Error: checksum incorrect. Please make sure you have typed your card number correctly."
-        
+
         return True, ""
-        
+
     def date_verify(self, date): # verifies that date is a real date (MM/YY) and is not expired, returns passed (bool), error (str)
         try:
             month, year = date.split("/")
@@ -761,7 +759,7 @@ class SubscriptionFrame(ctk.CTkFrame):
                    self.subscription_entries["expiry"].get(),
                    self.subscription_entries["security"].get(),
                    self.subscription_entries["billing"].get())
-        
+
         if not all(details):
             self.successlabel.configure(text="Please fill in all fields.", text_color="red")
             return
@@ -966,13 +964,10 @@ class StreamingServiceApp(ctk.CTk):
                                             "type": "Movie",
                                             "rating": row["rating"]}
         return videos
-    
+
     def open_video(self, video:str):
-        if self.window.title() == video:
-            self.window.focus()
-        else:
+        if self.window and self.window.winfo_exists():
             self.window.destroy()
-            self.open_video(video)
       
         self.main.add_video_to_history(video)
 
@@ -990,14 +985,18 @@ class StreamingServiceApp(ctk.CTk):
             self.window = MovieView(self.master, video, info)
             return
 
+        
         if info["type"] == "short":
             self.window = ShortView(self.master, video, info)
             return
 
+        else:
+            self.window.destroy()
+            self.open_video(video)
         if info["type"] == "user-made video":
             self.window = UserMadeView(self.master, video, info)
             return
-    
+
     # def load_tvshows(self):
     #     tvshoweps = self.load_video_details("tvshow")
     #     tvshows = set(map(lambda vals:vals["show"], tvshoweps.values()))
@@ -1009,7 +1008,7 @@ class StreamingServiceApp(ctk.CTk):
     #                 episodes[ep] = details
     #         # Creates tv show button for each episode
     #         for episode in episodes:
-                
+
     def generate_scroll(self, genre:str="", video_type:str="", rating:str=""):
         """
         Generates a scroll frame with the window buttons based on the filters\n
@@ -1053,7 +1052,7 @@ class StreamingServiceApp(ctk.CTk):
             shows[show].sort(key=lambda x: x[0])
 
         return shows
-                
+
 
 class UserAccounts:
     # Only handles data
@@ -1087,22 +1086,22 @@ class UserAccounts:
 
     def get_userdetails(self, detail) -> list:
         return [*map(lambda user: user[detail], self._accounts)]
-    
+
     def get_profiles(self, username) -> list:
         try:
             return self._profiles[username]
         except:
             return []
-        
+
     def get_profile_dict(self) -> dict:
         return self._profiles
-                
+
     def get_profilesnames(self, username:str) -> list:
         return [*map(lambda profile:profile.name, self._profiles[username])]
-    
+
     def get_all(self) -> list:
         return list(self._accounts)
-    
+
     def save_to_csv(self):
         with open(self.filepath, "w", newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=self.FIELDS)
@@ -1220,11 +1219,11 @@ class UserProfiles():
     def add_to_whistory(self, id:str):
         self.remove_from_whistory(id)
         self._watch_history.append(id)
-        
+
     def remove_from_whistory(self, id:str):
         if id in self._watch_history:
             self._watch_history.remove(id)
-    
+
     def get_whistory(self) -> list:
         return self._watch_history
 
