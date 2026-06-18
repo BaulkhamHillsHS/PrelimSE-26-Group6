@@ -46,9 +46,9 @@ class LoginFrame(ctk.CTkFrame):
         self.grid_columnconfigure(2, weight=2)
 
         self.signup_form = None
-        self.buildui()
+        self._buildui()
 
-    def buildui(self):
+    def _buildui(self):
         """Builds the ui for signup form"""
         if self.signup_form:
             self.signup_form.destroy()
@@ -100,28 +100,23 @@ class SignupFrame(ctk.CTkFrame):
         self.title = ctk.CTkLabel(self, text="Create an account")
         self.title.grid(row=0, column=0, padx=10, pady=10, columnspan=2)
 
-        self.username_label = ctk.CTkLabel(self, text="Username")
-        self.username_label.grid(row=1, column=0)
+        ctk.CTkLabel(self, text="Username").grid(row=1, column=0)
         self.username_entry = ctk.CTkEntry(self)
         self.username_entry.grid(row=1, column=1, padx=10, pady=10)
 
-        self.age_label = ctk.CTkLabel(self, text="Age")
-        self.age_label.grid(row=2, column=0)
+        ctk.CTkLabel(self, text="Age").grid(row=2, column=0)
         self.age_entry = ctk.CTkEntry(self)
         self.age_entry.grid(row=2, column=1, padx=10, pady=10)
 
-        self.email_label = ctk.CTkLabel(self, text="Email")
-        self.email_label.grid(row=3, column=0)
+        ctk.CTkLabel(self, text="Email").grid(row=3, column=0)
         self.email_entry = ctk.CTkEntry(self)
         self.email_entry.grid(row=3, column=1, padx=10, pady=10)
 
-        self.password_label = ctk.CTkLabel(self, text="Password")
-        self.password_label.grid(row=4, column=0)
+        ctk.CTkLabel(self, text="Password").grid(row=4, column=0)
         self.password_entry = ctk.CTkEntry(self, show="*")
         self.password_entry.grid(row=4, column=1, padx=10, pady=10)
 
-        self.confirm_password_label = ctk.CTkLabel(self, text="Confirm password")
-        self.confirm_password_label.grid(row=5, column=0, padx=(10, 0))
+        ctk.CTkLabel(self, text="Confirm password").grid(row=5, column=0, padx=(10, 0))
         self.confirm_password_entry = ctk.CTkEntry(self, show="*")
         self.confirm_password_entry.grid(row=5, column=1, padx=10, pady=10)
 
@@ -182,7 +177,7 @@ class SignupFrame(ctk.CTkFrame):
 
     def cancel_submit(self):
         """Returns to the login screen"""
-        self.master.buildui()
+        self.master._buildui()
 
 
 class AccountInfoWindow(ctk.CTkToplevel):
@@ -193,7 +188,6 @@ class AccountInfoWindow(ctk.CTkToplevel):
         self.grid_columnconfigure(1, weight=1)
 
         self.title(NAME + " account info")
-        #self.relative()
         self.resizable(False, False)
         self.overrideredirect(True)
 
@@ -203,11 +197,9 @@ class AccountInfoWindow(ctk.CTkToplevel):
         self.profilenametxt = ctk.CTkLabel(self, text="Profile: "+self.master.master.profile)
         self.profilenametxt.grid(row=1, column=0, padx=10, pady=(0,3))
 
-        self.colorbtn = ctk.CTkButton(self, text="Change Profile Colour", command=self.pick_color)
-        self.colorbtn.grid(row=2, column=0, padx=10, pady=3)
+        ctk.CTkButton(self, text="Change Profile Colour", command=self.pick_color).grid(row=2, column=0, padx=10, pady=3)
 
-        self.subscriptionbtn = ctk.CTkButton(self, text="Subscription", command=self.master.master.maintosubscription)
-        self.subscriptionbtn.grid(row=3, column=0, padx=10, pady=3)
+        ctk.CTkButton(self, text="Subscription", command=self.master.master.maintosubscription).grid(row=3, column=0, padx=10, pady=3)
 
         self.profilelist = ctk.CTkComboBox(self, values=self.master.master.profiles)
         self.profilelist.grid(row=4, column=0, padx=10, pady=(30, 3))
@@ -215,13 +207,7 @@ class AccountInfoWindow(ctk.CTkToplevel):
         self.switchprofilebtn = ctk.CTkButton(self, text="Switch Profile", command=lambda:self.master.master.switch_profile(self.profilelist.get()))
         self.switchprofilebtn.grid(row=5, column=0, padx=10, pady=3)
 
-        self.logoutbtn = ctk.CTkButton(self, text="Logout", command=master.master.logout)
-        self.logoutbtn.grid(row=6, column=0, padx=10, pady=3)
-
-    def relative(self):
-        self.update_idletasks()
-        self.profilebtn = self.master.profilebtn
-        self.geometry(f"160x300+{self.profilebtn.winfo_rootx() - 80}+{self.profilebtn.winfo_rooty() + self.profilebtn.winfo_height() + 10}")
+        ctk.CTkButton(self, text="Logout", command=master.master.logout).grid(row=6, column=0, padx=10, pady=3)
 
     def updateprofiles(self, profile, profiles:list):
         profiles.remove(profile)
@@ -525,8 +511,6 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe?
 
         self.watchlist_setting = master.watchlist_setting
 
-        self.accountinfowindow = AccountInfoWindow(self)
-        self.accountinfowindow.withdraw()
         self.subscriptionframe = None
 
         self.profilebtn = ctk.CTkButton(self, text="", width=60, height=60, corner_radius=30, command=self._open_account_info)
@@ -551,6 +535,9 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe?
         self.historyframe.grid(row=4, column=3, columnspan=4, rowspan=2, padx=10, pady=10, sticky="nsew")
 
         self.history_widgets = []
+
+        self.accountinfowindow = AccountInfoWindow(self)
+        self.accountinfowindow.withdraw()
 
         self.scrolls = BaseScrollFrame(self, dir="y")
         self.scrolls.grid(row=6, column=0, columnspan=10, rowspan=2, padx=2, pady=2, sticky="ew")
