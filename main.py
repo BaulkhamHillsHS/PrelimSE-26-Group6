@@ -229,19 +229,13 @@ class AccountInfoWindow(ctk.CTkToplevel):
 class BrowseMenu(ctk.CTkFrame):
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
+        self.grid_columnconfigure(2, weight=0)
+        self.grid_rowconfigure(2, weight=1)
 
         self.video_images = self.master.load_video_details()
 
-        self.grid_columnconfigure(2, weight=0)
-
         self.video_list_frame = ctk.CTkScrollableFrame(self, width=650, height=500)
         self.video_list_frame.grid(row=2, column=0, columnspan=3, padx=10, pady=10, sticky="nsew")
-
-        self.grid_rowconfigure(2, weight=1)
-
-        self.videomenu = None
-        self.video_buttons = []
-        self.video_rows = {}
 
         self.filter_frame = ctk.CTkFrame(self)
         self.filter_frame.grid(row=1, column=1, columnspan=10, padx=10, pady=10, sticky="w")
