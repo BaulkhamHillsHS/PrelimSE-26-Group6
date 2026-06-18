@@ -490,6 +490,7 @@ class MovieView(VideoView):
 
 class ShortView(VideoView):
     def __init__(self, master, title, info):
+        self.title = title
         self.info = info
 
         super().__init__(master, title, info["image"], "short")
@@ -500,6 +501,7 @@ class ShortView(VideoView):
 
 class UserMadeView(VideoView):
     def __init__(self, master, title, info):
+        self.title = title
         self.info = info
 
         super().__init__(master, title, info["image"], "user-made video")
@@ -518,7 +520,7 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe?
 
         self.watchlist_setting = master.watchlist_setting
 
-        self.subscriptionframe = None
+        self.subscriptionframe = None # unused variable?
 
         self.profilebtn = ctk.CTkButton(self, text="", width=60, height=60, corner_radius=30, command=self._open_account_info)
         self.profilebtn.grid(row=0, column=10)
@@ -983,26 +985,21 @@ class StreamingServiceApp(ctk.CTk):
             self.main.refresh_videos()
 
         info = self.browsemenu.video_images[video]
-
-        if info["type"] == "TV show":
-            self.browsemenu.open_tvshow(info, video)
-            return
-          
-        if info["type"] == "Movie":
-            self.window = MovieView(self.master, video, info)
-            return
-
-        
-        if info["type"] == "short":
-            self.window = ShortView(self.master, video, info)
-            return
-
-        if info["type"] == "user-made video":
-            self.window = UserMadeView(self.master, video, info)
-            return
-
-        else:
-            self.window.destroy()
+        match info["type"]:
+            case "TV show":
+                self.browsemenu.open_tvshow(info, video)
+                return 
+            case "Movie":
+                self.window = MovieView(self.master, video, info)
+                return
+            case "short":
+                self.window = ShortView(self.master, video, info)
+                return
+            case "user-made video":
+                self.window = UserMadeView(self.master, video, info)
+                return
+            case _:
+                self.window.destroy()
 
     def load_tvshows(self):
         shows = self.load_tvshow_episodes()
@@ -1173,7 +1170,6 @@ class UserAccounts:
 
 
 class UserProfiles():
-
     FIELDS = ["name", "wlist", "whistory"]
 
     def __init__(self, name:str, age:int, wlist:list, whistory:list, color=None):
@@ -1208,7 +1204,7 @@ class UserProfiles():
         # ;67; separates the profiles
         # |67| separates the wlist and whistory items
         # becomes:
-        # name, video1|video2|video3;video2|video1, video4;video3|video4
+        # name, video1|67|video2|67|video3;67;video2|67|video1, video4;67;video3|67|video4
         for i in range(len(profiles)):
             wlist = []
             whistorylist = []
