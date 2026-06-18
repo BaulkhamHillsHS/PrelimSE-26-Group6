@@ -668,7 +668,7 @@ class SubscriptionFrame(ctk.CTkFrame):
 
         # label text, placeholder text, hidden with asterisk?
         fields = {"cardholder": ("Cardholder Name", "e.g. Ryan Dunne", False, 200),
-                  "cardnumber": ("Card Number", "e.g. https://en.wikipedia.org/wiki/Luhn_algorithm", False, 200),
+                  "cardnumber": ("Card Number", "e.g. 1234567890123452", False, 200),
                   "expiry": ("Expiration Date (MM/YY)", "e.g. 01/67", False, 200),
                   "security": ("Security Code", "e.g. 420", True, 200),
                   "billing": ("Billing Address", "e.g. 419A Windsor Road", False, 300)}
@@ -703,6 +703,9 @@ class SubscriptionFrame(ctk.CTkFrame):
     def luhn_verify(self, number): # verifies that number follows Luhn algorithm, returns passed (bool), error (str)
         if not number.isdigit():
             return False, "Please enter only digits (no punctuation) for the card number."
+
+        if len(number) != 16:
+            return False, "Error: card number does not have 16 digits. Please make sure you have typed your card number correctly."
 
         runningtotal = 0
         payload = list(number[-2::-1])
