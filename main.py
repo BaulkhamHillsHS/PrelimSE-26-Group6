@@ -224,13 +224,19 @@ class AccountInfoWindow(ctk.CTkToplevel):
         if color:
             self.master.master._accounts.update_color((app:=self.master.master).account, app.profile.name, color)
             self.master.updateprofilebtn()
-
+    
+    def relative(self):
+        self.update_idletasks()
+        self.profilebtn = self.master.profilebtn
+        self.geometry(f"160x300+{self.profilebtn.winfo_rootx() - 80}+{self.profilebtn.winfo_rooty() + self.profilebtn.winfo_height() + 10}")
 
 class BrowseMenu(ctk.CTkFrame):
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
         self.grid_columnconfigure(2, weight=0)
         self.grid_rowconfigure(2, weight=1)
+
+        self.video_rows = {}
 
         self.video_images = self.master.load_video_details()
 
@@ -412,7 +418,7 @@ class VideoView(ctk.CTkToplevel, ABC):
         self.grid_columnconfigure(0, weight=1)
 
         self.content = ctk.CTkFrame(self, 440, 225)
-        self.image=self.master.get_cached_image(image_path, (440, 225))
+        self.image = self.master.get_cached_image(image_path, (440, 225))
         self.image.pack()
 
         self.content.grid(row=0, column=0, columnspan=3, sticky="nsew", padx=10, pady=10)
@@ -551,10 +557,6 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe?
         self.scrolls = BaseScrollFrame(self, dir="y")
         self.scrolls.grid(row=6, column=0, columnspan=10, rowspan=2, padx=2, pady=2, sticky="ew")
 
-    def make_accountinfowindow(self):
-        self.accountinfowindow = AccountInfoWindow(self)
-        self.accountinfowindow.withdraw()
-
     def updateaccounttxt(self, account, profile):
         self.accountinfowindow.accountnametxt.configure(text="Account: "+account)
         self.accountinfowindow.profilenametxt.configure(text="Profile: "+profile)
@@ -635,7 +637,6 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe?
 
     def updateprofilebtn(self):
         self.profilebtn.configure(text=self.master.profile.name[0], fg_color=self.master.profile.color, hover_color=self._darken_color(self.master.profile.color, 20))
-
 
 
 class SubscriptionFrame(ctk.CTkFrame):
@@ -808,7 +809,7 @@ class StreamingServiceApp(ctk.CTk):
 
         self.window = None
 
-        self.image_cache = {}
+        self.image_cache:dict[ctk.CTkImage] = {}
 
         self._accounts = UserAccounts()
         self._accounts.load_from_csv()
@@ -832,7 +833,7 @@ class StreamingServiceApp(ctk.CTk):
             return self.profile.age >= 15
         return True
 
-    def get_cached_image(self, path, size):
+    def get_cached_image(self, path, size) -> ctk.CTkImage:
         key = (path, size)
         if key not in self.image_cache:
             self.image_cache[key] = ctk.CTkImage(light_image=Image.open(path), size=size)
