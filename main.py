@@ -36,7 +36,7 @@ polymorphism - multiple classes containing same method
 https://youtu.be/uGI0tkmyogU?t=1590 "We should blur this on YouTube and make it unblurred on Nebula."
 """
 
-NAME = "yaoi"
+NAME = "yaoi streaming service :3"
 
 class LoginFrame(ctk.CTkFrame):
     # Frame for log in/welcome screen
@@ -521,33 +521,31 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe?
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
         self.current_display = None
-        self.grid_columnconfigure(10, weight=1)
-        self.grid_rowconfigure(5, weight=1)
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(4, weight=1)
+        self.topbar = ctk.CTkFrame(self)
+        self.topbar.grid(row=0, column=0, columnspan=10, pady=10)
 
         self.watchlist_setting = master.watchlist_setting
 
         self.subscriptionframe = None # unused variable?
 
-        self.profilebtn = ctk.CTkButton(self, text="", width=60, height=60, corner_radius=30, command=self._open_account_info)
-        self.profilebtn.grid(row=0, column=10)
+        self.profilebtn = ctk.CTkButton(self.topbar, text="", width=60, height=60, corner_radius=30, command=self._open_account_info)
+        self.savetocsv = ctk.CTkButton(self.topbar, text="save (unnecessary button now?)", command=self.savebtn)
+        self.browsebtn = ctk.CTkButton(self.topbar, text="browse", command=self.master.maintobrowse)
+        self.historybtn = ctk.CTkButton(self.topbar, text="watch history", command=self.show_history)
+        self.watchlaterbtn = ctk.CTkButton(self.topbar, text="watch later", command=self.show_watch_later)
+        self.switch = ctk.CTkSwitch(self.topbar, text="remove from Watch Later when watching", variable=self.watchlist_setting, onvalue=True, offvalue=False)
 
-        self.savetocsv = ctk.CTkButton(self, text="save", command=self.savebtn) # dont need anymore?
-        self.savetocsv.grid(row=3, column=3)
+        self.profilebtn.pack(side="left", padx=8)
+        self.savetocsv.pack(side="left", padx=8)
+        self.browsebtn.pack(side="left", padx=8)
+        self.historybtn.pack(side="left", padx=8)
+        self.watchlaterbtn.pack(side="left", padx=8)
+        self.switch.pack(side="left", padx=12)
 
-        self.browsebtn = ctk.CTkButton(self, text="browse", command=self.master.maintobrowse)
-        self.browsebtn.grid(row=3, column=4, padx=5)
-
-        self.historybtn = ctk.CTkButton(self, text="watch history", command=self.show_history)
-        self.historybtn.grid(row=3, column=5, padx=5)
-
-        self.watchlaterbtn = ctk.CTkButton(self, text="watch later", command=self.show_watch_later)
-        self.watchlaterbtn.grid(row=3, column=6, padx=5)
-
-        self.switch = ctk.CTkSwitch(self, text="when watching video, remove from Watch Later", variable=self.watchlist_setting, onvalue=True, offvalue=False)
-        self.switch.grid(row=2, column=3, columnspan=3, pady=10)
-
-        self.historyframe = BaseScrollFrame(self, dir="y", width=350, height=250)
-        self.historyframe.grid(row=4, column=3, columnspan=4, rowspan=2, padx=10, pady=10, sticky="nsew")
+        self.historyframe = BaseScrollFrame(self, dir="y")
+        self.historyframe.place_forget()
 
         self.history_widgets = []
 
@@ -555,7 +553,9 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe?
         self.accountinfowindow.withdraw()
 
         self.scrolls = BaseScrollFrame(self, dir="y")
-        self.scrolls.grid(row=6, column=0, columnspan=10, rowspan=2, padx=2, pady=2, sticky="ew")
+        self.scrolls.grid(row=4, column=0, sticky="nsew", padx=2, pady=2)
+        self.scrolls.grid_rowconfigure(0, weight=1)
+        self.scrolls.grid_columnconfigure(0, weight=1)
 
     def updateaccounttxt(self, account, profile):
         self.accountinfowindow.accountnametxt.configure(text="Account: "+account)
@@ -567,6 +567,11 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe?
             self.accountinfowindow.deiconify()
         else:
             self.accountinfowindow.withdraw()
+
+    def show_overlay(self):
+        self.update_idletasks()
+        self.historyframe.place(in_=self.scrolls, relx=0, rely=0, relwidth=1, relheight=1)
+        self.historyframe.lift()
 
     def update_history_display(self, title, items):
         for widget in self.history_widgets:
@@ -600,9 +605,12 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe?
     def show_history(self):
         if self.current_display == "history":
             self.clear_history_display()
+            self.historyframe.place_forget()
             return
 
         self.current_display = "history"
+
+        self.show_overlay()
 
         history = [v for v in self.master.profile.get_whistory()]
         self.update_history_display("Watch History", history)
@@ -610,14 +618,18 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe?
     def show_watch_later(self):
         if self.current_display == "watchlater":
             self.clear_history_display()
+            self.historyframe.place_forget()
             return
 
         self.current_display = "watchlater"
+
+        self.show_overlay()
 
         wlist = [v for v in self.master.profile.get_wlist()]
         self.update_history_display("Watch Later", wlist)
 
     def clear_history_display(self):
+        self.historyframe.place_forget()
         for widget in self.history_widgets:
             widget.destroy()
 
@@ -795,7 +807,7 @@ class SubscriptionFrame(ctk.CTkFrame):
 class StreamingServiceApp(ctk.CTk):
     def __init__(self):
         super().__init__()
-        self.title(NAME + " streaming service :3 ")
+        self.title(NAME)
         self.WIDTH = 720
         self.HEIGHT = 1080
         self.X = 100
@@ -819,7 +831,7 @@ class StreamingServiceApp(ctk.CTk):
         UserProfiles.load_from_csv(self._accounts)
 
         self.logo = ctk.CTkImage(light_image=Image.open("logo.png"), size=(40, 40))
-        ctk.CTkLabel(self, text=" "+NAME, text_color="pink", image=self.logo, compound="left").pack(side="top", pady=(10, 10))
+        ctk.CTkLabel(self, text=" "+NAME, text_color="green", image=self.logo, compound="left").pack(side="top", pady=(10, 10))
 
         self.login = LoginFrame(self)
         self.login.pack(fill="both", expand=True, padx=40, pady=(10, 20))
@@ -885,7 +897,7 @@ class StreamingServiceApp(ctk.CTk):
     def logout(self):
         self.changeframetologin()
         self.login.pack()
-        self.login.buildui()
+        self.login._buildui()
         self.account = ""
 
     def changeframetomain(self):
