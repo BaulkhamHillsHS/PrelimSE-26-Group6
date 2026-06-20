@@ -418,6 +418,7 @@ class BaseScrollFrame(ctk.CTkScrollableFrame):
 class BaseVideoFrame(ctk.CTkFrame):
     def __init__(self, master, image_path:str, name:str, type:str, backcmd=None, **kwargs):
         super().__init__(master, **kwargs)
+        self.name = name
         self.grid_rowconfigure(6, weight=1)
         self.grid_columnconfigure(4, weight=1)
         if not backcmd:
@@ -430,7 +431,23 @@ class BaseVideoFrame(ctk.CTkFrame):
         self.textlabel = ctk.CTkLabel(self, text=name, font=("Roboto", 36))
         self.textlabel.grid(row=3, column=0, columnspan=2, pady=10, padx=30, sticky="w")
 
-        self.typelabel = ctk.CTkLabel(self, text=type, font=("Roboto", 36))
+        meta = []
+
+        if "genre" in self.master.browsemenu.video_images.get(name, {}):
+            meta.append(f"Genre: {self.master.browsemenu.video_images[name]['genre']}")
+
+        if "user" in self.master.browsemenu.video_images.get(name, {}):
+            meta.append(f"User: {self.master.browsemenu.video_images[name]['user']}")
+
+        if "director" in self.master.browsemenu.video_images.get(name, {}):
+            meta.append(f"Director: {self.master.browsemenu.video_images[name]['director']}")
+
+        if "rating" in self.master.browsemenu.video_images.get(name, {}):
+            meta.append(f"Rating: {self.master.browsemenu.video_images[name]['rating']}")
+
+        meta_text = type + ("\n" + "\n".join(meta) if meta else "")
+
+        self.typelabel = ctk.CTkLabel(self, text=meta_text, font=("Roboto", 36))
         self.typelabel.grid(row=5, column=0, columnspan=2, pady=10, padx=30, sticky="w")
 
         self.watchbtn = ctk.CTkButton(self, 400, 75, text="Watch", command=self._watch_video)
@@ -997,6 +1014,9 @@ class StreamingServiceApp(ctk.CTk):
         self.subscription = SubscriptionFrame(self)
 
         self.browsemenu.video_images = self.load_video_details(status_check=self.loading_screen.step)
+
+        for widget in self.main.scrolls.winfo_children():
+            widget.destroy()
 
         self.generate_scroll("food")
         self.generate_scroll(video_type="usermade")
