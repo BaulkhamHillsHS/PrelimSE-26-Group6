@@ -836,7 +836,7 @@ class SubscriptionFrame(ctk.CTkFrame):
         if value:
             entry.insert(0, value)
 
-    def luhn_verify(self, number): # verifies that number follows Luhn algorithm, returns passed (bool), error (str)
+    def luhn_verify(self, number): # verifies that number follows Luhn algorithm (https://en.wikipedia.org/wiki/Luhn_algorithm), returns passed (bool), error (str)
         if not number.isdigit():
             return False, "Please enter only digits (no punctuation) for the card number."
 
@@ -905,7 +905,8 @@ class SubscriptionFrame(ctk.CTkFrame):
         self.master._accounts.update_subscription(self.master.account, self.form_frame.planbox.get(), *details)
 
         with open(f"{self.master.account}_invoice.txt", "w", encoding="utf-8") as f:
-            f.write(f"{NAME} - Subscription and Viewing Report\n\n")
+            f.write(f"{NAME} - Subscription and Viewing Report\n")
+            f.write(f"Generated: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}\n\n")
 
             f.write("--------------------\n")
             f.write("SUBSCRIPTION INVOICE\n")
@@ -920,13 +921,21 @@ class SubscriptionFrame(ctk.CTkFrame):
             f.write("WATCH HISTORYAOI\n")
             f.write("----------------\n\n")
 
-            history = self.master.profile.get_whistory()
+            profiles = self.master._accounts.get_profiles(self.master.account)
 
-            if history:
-                for video in history:
-                    f.write(f"- {video}\n")
-            else:
-                f.write("No videos in Watch HistorYaoi.\n")
+            for profile in profiles:
+                f.write(f"Profile: {profile.name}\n")
+                f.write("-" * (9 + len(profile.name)) + "\n")
+
+                history = profile.get_whistory()
+
+                if history:
+                    for video in history:
+                        f.write(f"- {video}\n")
+                else:
+                    f.write("No videos in Watch HistorYaoi.\n")
+
+                f.write("\n")
 
         self.successlabel.configure(text="Subscription updated successfully!", text_color="green")
 
@@ -1218,7 +1227,7 @@ class StreamingServiceApp(ctk.CTk):
     def generate_scroll(self, genre:str="", video_type:str="", rating:str=""):
         """
         Generates a scroll frame with the window buttons based on the filters\n
-        genre: food, music, education, lifestyle, None(default -> all)\n .........................................theres more genres now
+        genre: food, music, education, lifestyle, adventure, romance, horror, action, None(default -> all)\n
         video_type: usermade, short, movie, None(default -> all)\n
         rating: G, PG, M, MA, R, None(default -> all)
         """
