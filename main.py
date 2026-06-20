@@ -402,7 +402,7 @@ class BaseScrollFrame(ctk.CTkScrollableFrame):
         if string:
             ctk.CTkLabel(self, text=string).grid(row=0, column=0, columnspan=100, sticky="w")
         if video: # If frame is used for displaying video buttons
-            self.configure(width=650, height=150)
+            self.configure(width=1000, height=150)
         self.buttons = []
 
     def add_btn(self, image_path, command=lambda:print(f"No command")):
@@ -424,12 +424,17 @@ class BaseVideoFrame(ctk.CTkFrame):
         if not backcmd:
             backcmd = lambda:self.master.videotomain(self)
 
+        if type == "user-made video":
+            type = "User-made video"
+        elif type == "short":
+            type = "Short form video"
+
         self.name = name
         self.image = ctk.CTkLabel(self, text="", image=self.master.get_cached_image(image_path, (800, 450)))
-        self.image.grid(row=0, column=0, rowspan=3, columnspan=2, padx=20, pady=30, sticky="nsew")
+        self.image.grid(row=0, column=0, rowspan=3, columnspan=2, padx=20, pady=(20,5), sticky="w")
 
-        self.textlabel = ctk.CTkLabel(self, text=name, font=("Roboto", 36))
-        self.textlabel.grid(row=3, column=0, columnspan=2, pady=10, padx=30, sticky="w")
+        self.textlabel = ctk.CTkLabel(self, text=name, font=("Roboto", 36 if (nl:=len(name))<45 else (33 if nl<53 else 31)), anchor="w")
+        self.textlabel.grid(row=3, column=0, columnspan=2, pady=7, padx=30, sticky="w")
 
         meta = []
 
@@ -447,8 +452,8 @@ class BaseVideoFrame(ctk.CTkFrame):
 
         meta_text = type + ("\n" + "\n".join(meta) if meta else "")
 
-        self.typelabel = ctk.CTkLabel(self, text=meta_text, font=("Roboto", 36))
-        self.typelabel.grid(row=5, column=0, columnspan=2, pady=10, padx=30, sticky="w")
+        self.typelabel = ctk.CTkLabel(self, text=meta_text, font=("Roboto", 36), anchor="w", justify="left")
+        self.typelabel.grid(row=5, column=0, columnspan=2, pady=7, padx=30, sticky="w")
 
         self.watchbtn = ctk.CTkButton(self, 400, 75, text="Watch", command=self._watch_video)
         self.watchbtn.grid(row=0, column=2, columnspan=2, padx=10, pady=5)
@@ -956,7 +961,7 @@ class StreamingServiceApp(ctk.CTk):
 
         self.main = MainFrame(self)
 
-    def can_watch(self, rating):
+    def can_watch(self, rating) -> bool:
         if rating == "R":
             return self.profile.age >= 18
         if rating == "MA":
@@ -1018,9 +1023,7 @@ class StreamingServiceApp(ctk.CTk):
         for widget in self.main.scrolls.winfo_children():
             widget.destroy()
 
-        self.generate_scroll("food")
-        self.generate_scroll(video_type="usermade")
-        self.load_tvshows() # why no movies in scroll?
+        self.generate_scrolls()
 
         if self.loading_screen.loaded >= self.loading_screen.total:
             self.hide_loading()
@@ -1041,10 +1044,17 @@ class StreamingServiceApp(ctk.CTk):
                 for widget in self.main.scrolls.winfo_children():
                     widget.destroy()
 
-                self.generate_scroll("food")
-                self.generate_scroll(video_type="usermade")
-                self.load_tvshows()
+                self.generate_scrolls()
                 break
+
+    def generate_scrolls(self):
+        self.generate_scroll("food")
+        self.generate_scroll("lifestyle")
+        self.generate_scroll("music")
+        self.generate_scroll(rating="R")
+        self.generate_scroll(video_type="usermade")
+        self.generate_scroll(video_type="movie")
+        self.load_tvshows()
 
     def logout(self):
         self.changeframetologin()
@@ -1196,11 +1206,13 @@ class StreamingServiceApp(ctk.CTk):
         """
         Generates a scroll frame with the window buttons based on the filters\n
         genre: food, music, education, lifestyle, None(default -> all)\n .........................................theres more genres now
-        video_type: usermade, short, None(default -> all)\n
+        video_type: usermade, short, movie, None(default -> all)\n
         rating: G, PG, M, MA, R, None(default -> all)
         """
-        typetxt = {"usermade": "user-made videos", "short": "shorts", "": "videos"}
-        string = f"{rating}{' rated ' if rating else ''}{genre} {typetxt[video_type]}"       
+        if not self.can_watch(rating):
+            return
+        typetxt:dict[str] = {"usermade": "user-made videos", "short": "shorts", "movie": "movies", "": "videos"}
+        string = f"{rating}{'-rated ' if rating else ''}{genre if rating else genre.capitalize()} {typetxt[video_type] if rating or genre else typetxt[video_type].capitalize()}"       
         scroll = BaseScrollFrame(self.main.scrolls, string, "x", True)
         scroll.pack()
         if not genre and not video_type and not rating:
@@ -1208,7 +1220,7 @@ class StreamingServiceApp(ctk.CTk):
         if video_type:
             videos = self.load_video_details(video_type)
         else:
-            videos = self.load_video_details("usermade") | self.load_video_details("short")
+            videos = self.load_video_details("usermade") | self.load_video_details("short") | self.load_video_details("movie")
 
         for video, details in videos.items():
             if any((genre and details["genre"] != genre,
