@@ -304,7 +304,7 @@ class BrowseMenu(ctk.CTkFrame):
         self.rating_filter.set("all")
         self.rating_filter.pack(side="top", padx=5)
 
-        self.back_btn = ctk.CTkButton(self, text="back", command=self.master.browsetomain)
+        self.back_btn = ctk.CTkButton(self, text="Back", command=self.master.browsetomain)
         self.back_btn.grid(row=0, column=0, padx=10, pady=10)
 
         self.searchbox = ctk.CTkEntry(self, placeholder_text="Search videos...", width=200)
@@ -649,14 +649,12 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe?
         self.subscriptionframe = None # unused variable?
 
         self.profilebtn = ctk.CTkButton(self.topbar, text="", width=60, height=60, corner_radius=30, command=self._open_account_info)
-        self.savetocsv = ctk.CTkButton(self.topbar, text="save (unnecessary button now?)", command=self.savebtn)
-        self.browsebtn = ctk.CTkButton(self.topbar, text="browse", command=self.master.maintobrowse)
+        self.browsebtn = ctk.CTkButton(self.topbar, text="Browse", command=self.master.maintobrowse)
         self.historybtn = ctk.CTkButton(self.topbar, text="Watch HistorYaoi", command=self.show_history)
         self.watchlaterbtn = ctk.CTkButton(self.topbar, text="My LibrarYaoi", command=self.show_watch_later)
         self.switch = ctk.CTkSwitch(self.topbar, text="when watching video, remove from My LibrarYaoi", variable=self.watchlist_setting, onvalue=True, offvalue=False)
 
         self.profilebtn.pack(side="left", padx=8)
-        self.savetocsv.pack(side="left", padx=8)
         self.browsebtn.pack(side="left", padx=8)
         self.historybtn.pack(side="left", padx=8)
         self.watchlaterbtn.pack(side="left", padx=8)
@@ -724,9 +722,12 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe?
         if self.current_display == "history":
             self.clear_history_display()
             self.historyframe.place_forget()
+            self.historybtn.configure(text="Watch HistorYaoi")
             return
 
         self.current_display = "history"
+        self.historybtn.configure(text="Hide Watch HistorYaoi")
+        self.watchlaterbtn.configure(text="My LibrarYaoi")
 
         self.show_overlay()
 
@@ -737,9 +738,12 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe?
         if self.current_display == "watchlater":
             self.clear_history_display()
             self.historyframe.place_forget()
+            self.watchlaterbtn.configure(text="My LibrarYaoi")
             return
 
         self.current_display = "watchlater"
+        self.watchlaterbtn.configure(text="Hide My LibrarYaoi")
+        self.historybtn.configure(text="Watch HistorYaoi")
 
         self.show_overlay()
 
@@ -748,15 +752,15 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe?
 
     def clear_history_display(self):
         self.historyframe.place_forget()
+
+        self.historybtn.configure(text="Watch HistorYaoi")
+        self.watchlaterbtn.configure(text="My LibrarYaoi")
+
         for widget in self.history_widgets:
             widget.destroy()
 
         self.history_widgets.clear()
         self.current_display = None
-
-    def savebtn(self):
-        self.master._accounts.save_to_csv()
-        UserProfiles.save_to_csv(self.master._accounts)
 
     def _darken_color(self, color, amount): # amount is a % of the rgb value to reduce
         c = color[1:]
@@ -1270,7 +1274,9 @@ class UserAccounts:
                                "securitycode": "",
                                "billingaddress": "",
                                "rgb": ""})
-        self._profiles[username] = [UserProfiles(username, age)]
+        self._profiles[username] = [UserProfiles(username, age, [], [])]
+        self.save_to_csv()
+        UserProfiles.save_to_csv(self)
 
     def get_account(self, username) -> dict|None:
         for account in self._accounts:
