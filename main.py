@@ -290,7 +290,7 @@ class BrowseMenu(ctk.CTkFrame):
 
         self.video_images = self.master.load_video_details()
 
-        self.video_list_frame = ctk.CTkScrollableFrame(self, width=650, height=500)
+        self.video_list_frame = BaseScrollFrame(self, dir="y", width=650, height=500)
         self.video_list_frame.grid(row=2, column=0, columnspan=3, padx=10, pady=10, sticky="nsew")
 
         self.filter_frame = ctk.CTkFrame(self)
@@ -411,15 +411,23 @@ class BaseScrollFrame(ctk.CTkScrollableFrame):
         if video: # If frame is used for displaying video buttons
             self.configure(width=1000, height=150)
         self.buttons = []
+        self.dir = "x" if dir == "x" else "y"
 
     def add_btn(self, image_path, command=lambda:print(f"No command")):
         if image_path:
             image = app.get_cached_image(image_path, (200, 110))
             btn = ctk.CTkButton(self, command=command, width=200, height=110, image=image, text="", fg_color="transparent", hover_color="#515151")
         else:
-            btn = ctk.CTkButton(self, command=command, width=200, height=110, text="No text")
+            btn = ctk.CTkButton(self, command=command, width=200, height=110, text="No image")
         self.buttons.append(btn)
         btn.grid(row=2, column=len(self.buttons), ipadx=0, ipady=0)
+    
+    def back_to_top_btn(self, manage:str="pack"):
+        if self.dir == "y":
+            if manage == "pack":
+                ctk.CTkButton(self, 400, 60, command=lambda:self._parent_canvas.yview_moveto(0.0), text="Back to Top", font=("Roboto", 20)).pack(pady=5)
+            elif manage == "grid":
+                ctk.CTkButton(self, 400, 60, command=lambda:self._parent_canvas.yview_moveto(0.0), text="Back to Top", font=("Roboto", 20)).grid(row=len(self.winfo_children()), column=0, pady=5)
 
 
 class BaseVideoFrame(ctk.CTkFrame):
@@ -666,7 +674,7 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe?
 
         self.profilebtn = ctk.CTkButton(self.topbar, text="", width=60, height=60, corner_radius=30, command=self._open_account_info)
         self.browsebtn = ctk.CTkButton(self.topbar, text="Browse", command=self.master.maintobrowse)
-        self.historybtn = ctk.CTkButton(self.topbar, text="Watch HistorYaoi", command=self.show_history)
+        self.historybtn = ctk.CTkButton(self.topbar, 150, text="Watch HistorYaoi", command=self.show_history)
         self.watchlaterbtn = ctk.CTkButton(self.topbar, text="My LibrarYaoi", command=self.show_watch_later)
         self.switch = ctk.CTkSwitch(self.topbar, text="when watching video, remove from My LibrarYaoi", variable=self.watchlist_setting, onvalue=True, offvalue=False)
 
@@ -703,6 +711,7 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe?
     def show_overlay(self):
         self.update_idletasks()
         self.historyframe.place(in_=self.scrolls, relx=0, rely=0, relwidth=1, relheight=1)
+        self.scrolls._parent_canvas.yview_moveto(0.0)
         self.historyframe.lift()
 
     def update_history_display(self, title, items):
@@ -1039,6 +1048,9 @@ class StreamingServiceApp(ctk.CTk):
             widget.destroy()
 
         self.generate_scrolls()
+        
+        self.main.scrolls.back_to_top_btn()
+        self.browsemenu.video_list_frame.back_to_top_btn("grid")
 
         if self.loading_screen.loaded >= self.loading_screen.total:
             self.hide_loading()
@@ -1060,6 +1072,11 @@ class StreamingServiceApp(ctk.CTk):
                     widget.destroy()
 
                 self.generate_scrolls()
+                
+                self.main.scrolls._parent_canvas.yview_moveto(0.0)
+                self.browsemenu.after(10, lambda:self.browsemenu.video_list_frame._parent_canvas.yview_moveto(0.0))
+
+                self.main.scrolls.back_to_top_btn()
                 break
 
     def generate_scrolls(self):
@@ -1229,7 +1246,7 @@ class StreamingServiceApp(ctk.CTk):
         typetxt:dict[str] = {"usermade": "user-made videos", "short": "shorts", "movie": "movies", "": "videos"}
         string = f"{rating}{'-rated ' if rating else ''}{genre if rating else genre.capitalize()} {typetxt[video_type] if rating or genre else typetxt[video_type].capitalize()}"       
         scroll = BaseScrollFrame(self.main.scrolls, string, "x", True)
-        scroll.pack()
+        scroll.pack(pady=3)
         if not genre and not video_type and not rating:
             return
         if video_type:
