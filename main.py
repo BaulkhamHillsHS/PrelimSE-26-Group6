@@ -42,7 +42,7 @@ class LoginFrame(ctk.CTkFrame):
     # Frame for log in/welcome screen
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
-        self.grid_rowconfigure(5, weight=2)
+        self.grid_rowconfigure(5, weight=0)
         self.grid_columnconfigure(2, weight=2)
 
         self.signup_form = None
@@ -71,6 +71,9 @@ class LoginFrame(ctk.CTkFrame):
         self.loginbtn = ctk.CTkButton(self, 300, 50, text="Login", command=self.login)
         self.loginbtn.grid(row=4, column=1, sticky="nsew", padx=10)
 
+        self.exitbtn = ctk.CTkButton(self, text="Exit App", width=300, height=50, fg_color="red", hover_color="#670000", command=self.exit_app)
+        self.exitbtn.grid(row=5, column=1, sticky="nsew", padx=10, pady=(10, 0))
+
     def login(self):
         """Used for confirming entries are correct"""
         for user in self.master._accounts._accounts:
@@ -88,6 +91,9 @@ class LoginFrame(ctk.CTkFrame):
         if self.signup_form == None:
             self.signup_form = SignupFrame(self)
             self.signup_form.grid(row=0, column=0, padx=15, pady=15, columnspan=2, rowspan=3, sticky="nsew")
+
+    def exit_app(self):
+        self.master.destroy()
 
 
 class SignupFrame(ctk.CTkFrame):
