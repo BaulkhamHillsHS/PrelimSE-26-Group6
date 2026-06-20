@@ -1,18 +1,9 @@
 <mxfile host="65bd71144e">
     <diagram id="ec9SXcD-IyeAEvhiNEoS" name="Page-1">
-        <mxGraphModel dx="3548" dy="2163" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="1654" math="0" shadow="0">
+        <mxGraphModel dx="2877" dy="2451" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="1654" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
-                <mxCell id="14" style="edgeStyle=orthogonalEdgeStyle;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;endArrow=none;endFill=0;startArrow=classic;startFill=1;rounded=0;" parent="1" target="6" edge="1">
-                    <mxGeometry relative="1" as="geometry">
-                        <Array as="points">
-                            <mxPoint x="289" y="450"/>
-                            <mxPoint x="-66" y="450"/>
-                        </Array>
-                        <mxPoint x="289" y="10" as="sourcePoint"/>
-                    </mxGeometry>
-                </mxCell>
                 <mxCell id="21" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.499;exitY=0.987;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;rounded=0;curved=0;startArrow=classic;startFill=1;endArrow=none;endFill=0;exitPerimeter=0;" parent="1" source="5" target="15" edge="1">
                     <mxGeometry relative="1" as="geometry">
                         <Array as="points">
@@ -40,18 +31,8 @@
                         <mxPoint x="289" y="-420" as="sourcePoint"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="143" style="edgeStyle=orthogonalEdgeStyle;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;rounded=0;startArrow=classic;startFill=1;endArrow=none;endFill=0;" parent="1" target="110" edge="1">
-                    <mxGeometry relative="1" as="geometry">
-                        <Array as="points">
-                            <mxPoint x="289" y="450"/>
-                            <mxPoint x="-291" y="450"/>
-                            <mxPoint x="-291" y="570"/>
-                        </Array>
-                        <mxPoint x="289" y="10" as="sourcePoint"/>
-                    </mxGeometry>
-                </mxCell>
                 <mxCell id="2" value="ctk.CTkFrame" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
-                    <mxGeometry x="209" y="-100" width="160" height="110" as="geometry"/>
+                    <mxGeometry x="209" y="-450" width="160" height="110" as="geometry"/>
                 </mxCell>
                 <mxCell id="3" value="+ master&lt;div&gt;+ kwargs&lt;/div&gt;" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" parent="2" vertex="1">
                     <mxGeometry y="26" width="160" height="34" as="geometry"/>
@@ -127,7 +108,7 @@
                 <mxCell id="35" value="" style="line;strokeWidth=1;fillColor=none;align=left;verticalAlign=middle;spacingTop=-1;spacingLeft=3;spacingRight=3;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;strokeColor=inherit;" parent="33" vertex="1">
                     <mxGeometry y="180" width="200" height="8" as="geometry"/>
                 </mxCell>
-                <mxCell id="36" value="+ refresh_videos()&lt;div&gt;+ toggle_watch_later(video:str)&lt;/div&gt;&lt;div&gt;+ open_tvshow(info:dict, video:str)&lt;/div&gt;" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" parent="33" vertex="1">
+                <mxCell id="36" value="+ refresh_videos()&lt;div&gt;+ toggle_watch_later(video:str)&lt;/div&gt;&lt;div&gt;+ open_tvshow(info:dict, video:str)&lt;/div&gt;&lt;div&gt;+ watch_video(video:str)&lt;/div&gt;" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" parent="33" vertex="1">
                     <mxGeometry y="188" width="200" height="82" as="geometry"/>
                 </mxCell>
                 <mxCell id="44" value="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=8;" parent="1" vertex="1">
@@ -168,7 +149,7 @@
                     <mxGeometry y="60" width="210" height="26" as="geometry"/>
                 </mxCell>
                 <mxCell id="59" value="BaseVideoFrame" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
-                    <mxGeometry x="589" y="570" width="160" height="174" as="geometry"/>
+                    <mxGeometry x="589" y="570" width="160" height="190" as="geometry"/>
                 </mxCell>
                 <mxCell id="60" value="+ name: str&lt;div&gt;+ image: ctkLabel&lt;/div&gt;&lt;div&gt;+ textlabel: ctkLabel&lt;/div&gt;&lt;div&gt;+ typelabel: ctkLabel&lt;/div&gt;&lt;div&gt;+ watchbtn: ctkButton&lt;/div&gt;&lt;div&gt;+ watchlaterbtn: ctkButton&lt;/div&gt;&lt;div&gt;+ backbtn: ctkButton&lt;/div&gt;" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" parent="59" vertex="1">
                     <mxGeometry y="26" width="160" height="114" as="geometry"/>
@@ -176,8 +157,8 @@
                 <mxCell id="61" value="" style="line;strokeWidth=1;fillColor=none;align=left;verticalAlign=middle;spacingTop=-1;spacingLeft=3;spacingRight=3;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;strokeColor=inherit;" parent="59" vertex="1">
                     <mxGeometry y="140" width="160" height="8" as="geometry"/>
                 </mxCell>
-                <mxCell id="62" value="&amp;nbsp;" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" parent="59" vertex="1">
-                    <mxGeometry y="148" width="160" height="26" as="geometry"/>
+                <mxCell id="62" value="# watch_video()&lt;div&gt;+ toggle_watch_later()&lt;/div&gt;" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" parent="59" vertex="1">
+                    <mxGeometry y="148" width="160" height="42" as="geometry"/>
                 </mxCell>
                 <mxCell id="41" style="edgeStyle=none;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;startArrow=open;startFill=0;endArrow=none;endFill=0;" parent="1" source="16" edge="1">
                     <mxGeometry relative="1" as="geometry">
@@ -185,7 +166,7 @@
                     </mxGeometry>
                 </mxCell>
                 <mxCell id="66" value="StreamingServiceApp" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
-                    <mxGeometry x="-1290" y="1020" width="240" height="690" as="geometry"/>
+                    <mxGeometry x="-1290" y="1020" width="240" height="740" as="geometry"/>
                 </mxCell>
                 <mxCell id="67" value="&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+ watchlist_setting: ctk.BooleanVar&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+ videos: dict&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+ window: CTkToplevel | None&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+ image_cache: dict&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;# _accounts: UserAccounts&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+ account: str&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+ profiles: list[UserProfiles]&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+ profile: UserProfiles&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+ logo: CTkImage&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+ login: LoginFrame&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+ main: MainFrame&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+ browsemenu: BrowseMenu&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+ subscription: SubscriptionFrame&lt;/font&gt;&lt;/div&gt;" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" parent="66" vertex="1">
                     <mxGeometry y="26" width="240" height="204" as="geometry"/>
@@ -193,8 +174,8 @@
                 <mxCell id="68" value="" style="line;strokeWidth=1;fillColor=none;align=left;verticalAlign=middle;spacingTop=-1;spacingLeft=3;spacingRight=3;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;strokeColor=inherit;" parent="66" vertex="1">
                     <mxGeometry y="230" width="240" height="8" as="geometry"/>
                 </mxCell>
-                <mxCell id="69" value="&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+ can_watch(rating: str) -&amp;gt; bool&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+ get_cached_image(path: str, size: tuple)&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+ loggedin(username: str)&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+ newaccountloggedin()&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+ count_all_videos()&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+ show_loading()&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+ hide_loading()&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+ loginupdate(username: str)&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+ update_profiles()&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+ switch_profile(profile: str)&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+ logout()&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+ changeframetomain()&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+ changeframetologin()&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+ maintobrowse()&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+ browsetomain()&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+ maintosubscription()&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+ subscriptiontomain()&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+ videotomain(videoframe: BaseVideoFrame)&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+ maintovideo(videoframe: BaseVideoFrame)&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+ load_video_details(type; str, status_check: method) -&amp;gt; dict&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+ open_video(video: str)&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+ load_tvshows()&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+ register_view(video_title: str)&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+ generate_scroll(genre: str, video_type: str, rating: str)&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+ open_video_frame(video: str, details: dict)&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+ load_tvshow_episodes()&lt;/font&gt;&lt;/div&gt;" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" parent="66" vertex="1">
-                    <mxGeometry y="238" width="240" height="452" as="geometry"/>
+                <mxCell id="69" value="&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+ can_watch(rating: str) -&amp;gt; bool&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+ get_cached_image(path: str, size: tuple)&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+ loggedin(username: str)&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+ newaccountloggedin()&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+ count_all_videos()&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+ show_loading()&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+ hide_loading()&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+ loginupdate(username: str)&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+ update_profiles()&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+ switch_profile(profile: str)&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+ logout()&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+ changeframetomain()&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+ changeframetologin()&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+ maintobrowse()&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+ browsetomain()&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+ maintosubscription()&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+ subscriptiontomain()&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+ videotomain(videoframe: BaseVideoFrame)&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+ maintovideo(videoframe: BaseVideoFrame)&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+ load_video_details(type; str, status_check: method) -&amp;gt; dict&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+ open_video(video: str)&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+ load_tvshows()&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+ register_view(video_title: str)&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+ generate_scroll(genre: str, video_type: str, rating: str)&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+ open_video_frame(video: str, details: dict)&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+ load_tvshow_episodes()&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+ register_watch_event(video: str)&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+ register_watch_later(video: str)&lt;/font&gt;&lt;/div&gt;" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" parent="66" vertex="1">
+                    <mxGeometry y="238" width="240" height="502" as="geometry"/>
                 </mxCell>
                 <mxCell id="70" value="UserAccounts" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
                     <mxGeometry x="-1510" y="-210" width="290" height="350" as="geometry"/>
@@ -227,7 +208,7 @@
                     </mxGeometry>
                 </mxCell>
                 <mxCell id="80" value="TVShowVideoFrame" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
-                    <mxGeometry x="710" y="780" width="230" height="86" as="geometry"/>
+                    <mxGeometry x="710" y="844" width="230" height="86" as="geometry"/>
                 </mxCell>
                 <mxCell id="81" value="+ epafter: BaseVideoFrame | None" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" parent="80" vertex="1">
                     <mxGeometry y="26" width="230" height="26" as="geometry"/>
@@ -370,7 +351,7 @@
                     <mxGeometry x="-171" y="70" width="20" height="10" as="geometry"/>
                 </mxCell>
                 <mxCell id="142" value="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=8;" parent="1" vertex="1">
-                    <mxGeometry x="224" y="28" width="20" height="10" as="geometry"/>
+                    <mxGeometry x="224" y="-322" width="20" height="10" as="geometry"/>
                 </mxCell>
                 <mxCell id="145" value="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=8;" parent="1" vertex="1">
                     <mxGeometry x="-391" y="540" width="20" height="10" as="geometry"/>
@@ -390,7 +371,7 @@
                     </mxGeometry>
                 </mxCell>
                 <mxCell id="154" value="&lt;font style=&quot;color: rgb(255, 0, 0);&quot;&gt;make the arrowhead filled pls&lt;/font&gt;&lt;div&gt;&lt;font style=&quot;color: rgb(255, 0, 0);&quot;&gt;(idk how)&lt;/font&gt;&lt;/div&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
-                    <mxGeometry x="103" y="8" width="60" height="30" as="geometry"/>
+                    <mxGeometry x="69" y="-290" width="60" height="30" as="geometry"/>
                 </mxCell>
                 <mxCell id="155" value="&lt;font style=&quot;color: rgb(255, 0, 0);&quot;&gt;make the arrowhead filled pls&lt;/font&gt;&lt;div&gt;&lt;font style=&quot;color: rgb(255, 0, 0);&quot;&gt;(idk how)&lt;/font&gt;&lt;/div&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
                     <mxGeometry x="-751" y="253" width="60" height="30" as="geometry"/>
@@ -518,6 +499,24 @@
                         </Array>
                         <mxPoint x="638.2800000000002" y="742.8040000000001" as="sourcePoint"/>
                         <mxPoint x="-1060" y="1020" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="241" value="" style="endArrow=none;html=1;rounded=0;curved=0;" edge="1" parent="1">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="-80" y="570" as="sourcePoint"/>
+                        <mxPoint x="260" y="450" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="-80" y="450"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="242" value="" style="endArrow=none;html=1;rounded=0;curved=0;" edge="1" parent="1">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="-320" y="570" as="sourcePoint"/>
+                        <mxPoint x="20" y="450" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="-320" y="450"/>
+                        </Array>
                     </mxGeometry>
                 </mxCell>
             </root>
