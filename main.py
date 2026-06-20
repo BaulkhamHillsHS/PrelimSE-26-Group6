@@ -445,10 +445,10 @@ class BaseVideoFrame(ctk.CTkFrame):
             type = "Short form video"
 
         self.name = name
-        self.image = ctk.CTkLabel(self, text="", image=self.master.get_cached_image(image_path, (800, 450)))
+        self.image = ctk.CTkLabel(self, text="", image=self.master.get_cached_image(image_path, (700, 400)))
         self.image.grid(row=0, column=0, rowspan=3, columnspan=2, padx=20, pady=(20,5), sticky="w")
 
-        self.textlabel = ctk.CTkLabel(self, text=name, font=("Roboto", 36 if (nl:=len(name))<45 else (33 if nl<53 else 31)), anchor="w")
+        self.textlabel = ctk.CTkLabel(self, text=name, font=("Roboto", 36 if (nl:=len(name))<45 else (32 if nl<49 else 29)), anchor="w")
         self.textlabel.grid(row=3, column=0, columnspan=2, pady=7, padx=30, sticky="w")
 
         meta = []
@@ -470,13 +470,13 @@ class BaseVideoFrame(ctk.CTkFrame):
         self.typelabel = ctk.CTkLabel(self, text=meta_text, font=("Roboto", 36), anchor="w", justify="left")
         self.typelabel.grid(row=5, column=0, columnspan=2, pady=7, padx=30, sticky="w")
 
-        self.watchbtn = ctk.CTkButton(self, 400, 75, text="Watch", command=self._watch_video)
+        self.watchbtn = ctk.CTkButton(self, 450, 75, text="Watch", command=self._watch_video)
         self.watchbtn.grid(row=0, column=2, columnspan=2, padx=10, pady=5)
 
-        self.watchlaterbtn = ctk.CTkButton(self, 400, 75, text=("Remove from" if self.name in self.master.profile.get_wlist() else "Add to") + "\nMy LibrarYaoi", command=self.toggle_watch_later)
+        self.watchlaterbtn = ctk.CTkButton(self, 450, 75, text=("Remove from" if self.name in self.master.profile.get_wlist() else "Add to") + "\nMy LibrarYaoi", command=self.toggle_watch_later)
         self.watchlaterbtn.grid(row=1, column=2, columnspan=2, padx=10, pady=5)
 
-        self.backbtn = ctk.CTkButton(self, 400, 75, text="Back", command=backcmd)
+        self.backbtn = ctk.CTkButton(self, 450, 75, text="Back", command=backcmd)
         self.backbtn.grid(row=5, column=2, columnspan=2, padx=5, pady=4)
 
     def _watch_video(self):
