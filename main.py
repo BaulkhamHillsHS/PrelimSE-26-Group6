@@ -4,36 +4,11 @@ import CTkColorPicker as ctkcolor
 import customtkinter as ctk
 from datetime import datetime
 from PIL import Image
-import tkinter as tk
 
 """
 Notes:
 NEEDED THINGS
-profiles: 
-- each profile should have an age, watch list and watch history
-- profile should be a class
-
-subscription management:
-button next to profile to open a seperate window to see subscription and manage
-
-OOP PROGRAMMING:
-CONGposition - class containing classes 
-- make a profile class, where the account class is containing profiles
-
 encapsulation - more protected things? currently only _accounts
-
-polymorphism - multiple classes containing same method
-- easy imo, because video and tv show are going to be inheriting from the same abstract class
-
-
-
-
-
-
-
-
-
-https://youtu.be/uGI0tkmyogU?t=1590 "We should blur this on YouTube and make it unblurred on Nebula."
 """
 
 NAME = "yaoi streaming service :3"
@@ -149,10 +124,10 @@ class SignupFrame(ctk.CTkFrame):
             return
 
         if "@" in username:
-            self.status_label.configure(text="Username cannot contain @", text_color="red")
+            self.status_label.configure(text="Username cannot contain @", text_color="red") # to prevent issues with usernames and emails being the same
             return
 
-        try:
+        try: # age must be positive integer
             age = int(age)
             if age <= 0:
                 raise ValueError
@@ -218,7 +193,7 @@ class LoadingScreen(ctk.CTkToplevel):
         self.loaded = 0
         self.update_bar()
 
-    def step(self):
+    def step(self): # increases loading progress after each item processed
         self.loaded += 1
         self.update_bar()
 
@@ -229,7 +204,7 @@ class LoadingScreen(ctk.CTkToplevel):
 
 
 class AccountInfoWindow(ctk.CTkToplevel):
-    # Frame for showing account information
+    # Frame for showing account information - pops up when clicking pfp
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
         self.grid_rowconfigure(7, weight=1)
@@ -413,7 +388,7 @@ class BaseScrollFrame(ctk.CTkScrollableFrame):
         self.buttons = []
         self.dir = "x" if dir == "x" else "y"
 
-    def add_btn(self, image_path, command=lambda:print(f"No command")):
+    def add_btn(self, image_path, command=lambda:print(f"No command")): # clickable thumbnail
         if image_path:
             image = app.get_cached_image(image_path, (200, 110))
             btn = ctk.CTkButton(self, command=command, width=200, height=110, image=image, text="", fg_color="transparent", hover_color="#515151")
@@ -431,6 +406,7 @@ class BaseScrollFrame(ctk.CTkScrollableFrame):
 
 
 class BaseVideoFrame(ctk.CTkFrame):
+    # base for all video types (movie, short, tv, usermade)
     def __init__(self, master, image_path:str, name:str, type:str, backcmd=None, **kwargs):
         super().__init__(master, **kwargs)
         self.name = name
@@ -467,7 +443,7 @@ class BaseVideoFrame(ctk.CTkFrame):
 
         meta_text = type + ("\n" + "\n".join(meta) if meta else "")
 
-        self.typelabel = ctk.CTkLabel(self, text=meta_text, font=("Roboto", 36), anchor="w", justify="left")
+        self.typelabel = ctk.CTkLabel(self, text=meta_text, font=("Roboto", 20), anchor="w", justify="left")
         self.typelabel.grid(row=5, column=0, columnspan=2, pady=7, padx=30, sticky="w")
 
         self.watchbtn = ctk.CTkButton(self, 450, 75, text="Watch", command=self._watch_video)
@@ -501,6 +477,7 @@ class BaseVideoFrame(ctk.CTkFrame):
 
 
 class TVShowVideoFrame(BaseVideoFrame):
+    # special frame for tv shows - includes navigation buttons
     def __init__(self, master, image_path, name, type, epnumber:int, epbefore:BaseVideoFrame|None, epafter:BaseVideoFrame|None, serieslen:int, backcmd=None, **kwargs):
         super().__init__(master, image_path, name, type, backcmd, **kwargs)
         self.epafter = epafter
@@ -514,6 +491,7 @@ class TVShowVideoFrame(BaseVideoFrame):
 
 
 class VideoView(ctk.CTkToplevel, ABC):
+    # abstract video viewing class
     def __init__(self, master, title, image_path, video_type, info):
         super().__init__(master)
         self.after(50, self.focus_set)
@@ -658,8 +636,8 @@ class UserMadeView(VideoView):
         self.back_btn.grid(row=3, column=0, pady=10)
 
 
-class MainFrame(ctk.CTkFrame): # better name than mainframe?
-    # Frame for after login, watching things idk
+class MainFrame(ctk.CTkFrame):
+    # Frame for after login, the main screen of the app, featuring topbar, scroll, history, etc
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
         self.current_display = None
@@ -799,6 +777,7 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe?
 
 
 class SubscriptionFrame(ctk.CTkFrame):
+    # form to update subscriptions
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
 
@@ -821,6 +800,7 @@ class SubscriptionFrame(ctk.CTkFrame):
         ctk.CTkLabel(self.form_frame, text="Subscription").pack()
         self.form_frame.planbox = ctk.CTkComboBox(self.form_frame, values=["basic", "premium", "神様"])
         self.form_frame.planbox.pack(pady=(0,5))
+        self.form_frame.planbox.set(self.master._accounts.get_subscription(self.master.account))
 
         # label text, placeholder text, hidden with asterisk?
         fields = {"cardholder": ("Cardholder Name", "e.g. Ryan Dunne", False, 200),
@@ -952,6 +932,7 @@ class SubscriptionFrame(ctk.CTkFrame):
 
 
 class StreamingServiceApp(ctk.CTk):
+    # main class, controls many frames, navigation, and csv files
     def __init__(self):
         super().__init__()
         self.title(NAME)
@@ -1293,7 +1274,7 @@ class StreamingServiceApp(ctk.CTk):
 
 
 class UserAccounts:
-    # Only handles data
+    # Only handles data, account/profile management
     FIELDS = ["username", "age", "email", "password", "profiles", "subscription", "cardholder", "cardnumber", "expiry", "securitycode", "billingaddress", "rgb"]
     filepath = "accounts.csv"
 
@@ -1406,6 +1387,7 @@ class UserAccounts:
 
 
 class UserProfiles():
+    # individual user profile with its own watch list and history
     FIELDS = ["name", "wlist", "whistory"]
 
     def __init__(self, name:str, age:int, wlist:list, whistory:list, color=None):
