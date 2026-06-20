@@ -196,6 +196,13 @@ class LoadingScreen(ctk.CTkToplevel):
         self.geometry(f"{master.winfo_screenwidth()}x{master.winfo_screenheight()}+0+0")
         self.configure(fg_color="#000000")
 
+        self.logo = ctk.CTkImage(light_image=Image.open("logo.png"),size=(150, 150))
+        self.logo_label = ctk.CTkLabel(self, text="", image=self.logo)
+        self.logo_label.place(relx=0.5, rely=0.3, anchor="center")
+
+        self.title_label = ctk.CTkLabel(self, text=NAME, font=("Roboto", 40), text_color="green")
+        self.title_label.place(relx=0.5, rely=0.4, anchor="center")
+
         self.label = ctk.CTkLabel(self, text="Loading...", font=("Roboto", 30), text_color="white")
         self.label.place(relx=0.5, rely=0.5, anchor="center")
 
@@ -519,6 +526,10 @@ class VideoView(ctk.CTkToplevel, ABC):
         self.meta_label = ctk.CTkLabel(self, text=self.build_meta_text(video_type, info), justify="left")
         self.meta_label.grid(row=1, column=0, sticky="w", padx=10, pady=10)
 
+        self.appname_logo = self.master.get_cached_image("logo.png", (50, 50))
+        self.appname_label = ctk.CTkLabel(self, text=" "+NAME, image=self.appname_logo, compound="left", text_color="green")
+        self.appname_label.grid(row=2, column=0, sticky="w", padx=10, pady=(0, 10))
+
         self.content.grid(row=0, column=0, columnspan=3, sticky="nsew", padx=10, pady=10)
 
         self.back_btn = ctk.CTkButton(self, text="Back", command=self.destroy)
@@ -568,9 +579,9 @@ class TVEpisodeView(VideoView):
 
         self.next_btn = ctk.CTkButton(self, text="Next Episode", command=self.next_ep)
 
-        self.prev_btn.grid(row=2, column=0, padx=10, pady=10, sticky="w")
-        self.next_btn.grid(row=2, column=2, padx=10, pady=10, sticky="e")
-        self.back_btn.grid(row=3, column=0, columnspan=3, pady=10)
+        self.prev_btn.grid(row=3, column=0, padx=10, pady=10, sticky="w")
+        self.next_btn.grid(row=3, column=2, padx=10, pady=10, sticky="e")
+        self.back_btn.grid(row=4, column=0, columnspan=3, pady=10)
 
     def load_episode(self):
         ep_info = self.episodes[self.index][2]
@@ -614,7 +625,7 @@ class MovieView(VideoView):
         super().__init__(master, movie_name, movie_info["image"], "Movie", movie_info)
 
     def create_navigation(self):
-        self.back_btn.grid(row=2, column=0, pady=10)
+        self.back_btn.grid(row=3, column=0, pady=10)
 
 
 class ShortView(VideoView):
@@ -625,7 +636,7 @@ class ShortView(VideoView):
         super().__init__(master, self.short_title, info["image"], "short", info)
 
     def create_navigation(self):
-        self.back_btn.grid(row=2, column=0, pady=10)
+        self.back_btn.grid(row=3, column=0, pady=10)
 
 
 class UserMadeView(VideoView):
@@ -636,7 +647,7 @@ class UserMadeView(VideoView):
         super().__init__(master, self.usermade_title, info["image"], "user-made video", info)
 
     def create_navigation(self):
-        self.back_btn.grid(row=2, column=0, pady=10)
+        self.back_btn.grid(row=3, column=0, pady=10)
 
 
 class MainFrame(ctk.CTkFrame): # better name than mainframe?
