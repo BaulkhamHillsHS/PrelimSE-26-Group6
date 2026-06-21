@@ -49,10 +49,12 @@ class LoginFrame(ctk.CTkFrame):
         self._buildui()
 
     def _buildui(self):
-        """Builds the ui for signup form"""
+        """Builds the ui for login frame"""
         if self.signup_form:
+            # Removes previous signup form when going back to login frame
             self.signup_form.destroy()
             self.signup_form = None
+        
         self.logintitle = ctk.CTkLabel(self, text="Login", font=("Roboto", 50))
         self.logintitle.grid(row=0, column=0, columnspan=2, sticky="nsew", pady=(30, 60))
 
@@ -86,24 +88,27 @@ class LoginFrame(ctk.CTkFrame):
 
     def create_signup_form(self):
         """Used for generating a signup form"""
-        for widget in self.winfo_children():
+        for widget in self.winfo_children(): # Removes the widgets in the login frame
             widget.grid_forget()
-        if self.signup_form == None:
+
+        if self.signup_form == None: # Creates a signup frame
             self.signup_form = SignupFrame(self)
             self.signup_form.grid(row=0, column=0, padx=15, pady=15, columnspan=2, rowspan=3, sticky="nsew")
 
     def exit_app(self):
+        """Exits the app"""
         self.master.quit()
         self.master.destroy()
 
 
 class SignupFrame(ctk.CTkFrame):
-    # Frame to create an account
+    """Frame to create an account"""
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
         self.grid_rowconfigure(9, weight=1)
         self.grid_columnconfigure(2, weight=1)
 
+        # Creates widgets in the signup form
         self.title = ctk.CTkLabel(self, text="Create an account")
         self.title.grid(row=0, column=0, padx=10, pady=10, columnspan=2)
 
@@ -144,14 +149,17 @@ class SignupFrame(ctk.CTkFrame):
         password = self.password_entry.get()
         confirm_password = self.confirm_password_entry.get()
 
+        # Unfilled boxes check
         if any(var == "" for var in (username, age, email, password, confirm_password)):
             self.status_label.configure(text="Please fill in all fields.", text_color="red")
             return
 
+        # Valid username check
         if "@" in username:
             self.status_label.configure(text="Username cannot contain @", text_color="red")
             return
 
+        # Check if age is a number
         try:
             age = int(age)
             if age <= 0:
@@ -160,18 +168,22 @@ class SignupFrame(ctk.CTkFrame):
             self.status_label.configure(text="Please enter a positive whole number for age", text_color="red")
             return
 
+        # Valid email check
         if not "@" in email:
             self.status_label.configure(text="Email must contain @", text_color="red")
             return
 
+        # Valid password check
         if password != confirm_password:
             self.status_label.configure(text="Passwords do not match.", text_color="red")
             return
 
+        # Check if username is taken
         if username in self.master.master._accounts.get_userdetails("username"):
             self.status_label.configure(text=f"Username {username} is taken.", text_color="red")
             return
 
+        # Check if email is already being used
         if email in self.master.master._accounts.get_userdetails("email"):
             self.status_label.configure(text="Email already linked to an account.\nIf you would like to create new profiles,\nyou can do so in the profile menu.", text_color="red")
             return
@@ -188,6 +200,7 @@ class SignupFrame(ctk.CTkFrame):
 
 
 class LoadingScreen(ctk.CTkToplevel):
+    """Loading screen after login to load all videos"""
     def __init__(self, master):
         super().__init__(master)
 
@@ -214,28 +227,30 @@ class LoadingScreen(ctk.CTkToplevel):
         self.total = 1
 
     def set_total(self, total):
+        """Sets the end point of the progress bar based on the total videos"""
         self.total = max(total, 1)
         self.loaded = 0
         self.update_bar()
 
     def step(self):
+        """Increments the progress bar"""
         self.loaded += 1
         self.update_bar()
 
     def update_bar(self):
+        """Updates the progress on the bar"""
         value = self.loaded / self.total
         self.progress.set(min(value, 1.0))
         self.update_idletasks()
 
 
 class AccountInfoWindow(ctk.CTkToplevel):
-    # Frame for showing account information
+    """Frame for showing account information"""
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
         self.grid_rowconfigure(7, weight=1)
         self.grid_columnconfigure(1, weight=1)
 
-        self.title(NAME + " account info")
         self.resizable(False, False)
         self.overrideredirect(True)
 
@@ -258,17 +273,20 @@ class AccountInfoWindow(ctk.CTkToplevel):
         ctk.CTkButton(self, text="Logout", command=master.master.logout).grid(row=6, column=0, padx=10, pady=3)
 
     def updateprofiles(self, profile, profiles:list):
+        """Updates the CTkEntry to show the list of profiles that the user can switch to"""
         profiles = profiles.copy()
         if profile in profiles:
+            # Remove the current profile because user cannot switch to current profile
             profiles.remove(profile)
-        if profiles:
+        if profiles: # Configures the values of the CTkEntry if the user has multiple profiles
             self.profilelist.configure(values=profiles) 
             self.profilelist.set(profiles[0])
-        else:
+        else: # Dosen't show CTkEntry if only has one profile (no other profile to switch to)
             self.profilelist.grid_forget()
             self.switchprofilebtn.grid_forget()
 
     def pick_color(self):
+        """Opens the colour picker to choose a profile colour"""
         self.master.accountinfowindow.withdraw()
         color = ctkcolor.AskColor().get()
         if color:
@@ -276,11 +294,13 @@ class AccountInfoWindow(ctk.CTkToplevel):
             self.master.updateprofilebtn()
     
     def relative(self):
+        """Opens the account info window in a position relative to the main window"""
         self.update_idletasks()
         self.profilebtn = self.master.profilebtn
         self.geometry(f"160x300+{self.profilebtn.winfo_rootx() - 80}+{self.profilebtn.winfo_rooty() + self.profilebtn.winfo_height() + 10}")
 
 class BrowseMenu(ctk.CTkFrame):
+    """Menu showing all videos with search and filters"""
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
         self.grid_columnconfigure(2, weight=0)
@@ -326,9 +346,11 @@ class BrowseMenu(ctk.CTkFrame):
         self.refresh_videos()
 
     def create_video_rows(self):
+        """Generates each video with its own buttons"""
         row = 0
 
         for video, info in self.video_images.items():
+            # Creates frame and widgets for each video
             video_row = ctk.CTkFrame(self.video_list_frame)
             video_row.grid(row=row, column=0, sticky="ew", padx=5, pady=3)
 
@@ -348,9 +370,12 @@ class BrowseMenu(ctk.CTkFrame):
             row += 1
 
     def refresh_videos(self):
+        """Updates the list of videos based on the search and filters"""
+        # Removes label showing that there are no videos based on filters
         self.feedback.grid_forget()
-        search = self.searchbox.get().lower().strip()
 
+        # Gets filter and search
+        search = self.searchbox.get().lower().strip()
         genre = self.genre_filter.get()
         content_type = self.type_filter.get()
         rating = self.rating_filter.get()
@@ -360,6 +385,7 @@ class BrowseMenu(ctk.CTkFrame):
         for video, row_data in self.video_rows.items():
             info = row_data["info"]
 
+            # Figures out which videos match the filters
             matches = not any((genre != "all" and info["genre"] != genre,
                                content_type != "all" and info["type"] != content_type,
                                rating != "all" and info["rating"] != rating,
@@ -367,19 +393,22 @@ class BrowseMenu(ctk.CTkFrame):
                                not self.master.can_watch(info["rating"])))
 
             if matches:
+                # Adds video frame and increments visible_count if match
                 row_data["frame"].grid()
                 row_data["watchlater"].configure(text=("Remove from" if video in self.master.profile.get_wlist() else "Add to") + "\nMy LibrarYaoi")
                 visible_count += 1
 
             else:
+                # Removes video frame if not a match
                 row_data["frame"].grid_remove()
 
         if visible_count == 0:
+            # If no videos are shown, show the feedback label
             self.feedback.grid(row=2, column=0, columnspan=3)
 
     def toggle_watch_later(self, video:str):
-        prof = self.master.profile
-        if video in prof.get_wlist():
+        """Adds/Removes video from watch later"""
+        if video in (prof:=self.master.profile).get_wlist():
             prof.remove_from_wlist(video)
         else:
             self.master.register_watch_later(video)
@@ -388,6 +417,8 @@ class BrowseMenu(ctk.CTkFrame):
         self.refresh_videos()
 
     def open_tvshow(self, info, video):
+        """Opens TV show window"""
+        # Gets show information
         shows = self.master.load_tvshow_episodes()
         show_name = info["show"]
 
@@ -395,9 +426,11 @@ class BrowseMenu(ctk.CTkFrame):
 
         index = next(i for i, ep in enumerate(episodes) if video == ep[1])
 
+        # Opens window
         self.master.window = TVEpisodeView(self.master, show_name, episodes, index)
 
     def watch_video(self, video):
+        """Opens video window"""
         self.master.register_watch_event(video)
         self.master.open_video(video)
 
@@ -414,6 +447,7 @@ class BaseScrollFrame(ctk.CTkScrollableFrame):
         self.dir = "x" if dir == "x" else "y"
 
     def add_btn(self, image_path, command=lambda:print(f"No command")):
+        """Creates a button with an image and adds to self frame"""
         if image_path:
             image = app.get_cached_image(image_path, (200, 110))
             btn = ctk.CTkButton(self, command=command, width=200, height=110, image=image, text="", fg_color="transparent", hover_color="#515151")
@@ -423,27 +457,33 @@ class BaseScrollFrame(ctk.CTkScrollableFrame):
         btn.grid(row=2, column=len(self.buttons), ipadx=0, ipady=0)
     
     def back_to_top_btn(self, manage:str="pack"):
+        """Creates a back to top button at the bottom of the frame"""
         if self.dir == "y":
-            if manage == "pack":
+            if manage == "pack": # Managed by pack
                 ctk.CTkButton(self, 400, 60, command=lambda:self._parent_canvas.yview_moveto(0.0), text="Back to Top", font=("Roboto", 20)).pack(pady=5)
-            elif manage == "grid":
+            elif manage == "grid": # Managed by grid
                 ctk.CTkButton(self, 400, 60, command=lambda:self._parent_canvas.yview_moveto(0.0), text="Back to Top", font=("Roboto", 20)).grid(row=len(self.winfo_children()), column=0, pady=5)
 
 
 class BaseVideoFrame(ctk.CTkFrame):
+    """Frame for displaying video information"""
     def __init__(self, master, image_path:str, name:str, type:str, backcmd=None, **kwargs):
         super().__init__(master, **kwargs)
         self.name = name
         self.grid_rowconfigure(6, weight=1)
         self.grid_columnconfigure(4, weight=1)
-        if not backcmd:
+
+        if not backcmd: # Creates a command for the back button
             backcmd = lambda:self.master.videotomain(self)
 
+        # Changes the type to be displayed better
         if type == "user-made video":
             type = "User-made video"
         elif type == "short":
             type = "Short form video"
 
+
+        # Generates widgets
         self.name = name
         self.image = ctk.CTkLabel(self, text="", image=self.master.get_cached_image(image_path, (700, 400)))
         self.image.grid(row=0, column=0, rowspan=3, columnspan=2, padx=20, pady=(20,5), sticky="w")
@@ -480,11 +520,13 @@ class BaseVideoFrame(ctk.CTkFrame):
         self.backbtn.grid(row=5, column=2, columnspan=2, padx=5, pady=4)
 
     def _watch_video(self):
+        """Watch button press"""
         self.master.register_watch_event(self.name)
         self.master.open_video(self.name)
         self.watchlaterbtn.configure(text=("Remove from" if self.name in app.profile.get_wlist() else "Add to") + "\nMy LibrarYaoi")
 
     def toggle_watch_later(self):
+        """Watch later button press"""
         app = self.master
 
         if self.name in app.profile.get_wlist():
@@ -500,20 +542,8 @@ class BaseVideoFrame(ctk.CTkFrame):
         self.watchlaterbtn.configure(text=("Remove from" if self.name in app.profile.get_wlist() else "Add to") + "\nMy LibrarYaoi")
 
 
-class TVShowVideoFrame(BaseVideoFrame):
-    def __init__(self, master, image_path, name, type, epnumber:int, epbefore:BaseVideoFrame|None, epafter:BaseVideoFrame|None, serieslen:int, backcmd=None, **kwargs):
-        super().__init__(master, image_path, name, type, backcmd, **kwargs)
-        self.epafter = epafter
-        if epnumber != 1:
-            ctk.CTkButton(self, text="Previous Episode", command=lambda:print(f"Previous Episode: {epbefore.name}")).grid(row=2, column=2, padx=5, pady=5)
-        if epnumber != serieslen:
-            ctk.CTkButton(self, text="Next Episode", command=lambda:print(f"Next Episode: {self.epafter.name}")).grid(row=2, column=3, padx=5, pady=5)
-        
-    def setepafter(self, epafter:BaseVideoFrame):
-        self.epafter = epafter
-
-
 class VideoView(ctk.CTkToplevel, ABC):
+    """Abstract class for displaying videos using window"""
     def __init__(self, master, title, image_path, video_type, info):
         super().__init__(master)
         self.after(50, self.focus_set)
@@ -524,9 +554,9 @@ class VideoView(ctk.CTkToplevel, ABC):
         self.geometry("440x440")
         self.grid_rowconfigure(0, weight=1)
         self.grid_rowconfigure((1,2), weight=0)
-
         self.grid_columnconfigure(0, weight=1)
 
+        # Widget creation
         self.content = ctk.CTkFrame(self, 440, 225)
         self.image = ctk.CTkLabel(self.content, text="", image=self.master.get_cached_image(image_path, (440, 225)))
         self.image.grid(row=0, column=0)
@@ -544,7 +574,8 @@ class VideoView(ctk.CTkToplevel, ABC):
 
         self.create_navigation()
 
-    def build_meta_text(self, video_type, info):
+    def build_meta_text(self, video_type, info) -> str:
+        """Creates video information string"""
         genre = info.get("genre", "Unknown")
         rating = info.get("rating", "Unknown")
 
@@ -566,10 +597,12 @@ class VideoView(ctk.CTkToplevel, ABC):
 
     @abstractmethod
     def create_navigation(self):
+        """Creates the buttons"""
         pass
 
 
 class TVEpisodeView(VideoView):
+    """Window for displaying TV shows"""
     def __init__(self, master, show_name, episodes, start_index=0):
         self.show_name = show_name
         self.episodes = episodes
@@ -592,6 +625,7 @@ class TVEpisodeView(VideoView):
         self.back_btn.grid(row=4, column=0, columnspan=3, pady=10)
 
     def load_episode(self):
+        """Loads current episode"""
         ep_info = self.episodes[self.index][2]
 
         image = self.master.get_cached_image(ep_info["image"], (440, 225))
@@ -607,6 +641,7 @@ class TVEpisodeView(VideoView):
             self.image.resize_image()
 
     def next_ep(self):
+        """Gets next episode of TV show"""
         if self.index < len(self.episodes) - 1:
             self.index += 1
             self.load_episode()
@@ -614,6 +649,7 @@ class TVEpisodeView(VideoView):
             self.master.register_watch_event(self.episodes[self.index][1])
 
     def prev_ep(self):
+        """Gets previous episode of TV show"""
         if self.index > 0:
             self.index -= 1
             self.load_episode()
@@ -621,11 +657,13 @@ class TVEpisodeView(VideoView):
             self.master.register_watch_event(self.episodes[self.index][1])
 
     def update_buttons(self):
+        """Disables buttons if at the start/end of show"""
         self.prev_btn.configure(state="normal" if self.index > 0 else "disabled")
         self.next_btn.configure(state="normal" if self.index < len(self.episodes) - 1 else "disabled")
 
 
 class MovieView(VideoView):
+    """Window for displaying movies"""
     def __init__(self, master, movie_name, movie_info):
         self.movie_name = movie_name
         self.movie_info = movie_info
@@ -637,6 +675,7 @@ class MovieView(VideoView):
 
 
 class ShortView(VideoView):
+    """Window for displaying shorts"""
     def __init__(self, master, title, info):
         self.short_title = title
         self.info = info
@@ -648,6 +687,7 @@ class ShortView(VideoView):
 
 
 class UserMadeView(VideoView):
+    """Window for displaying user-made videos"""
     def __init__(self, master, title, info):
         self.usermade_title = title
         self.info = info
@@ -658,8 +698,8 @@ class UserMadeView(VideoView):
         self.back_btn.grid(row=3, column=0, pady=10)
 
 
-class MainFrame(ctk.CTkFrame): # better name than mainframe?
-    # Frame for after login, watching things idk
+class MainFrame(ctk.CTkFrame):
+    """Frame with video recommendations and account information"""
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
         self.current_display = None
@@ -670,8 +710,7 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe?
 
         self.watchlist_setting = master.watchlist_setting
 
-        self.subscriptionframe = None # unused variable?
-
+        # Creates buttons
         self.profilebtn = ctk.CTkButton(self.topbar, text="", width=60, height=60, corner_radius=30, command=self._open_account_info)
         self.browsebtn = ctk.CTkButton(self.topbar, text="Browse", command=self.master.maintobrowse)
         self.historybtn = ctk.CTkButton(self.topbar, 150, text="Watch HistorYaoi", command=self.show_history)
@@ -684,24 +723,29 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe?
         self.watchlaterbtn.pack(side="left", padx=8)
         self.switch.pack(side="left", padx=12)
 
+        # Creates history frame
         self.historyframe = BaseScrollFrame(self, dir="y")
         self.historyframe.place_forget()
 
         self.history_widgets = []
 
+        # Creates account info window
         self.accountinfowindow = AccountInfoWindow(self)
         self.accountinfowindow.withdraw()
 
+        # Creates recommendations frame
         self.scrolls = BaseScrollFrame(self, dir="y")
         self.scrolls.grid(row=4, column=0, sticky="nsew", padx=2, pady=2)
         self.scrolls.grid_rowconfigure(0, weight=1)
         self.scrolls.grid_columnconfigure(0, weight=1)
 
     def updateaccounttxt(self, account, profile):
+        """Updates the account text in the account info window"""
         self.accountinfowindow.accountnametxt.configure(text="Account: "+account)
         self.accountinfowindow.profilenametxt.configure(text="Profile: "+profile)
 
     def _open_account_info(self):
+        """Opens the account information window"""
         if self.accountinfowindow.state() != "normal":
             self.accountinfowindow.relative()
             self.accountinfowindow.deiconify()
@@ -709,20 +753,23 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe?
             self.accountinfowindow.withdraw()
 
     def show_overlay(self):
+        """Opens the history frame"""
         self.update_idletasks()
         self.historyframe.place(in_=self.scrolls, relx=0, rely=0, relwidth=1, relheight=1)
         self.scrolls._parent_canvas.yview_moveto(0.0)
         self.historyframe.lift()
 
     def update_history_display(self, title, items):
+        """Updates the history frame based on watch list and watch history"""
         for widget in self.history_widgets:
             widget.destroy()
 
         self.history_widgets.clear()
 
+        # List of non empty strings
         items = [x for x in items if x]
 
-        if not items:
+        if not items: # Items list is empty
             label = ctk.CTkLabel(self.historyframe, text=f"No videos in {title}")
             label.grid(row=1, column=0, sticky="w", padx=5)
             self.history_widgets.append(label)
@@ -733,6 +780,7 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe?
 
         self.history_widgets.append(heading)
 
+        # Generates labels of video titles
         for row, video in enumerate(items, start=1):
             label = ctk.CTkLabel(self.historyframe, text=video, anchor="w")
             label.grid(row=row, column=0, sticky="w", padx=5, pady=2)
@@ -740,10 +788,12 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe?
             self.history_widgets.append(label)
 
     def add_video_to_history(self, video):
+        """Adds video to history and saves to csv"""
         self.master.profile.add_to_whistory(video)
         UserProfiles.save_to_csv(self.master._accounts)
 
     def show_history(self):
+        """Shows the watch history"""
         if self.current_display == "history":
             self.clear_history_display()
             self.historyframe.place_forget()
@@ -760,6 +810,7 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe?
         self.update_history_display("Watch HistorYaoi", history)
 
     def show_watch_later(self):
+        """Shows the watch later"""
         if self.current_display == "watchlater":
             self.clear_history_display()
             self.historyframe.place_forget()
@@ -776,18 +827,22 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe?
         self.update_history_display("My LibrarYaoi", wlist)
 
     def clear_history_display(self):
+        """Removes history display"""
         self.historyframe.place_forget()
+        self.scrolls._parent_canvas.yview_moveto(0.0)
 
         self.historybtn.configure(text="Watch HistorYaoi")
         self.watchlaterbtn.configure(text="My LibrarYaoi")
 
+        # Clears text
         for widget in self.history_widgets:
             widget.destroy()
 
         self.history_widgets.clear()
         self.current_display = None
 
-    def _darken_color(self, color, amount): # amount is a % of the rgb value to reduce
+    def _darken_color(self, color, amount) -> str: # amount is a % of the rgb value to reduce
+        """Generates the hover colour"""
         c = color[1:]
         r = round(int(c[0:2], 16) * (1-amount/100))
         g = round(int(c[2:4], 16) * (1-amount/100))
@@ -795,16 +850,19 @@ class MainFrame(ctk.CTkFrame): # better name than mainframe?
         return f"#{r:02x}{g:02x}{b:02x}"
 
     def updateprofilebtn(self):
+        """Updates profile button text and colour"""
         self.profilebtn.configure(text=self.master.profile.name[0], fg_color=self.master.profile.color, hover_color=self._darken_color(self.master.profile.color, 20))
 
 
 class SubscriptionFrame(ctk.CTkFrame):
+    """Frame for updating and viewing subscription information"""
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
 
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
 
+        # Frame widgets
         self.form_frame = BaseScrollFrame(self, dir="y", height=500, width=650)
 
         self.form_frame.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
@@ -853,16 +911,19 @@ class SubscriptionFrame(ctk.CTkFrame):
         ctk.CTkButton(self, text="Back", command=self.master.subscriptiontomain).grid(row=3, column=0, pady=5)
 
     def set_entry(self, entry, value):
+        """Sets entries with user details"""
         if value:
             entry.insert(0, value)
 
-    def luhn_verify(self, number): # verifies that number follows Luhn algorithm, returns passed (bool), error (str)
-        if not number.isdigit():
+    def luhn_verify(self, number) -> tuple[bool, str]:
+        """Verifies that number follows Luhn algorithm, returns bool and error str"""
+        if not number.isdigit(): # Checks if all digits
             return False, "Please enter only digits (no punctuation) for the card number."
 
-        if len(number) != 16:
+        if len(number) != 16: # Checks if credit card number is 16 digits
             return False, "Error: card number does not have 16 digits. Please make sure you have typed your card number correctly."
 
+        # Algorithm called the luhn algorithm, checks if the credit card number is a valid credit card number
         runningtotal = 0
         payload = list(number[-2::-1])
         for i in range(len(payload)):
@@ -876,7 +937,8 @@ class SubscriptionFrame(ctk.CTkFrame):
 
         return True, ""
 
-    def date_verify(self, date): # verifies that date is a real date (MM/YY) and is not expired, returns passed (bool), error (str)
+    def date_verify(self, date) -> tuple[bool, str]:
+        """Verifies that date is a real date (MM/YY) and is not expired, returns bool and error str"""
         try:
             month, year = date.split("/")
             month = int(month)
@@ -897,6 +959,7 @@ class SubscriptionFrame(ctk.CTkFrame):
             return False, "Error: expiry date is not in MM/YY format"
 
     def update_subscription(self):
+        """Updates profile csv and outputs a subscription invoice txt file"""
         prices = {"basic": 0, "premium": 5, "神様": 67}
         details = (self.subscription_entries["cardholder"].get(),
                    self.subscription_entries["cardnumber"].get(),
@@ -952,6 +1015,7 @@ class SubscriptionFrame(ctk.CTkFrame):
 
 
 class StreamingServiceApp(ctk.CTk):
+    """App for Streaming service"""
     def __init__(self):
         super().__init__()
         self.title(NAME)
@@ -963,7 +1027,8 @@ class StreamingServiceApp(ctk.CTk):
         self.geometry(f"{self.WIDTH}x{self.HEIGHT}+{self.X}+{self.Y}")
 
         self.watchlist_setting = ctk.BooleanVar(value=False)
-        self.videos:dict[list[dict]] = {} # {showtype: [{class:class, moreinfo: info}], showtype: [{}]}
+        self.videos:dict[list[dict]] = {} 
+        # {showtype: [{class:class, moreinfo: info}], showtype: [{}]}
         # eg. {tvshow: [{class:class, show:showname, epnum:1}]}
 
         self.window = None
@@ -986,6 +1051,7 @@ class StreamingServiceApp(ctk.CTk):
         self.main = MainFrame(self)
 
     def can_watch(self, rating) -> bool:
+        """Checks if videos are age appropriate to watch"""
         if rating == "R":
             return self.profile.age >= 18
         if rating == "MA":
@@ -993,22 +1059,26 @@ class StreamingServiceApp(ctk.CTk):
         return True
 
     def get_cached_image(self, path, size) -> ctk.CTkImage:
+        """Generates image"""
         key = (path, size)
         if key not in self.image_cache:
             self.image_cache[key] = ctk.CTkImage(light_image=Image.open(path), size=size)
         return self.image_cache[key]
 
     def loggedin(self, username):
+        """Log in method when user uses existing account"""
         self.changeframetomain()
         self.account = username
         self.loginupdate(self.account)
 
     def newaccountloggedin(self):
+        """Log in method when user makes new account"""
         self.changeframetomain()
         self.account = self.login.signup_form.username_entry.get()
         self.loginupdate(self.account)
 
-    def count_all_videos(self):
+    def count_all_videos(self) -> int:
+        """Outputs count of all videos"""
         count = 0
         for file in ["video_details/short_details.csv",
                      "video_details/tvshow_details.csv",
@@ -1019,19 +1089,23 @@ class StreamingServiceApp(ctk.CTk):
         return count
     
     def show_loading(self):
+        """Creates loading screen"""
         self.loading_screen = LoadingScreen(self)
         self.loading_screen.update()
 
     def hide_loading(self):
+        """Removes loading screen"""
         if hasattr(self, "loading_screen"):
             self.loading_screen.destroy()
             del self.loading_screen
 
     def loginupdate(self, username):
+        """Updates main frame after user logs in"""
         self.show_loading()
 
         self.loading_screen.set_total(self.count_all_videos())
 
+        # Update text
         self.profile = self._accounts.get_profiles(self.account)[0]
         self.main.updateaccounttxt(self.account, self.profile.name)
         self.main.accountinfowindow.updateprofiles(self.profile.name, self._accounts.get_profilesnames(username))
@@ -1039,6 +1113,7 @@ class StreamingServiceApp(ctk.CTk):
         self.main.updateprofilebtn()
         self.update_profiles()
 
+        # Creates frames
         self.browsemenu = BrowseMenu(self)
         self.subscription = SubscriptionFrame(self)
 
@@ -1047,6 +1122,7 @@ class StreamingServiceApp(ctk.CTk):
         for widget in self.main.scrolls.winfo_children():
             widget.destroy()
 
+        # Creates recommended
         self.generate_scrolls()
         
         self.main.scrolls.back_to_top_btn()
@@ -1056,11 +1132,14 @@ class StreamingServiceApp(ctk.CTk):
             self.hide_loading()
 
     def update_profiles(self):
+        """Updates users profiles"""
         self.profiles = self._accounts.get_profiles(self.account)
 
     def switch_profile(self, profile:str):
+        """Updates main frame after switch profile"""
         for i, p in enumerate(map(lambda p:p.name,self._accounts.get_profiles(self.account))):
             if p == profile:
+                # Updates text and profile button
                 self.profile = self.profiles[i]
                 self.main.updateaccounttxt(self.account, self.profile.name)
                 self.main.updateprofilebtn()
@@ -1068,6 +1147,7 @@ class StreamingServiceApp(ctk.CTk):
                 self.main.clear_history_display()
                 self.browsemenu.refresh_videos()
 
+                # Removes and generates scrolls (in case there are videos new profile can't watch)
                 for widget in self.main.scrolls.winfo_children():
                     widget.destroy()
 
@@ -1080,6 +1160,7 @@ class StreamingServiceApp(ctk.CTk):
                 break
 
     def generate_scrolls(self):
+        """Generates the recommended scrolls"""
         self.generate_scroll("food")
         self.generate_scroll("lifestyle")
         self.generate_scroll("music")
@@ -1089,12 +1170,14 @@ class StreamingServiceApp(ctk.CTk):
         self.load_tvshows()
 
     def logout(self):
+        """Logout button"""
         self.changeframetologin()
         self.login.pack()
         self.login._buildui()
         self.account = ""
 
     def changeframetomain(self):
+        """Removes login screen and adds main frame"""
         self.login.create_account_button.grid_forget()
         self.login.accountbox.grid_forget()
         self.login.loginbtn.grid_forget()
@@ -1102,11 +1185,13 @@ class StreamingServiceApp(ctk.CTk):
         self.main.pack(fill="both", expand=True)
 
     def changeframetologin(self):
+        """Removes main frame and adds login screen"""
         self.main.forget()
         self.main.clear_history_display()
         self.main.accountinfowindow.withdraw()
 
     def maintobrowse(self):
+        """Removes main screen and adds browse menu"""
         self.main.clear_history_display()
         self.main.accountinfowindow.withdraw()
         self.main.forget()
@@ -1114,6 +1199,7 @@ class StreamingServiceApp(ctk.CTk):
         self.browsemenu.refresh_videos()
 
     def browsetomain(self):
+        """Removes browse menu and adds main screen"""
         self.browsemenu.forget()
         self.browsemenu.feedback.grid_forget()
         self.browsemenu.searchbox.delete(0, "end")
@@ -1123,24 +1209,30 @@ class StreamingServiceApp(ctk.CTk):
         self.main.pack(fill="both", expand=True)
 
     def maintosubscription(self):
+        """Removes main frame and adds subscription frame"""
         self.main.clear_history_display()
         self.main.accountinfowindow.withdraw()
         self.main.forget()
         self.subscription.pack(fill="both", expand=True)
 
     def subscriptiontomain(self):
+        """Removes subscription frame and adds main frame"""
         self.subscription.forget()
         self.main.pack(fill="both", expand=True)
 
     def videotomain(self, videoframe:BaseVideoFrame):
+        """Removes video frame and adds main frame"""
         videoframe.forget()
         self.main.pack(fill="both", expand=True)
 
     def maintovideo(self, videoframe:BaseVideoFrame):
+        """Removes main frame and adds video frame"""
         self.main.forget()
         videoframe.pack(fill="both", expand=True)
 
     def load_video_details(self, type:str="all", status_check=None) -> dict[dict]:
+        """Outputs a dictionary of videos with details """
+
         videos:dict[dict] = {}
 
         def process_row(row, vtype):
@@ -1192,6 +1284,7 @@ class StreamingServiceApp(ctk.CTk):
         return videos
 
     def open_video(self, video:str):
+        """Creates a video window with the video"""
         if self.window and self.window.winfo_exists():
             self.window.destroy()
 
@@ -1217,6 +1310,7 @@ class StreamingServiceApp(ctk.CTk):
                 self.window.destroy()
 
     def load_tvshows(self):
+        """Generates the TV show scroll frames"""
         shows = self.load_tvshow_episodes()
         for show, eps in shows.items():
             allowed_eps = [(epnum, title, details) for (epnum, title, details) in eps if self.can_watch(details["rating"])]
@@ -1228,12 +1322,6 @@ class StreamingServiceApp(ctk.CTk):
             for epnum, title, details in allowed_eps:
                 scroll.add_btn(details["image"],command=lambda e=title, d=details: self.open_video_frame(e, d))
 
-    def register_view(self, video_title):
-        self.main.add_video_to_history(video_title)
-        if self.watchlist_setting.get():
-            self.profile.remove_from_wlist(video_title)
-            self.browsemenu.refresh_videos()
-
     def generate_scroll(self, genre:str="", video_type:str="", rating:str=""):
         """
         Generates a scroll frame with the window buttons based on the filters\n
@@ -1243,8 +1331,10 @@ class StreamingServiceApp(ctk.CTk):
         """
         if not self.can_watch(rating):
             return
+        # Creates a string of information based on the type
         typetxt:dict[str] = {"usermade": "user-made videos", "short": "shorts", "movie": "movies", "": "videos"}
         string = f"{rating}{'-rated ' if rating else ''}{genre if rating else genre.capitalize()} {typetxt[video_type] if rating or genre else typetxt[video_type].capitalize()}"       
+        
         scroll = BaseScrollFrame(self.main.scrolls, string, "x", True)
         scroll.pack(pady=3)
         if not genre and not video_type and not rating:
@@ -1254,6 +1344,7 @@ class StreamingServiceApp(ctk.CTk):
         else:
             videos = self.load_video_details("usermade") | self.load_video_details("short") | self.load_video_details("movie")
 
+        # Adds button to frame
         for video, details in videos.items():
             if any((genre and details["genre"] != genre,
                     rating and details["rating"] != rating,
@@ -1263,9 +1354,11 @@ class StreamingServiceApp(ctk.CTk):
             scroll.add_btn(details["image"], command=lambda v=video, d=details: self.open_video_frame(v, d))
 
     def open_video_frame(self, video, details):
+        """Opens the video frame of a video"""
         self.maintovideo(BaseVideoFrame(self, details["image"], video, details["type"]))
 
-    def load_tvshow_episodes(self):
+    def load_tvshow_episodes(self) -> dict[list[tuple]]:
+        """Generates a dictionary of tv show details"""
         episodes = self.load_video_details("tvshow")
 
         shows:dict[list[tuple]] = {}
@@ -1281,6 +1374,7 @@ class StreamingServiceApp(ctk.CTk):
         return shows
 
     def register_watch_event(self, video):
+        """Updates csv and adds to watch history"""
         self.main.add_video_to_history(video)
         if self.watchlist_setting.get():
             self.profile.remove_from_wlist(video)
@@ -1288,12 +1382,14 @@ class StreamingServiceApp(ctk.CTk):
         UserProfiles.save_to_csv(self._accounts)
 
     def register_watch_later(self, video):
+        """Updates csv and adds to watch later"""
         self.profile.add_to_wlist(video)
         UserProfiles.save_to_csv(self._accounts)
 
 
 class UserAccounts:
-    # Only handles data
+    """Handles the user account information"""
+
     FIELDS = ["username", "age", "email", "password", "profiles", "subscription", "cardholder", "cardnumber", "expiry", "securitycode", "billingaddress", "rgb"]
     filepath = "accounts.csv"
 
@@ -1302,6 +1398,7 @@ class UserAccounts:
         self._profiles:dict[list] = {}
 
     def add_account(self, username, age, email, password, subscription="basic"):
+        """Adds account to _accounts for new accounts"""
         self._accounts.append({"username": username,
                                "age": age,
                                "email": email,
@@ -1319,36 +1416,45 @@ class UserAccounts:
         UserProfiles.save_to_csv(self)
 
     def get_account(self, username) -> dict|None:
+        """Returns account information if username exists"""
         for account in self._accounts:
             if account["username"] == username:
                 return account
         return None
 
     def get_userdetails(self, detail) -> list:
+        """Returns list of all users detail"""
+        # eg. if detail = "username", returns list of all usernames
         return [*map(lambda user: user[detail], self._accounts)]
 
     def get_profiles(self, username) -> list:
+        """Returns list of all profiles for an account"""
         try:
             return self._profiles[username]
         except:
             return []
 
     def get_profile_dict(self) -> dict:
+        """Returns all profiles"""
         return self._profiles
 
     def get_profilesnames(self, username:str) -> list:
+        """Returns profile names"""
         return [*map(lambda profile:profile.name, self._profiles[username])]
 
     def get_all(self) -> list:
+        """Returns all accounts"""
         return list(self._accounts)
 
     def save_to_csv(self):
+        """Saves user accounts to csv"""
         with open(self.filepath, "w", newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=self.FIELDS)
             writer.writeheader()
             writer.writerows(self._accounts)
 
     def load_from_csv(self):
+        """Loads accounts from csv"""
         colors:dict[list[str]] = {}
         with open(self.filepath, "r", newline="", encoding="utf-8") as f:
             reader = csv.DictReader(f)
@@ -1374,11 +1480,13 @@ class UserAccounts:
         self.update_color_all(colors)
 
     def get_subscription(self, username:str) -> str:
+        """Returns account subscription"""
         for account in self._accounts:
             if account["username"] == username:
                 return account["subscription"]
 
     def update_subscription(self, username, subscription, cardholder, cardnumber, expiry, securitycode, billingaddress):
+        """Updates account subscription"""
         for account in self._accounts:
             if account["username"] == username:
                 account["subscription"] = subscription
@@ -1391,6 +1499,7 @@ class UserAccounts:
         self.save_to_csv()
 
     def update_color(self, username:str, name:str, rgb):
+        """Updates profile colour"""
         (profiles:=self._profiles[username])[self.get_profilesnames(username).index(name)].color = rgb
         colors = []
         for p in profiles:
@@ -1399,6 +1508,7 @@ class UserAccounts:
         self._accounts[self.get_userdetails("username").index(username)]["rgb"] = colortxt
 
     def update_color_all(self, colors:dict[list[str]]):
+        """Updates all colours"""
         for username in [*self._profiles.keys()]:
             profile_colors = colors[username]
             for i, profile in enumerate(self._profiles[username]):
@@ -1406,6 +1516,8 @@ class UserAccounts:
 
 
 class UserProfiles():
+    """Handles profile specific data"""
+
     FIELDS = ["name", "wlist", "whistory"]
 
     def __init__(self, name:str, age:int, wlist:list, whistory:list, color=None):
@@ -1416,6 +1528,7 @@ class UserProfiles():
         self.color = color or ctk.ThemeManager.theme["CTkButton"]["fg_color"][int(ctk.get_appearance_mode() == "Dark")]
 
     def load_from_csv(account:UserAccounts):
+        """Loads information from csv"""
         with open("profiles.csv", "r", newline="", encoding="utf-8") as f:
             reader = csv.DictReader(f)
             profiles = account.get_profile_dict()
@@ -1425,14 +1538,15 @@ class UserProfiles():
                 profile_watch_history = row["whistory"].split(";67;")
                 for i in range(len(profiles_watch_list)):
                     profile = profiles[name][i]
-                    watch_list = profiles_watch_list[i].split("|67|") # watch list in the profile in the account
-                    watch_history = profile_watch_history[i].split("|67|")
+                    watch_list = profiles_watch_list[i].split("|67|") # watch list of profile
+                    watch_history = profile_watch_history[i].split("|67|") # watch history of profile
                     for video in watch_list:
                         profile.add_to_wlist(video)
                     for video in watch_history:
                         profile.add_to_whistory(video)
 
     def save_to_csv(account:UserAccounts):
+        """Saves information to csv"""
         # Change UserProfiles class into a dict
         profiles = account.get_profile_dict()
         # {name: [UserProfiles(), UserProfiles()], name: [UserProfiles()]}
@@ -1456,25 +1570,31 @@ class UserProfiles():
             writer.writerows(plist)
 
     def add_to_whistory(self, id:str):
+        """Add video to watch history"""
         self.remove_from_whistory(id)
         self._watch_history.append(id)
 
     def remove_from_whistory(self, id:str):
+        """Remove video from watch history"""
         if id in self._watch_history:
             self._watch_history.remove(id)
 
     def get_whistory(self) -> list:
+        """Returns list of watch history"""
         return self._watch_history
 
     def add_to_wlist(self, id:str):
+        """Adds video to watch list"""
         self.remove_from_wlist(id)
         self._watch_list.append(id)
 
     def remove_from_wlist(self, id:str):
+        """Removes video from watch list"""
         if id in self._watch_list:
             self._watch_list.remove(id)
 
     def get_wlist(self) -> list:
+        """Returns list of watch list"""
         return self._watch_list
 
 
