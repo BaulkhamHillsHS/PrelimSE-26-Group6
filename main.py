@@ -5,12 +5,6 @@ import customtkinter as ctk
 from datetime import datetime
 from PIL import Image
 
-"""
-Notes:
-NEEDED THINGS
-encapsulation - more protected things? currently only _accounts
-"""
-
 NAME = "yaoi streaming service :3"
 
 class LoginFrame(ctk.CTkFrame):
@@ -204,7 +198,7 @@ class LoadingScreen(ctk.CTkToplevel):
 
 
 class AccountInfoWindow(ctk.CTkToplevel):
-    # Frame for showing account information - pops up when clicking pfp
+    # Frame for showing account information - pops up when clicking profile button (the one with 1 character)
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
         self.grid_rowconfigure(7, weight=1)
@@ -312,7 +306,7 @@ class BrowseMenu(ctk.CTkFrame):
             title = ctk.CTkLabel(video_row, text=video, anchor="w")
             title.grid(row=0, column=0, padx=10, pady=5, sticky="ew")
 
-            watchbtn = ctk.CTkButton(video_row, text="Watch", width=100, command=lambda v=video: self.master.open_video(v))
+            watchbtn = ctk.CTkButton(video_row, text="Watch", width=100, command=lambda v=video: self.watch_video(v))
             watchbtn.grid(row=0, column=1, padx=5)
 
             watchlaterbtn = ctk.CTkButton(video_row, width=120, command=lambda v=video: self.toggle_watch_later(v))
@@ -648,8 +642,6 @@ class MainFrame(ctk.CTkFrame):
 
         self.watchlist_setting = master.watchlist_setting
 
-        self.subscriptionframe = None # unused variable?
-
         self.profilebtn = ctk.CTkButton(self.topbar, text="", width=60, height=60, corner_radius=30, command=self._open_account_info)
         self.browsebtn = ctk.CTkButton(self.topbar, text="Browse", command=self.master.maintobrowse)
         self.historybtn = ctk.CTkButton(self.topbar, 150, text="Watch HistorYaoi", command=self.show_history)
@@ -765,7 +757,7 @@ class MainFrame(ctk.CTkFrame):
         self.history_widgets.clear()
         self.current_display = None
 
-    def _darken_color(self, color, amount): # amount is a % of the rgb value to reduce
+    def _darken_color(self, color, amount): # amount is a % of each rgb value to reduce
         c = color[1:]
         r = round(int(c[0:2], 16) * (1-amount/100))
         g = round(int(c[2:4], 16) * (1-amount/100))
@@ -931,7 +923,8 @@ class SubscriptionFrame(ctk.CTkFrame):
 
                 if history:
                     for video in history:
-                        f.write(f"- {video}\n")
+                        if video != "":
+                            f.write(f"- {video}\n")
                 else:
                     f.write("No videos in Watch HistorYaoi.\n")
 
@@ -1284,7 +1277,7 @@ class StreamingServiceApp(ctk.CTk):
 
 class UserAccounts:
     # Only handles data, account/profile management
-    FIELDS = ["username", "age", "email", "password", "profiles", "subscription", "cardholder", "cardnumber", "expiry", "securitycode", "billingaddress", "rgb"]
+    FIELDS = ["username", "age", "email", "password", "profiles", "subscription", "cardholder", "cardnumber", "expiry", "securitycode", "billingaddress", "hex"]
     filepath = "accounts.csv"
 
     def __init__(self):
@@ -1303,7 +1296,7 @@ class UserAccounts:
                                "expiry": "",
                                "securitycode": "",
                                "billingaddress": "",
-                               "rgb": ""})
+                               "hex": "#1F6AA5"})
         self._profiles[username] = [UserProfiles(username, age, [], [])]
         self.save_to_csv()
         UserProfiles.save_to_csv(self)
@@ -1354,13 +1347,13 @@ class UserAccounts:
                                        "expiry": row.get("expiry", ""),
                                        "securitycode": row.get("securitycode", ""),
                                        "billingaddress": row.get("billingaddress", ""),
-                                       "rgb": row["rgb"]})
+                                       "hex": row["hex"]})
                 self._profiles[row["username"]] = []
                 if row["profiles"]:
                     for profile in row["profiles"].split(";"):
                         # profile should be name:age;name:age
                         self._profiles[row["username"]].append(UserProfiles((plist:=profile.split(":"))[0], int(plist[1]), [], []))
-                colors[row["username"]] = row["rgb"].split(":")
+                colors[row["username"]] = row["hex"].split(":")
         self.update_color_all(colors)
 
     def get_subscription(self, username:str) -> str:
@@ -1380,13 +1373,14 @@ class UserAccounts:
                 break
         self.save_to_csv()
 
-    def update_color(self, username:str, name:str, rgb):
-        (profiles:=self._profiles[username])[self.get_profilesnames(username).index(name)].color = rgb
+    def update_color(self, username:str, name:str, hex):
+        (profiles:=self._profiles[username])[self.get_profilesnames(username).index(name)].color = hex
         colors = []
         for p in profiles:
             colors.append(p.color)
         colortxt = ":".join(colors)
-        self._accounts[self.get_userdetails("username").index(username)]["rgb"] = colortxt
+        self._accounts[self.get_userdetails("username").index(username)]["hex"] = colortxt
+        self.save_to_csv()
 
     def update_color_all(self, colors:dict[list[str]]):
         for username in [*self._profiles.keys()]:
