@@ -306,10 +306,10 @@ class BrowseMenu(ctk.CTkFrame):
             title = ctk.CTkLabel(video_row, text=video, anchor="w")
             title.grid(row=0, column=0, padx=10, pady=5, sticky="ew")
 
-            watchbtn = ctk.CTkButton(video_row, text="Watch", width=100, command=lambda v=video: self.watch_video(v))
+            watchbtn = ctk.CTkButton(video_row, text="Watch", width=100, command=lambda vid=video: self.watch_video(vid))
             watchbtn.grid(row=0, column=1, padx=5)
 
-            watchlaterbtn = ctk.CTkButton(video_row, width=120, command=lambda v=video: self.toggle_watch_later(v))
+            watchlaterbtn = ctk.CTkButton(video_row, width=120, command=lambda vid=video: self.toggle_watch_later(vid))
             watchlaterbtn.grid(row=0, column=2, padx=5)
 
             self.video_rows[video] = {"frame": video_row, "watchlater": watchlaterbtn, "info": info}
@@ -361,8 +361,7 @@ class BrowseMenu(ctk.CTkFrame):
         show_name = info["show"]
 
         episodes = shows[show_name]
-
-        index = next(i for i, ep in enumerate(episodes) if video == ep[1])
+        index = next(ep_index for ep_index, episode in enumerate(episodes) if video == episode[1])
 
         self.master.window = TVEpisodeView(self.master, show_name, episodes, index)
 
@@ -418,7 +417,7 @@ class BaseVideoFrame(ctk.CTkFrame):
         self.image = ctk.CTkLabel(self, text="", image=self.master.get_cached_image(image_path, (700, 400)))
         self.image.grid(row=0, column=0, rowspan=3, columnspan=2, padx=20, pady=(20,5), sticky="w")
 
-        self.textlabel = ctk.CTkLabel(self, text=name, font=("Roboto", 36 if (nl:=len(name))<45 else (32 if nl<49 else 29)), anchor="w")
+        self.textlabel = ctk.CTkLabel(self, text=name, font=("Roboto", 36 if (namelen:=len(name))<45 else (32 if namelen<49 else 29)), anchor="w")
         self.textlabel.grid(row=3, column=0, columnspan=2, pady=7, padx=30, sticky="w")
 
         meta = []
@@ -690,7 +689,7 @@ class MainFrame(ctk.CTkFrame):
 
         self.history_widgets.clear()
 
-        items = [x for x in items if x]
+        items = [vid for vid in items if vid]
 
         if not items:
             label = ctk.CTkLabel(self.historyframe, text=f"No videos in {title}")
@@ -726,7 +725,7 @@ class MainFrame(ctk.CTkFrame):
 
         self.show_overlay()
 
-        history = [v for v in self.master.profile.get_whistory()]
+        history = [vid for vid in self.master.profile.get_whistory()]
         self.update_history_display("Watch HistorYaoi", history)
 
     def show_watch_later(self):
@@ -742,7 +741,7 @@ class MainFrame(ctk.CTkFrame):
 
         self.show_overlay()
 
-        wlist = [v for v in self.master.profile.get_wlist()]
+        wlist = [vid for vid in self.master.profile.get_wlist()]
         self.update_history_display("My LibrarYaoi", wlist)
 
     def clear_history_display(self):
@@ -758,10 +757,10 @@ class MainFrame(ctk.CTkFrame):
         self.current_display = None
 
     def _darken_color(self, color, amount): # amount is a % of each rgb value to reduce
-        c = color[1:]
-        r = round(int(c[0:2], 16) * (1-amount/100))
-        g = round(int(c[2:4], 16) * (1-amount/100))
-        b = round(int(c[4:6], 16) * (1-amount/100))
+        colornumber = color[1:]
+        r = round(int(colornumber[0:2], 16) * (1-amount/100))
+        g = round(int(colornumber[2:4], 16) * (1-amount/100))
+        b = round(int(colornumber[4:6], 16) * (1-amount/100))
         return f"#{r:02x}{g:02x}{b:02x}"
 
     def updateprofilebtn(self):
@@ -1042,9 +1041,9 @@ class StreamingServiceApp(ctk.CTk):
         self.profiles = self._accounts.get_profiles(self.account)
 
     def switch_profile(self, profile:str):
-        for i, p in enumerate(map(lambda p:p.name,self._accounts.get_profiles(self.account))):
-            if p == profile:
-                self.profile = self.profiles[i]
+        for profile_index, profile_name in enumerate(map(lambda profile:profile.name,self._accounts.get_profiles(self.account))):
+            if profile_name == profile:
+                self.profile = self.profiles[profile_index]
                 self.main.updateaccounttxt(self.account, self.profile.name)
                 self.main.updateprofilebtn()
                 self.main.accountinfowindow.updateprofiles(self.profile.name, self._accounts.get_profilesnames(self.account))
@@ -1209,7 +1208,7 @@ class StreamingServiceApp(ctk.CTk):
             scroll = BaseScrollFrame(self.main.scrolls, show, "x", True)
             scroll.pack()
             for epnum, title, details in allowed_eps:
-                scroll.add_btn(details["image"],command=lambda e=title, d=details: self.open_video_frame(e, d))
+                scroll.add_btn(details["image"],command=lambda episode=title, episodedetails=details: self.open_video_frame(episode, episodedetails))
 
     def register_view(self, video_title):
         self.main.add_video_to_history(video_title)
@@ -1243,7 +1242,7 @@ class StreamingServiceApp(ctk.CTk):
                     not self.can_watch(details["rating"]))):
                 continue
 
-            scroll.add_btn(details["image"], command=lambda v=video, d=details: self.open_video_frame(v, d))
+            scroll.add_btn(details["image"], command=lambda vid=video, videodetails=details: self.open_video_frame(vid, videodetails))
 
     def open_video_frame(self, video, details):
         self.maintovideo(BaseVideoFrame(self, details["image"], video, details["type"]))
@@ -1376,8 +1375,8 @@ class UserAccounts:
     def update_color(self, username:str, name:str, hex):
         (profiles:=self._profiles[username])[self.get_profilesnames(username).index(name)].color = hex
         colors = []
-        for p in profiles:
-            colors.append(p.color)
+        for prof in profiles:
+            colors.append(prof.color)
         colortxt = ":".join(colors)
         self._accounts[self.get_userdetails("username").index(username)]["hex"] = colortxt
         self.save_to_csv()
@@ -1385,8 +1384,8 @@ class UserAccounts:
     def update_color_all(self, colors:dict[list[str]]):
         for username in [*self._profiles.keys()]:
             profile_colors = colors[username]
-            for i, profile in enumerate(self._profiles[username]):
-                self.update_color(username, profile.name, profile_colors[i])
+            for user, profile in enumerate(self._profiles[username]):
+                self.update_color(username, profile.name, profile_colors[user])
 
 
 class UserProfiles():
@@ -1430,8 +1429,8 @@ class UserProfiles():
             wlist = []
             whistorylist = []
             for profile in [*profiles.values()][i]:
-                wlist.append(wl if (wl:="|67|".join(profile._watch_list))[:4] != "|67|" else wl[4:])
-                whistorylist.append(wh if (wh:="|67|".join(profile._watch_history))[:4] != "|67|" else wh[4:])
+                wlist.append(watchlist if (watchlist:="|67|".join(profile._watch_list))[:4] != "|67|" else watchlist[4:])
+                whistorylist.append(watchhistory if (watchhistory:="|67|".join(profile._watch_history))[:4] != "|67|" else watchhistory[4:])
             wlisttxt = ";67;".join(wlist)
             whistorytxt = ";67;".join(whistorylist)
             plist.append({"name":[*profiles.keys()][i], "wlist":wlisttxt, "whistory":whistorytxt})           
