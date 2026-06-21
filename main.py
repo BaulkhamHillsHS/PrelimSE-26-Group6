@@ -4,37 +4,6 @@ import CTkColorPicker as ctkcolor
 import customtkinter as ctk
 from datetime import datetime
 from PIL import Image
-import tkinter as tk
-
-"""
-Notes:
-NEEDED THINGS
-profiles: 
-- each profile should have an age, watch list and watch history
-- profile should be a class
-
-subscription management:
-button next to profile to open a seperate window to see subscription and manage
-
-OOP PROGRAMMING:
-CONGposition - class containing classes 
-- make a profile class, where the account class is containing profiles
-
-encapsulation - more protected things? currently only _accounts
-
-polymorphism - multiple classes containing same method
-- easy imo, because video and tv show are going to be inheriting from the same abstract class
-
-
-
-
-
-
-
-
-
-https://youtu.be/uGI0tkmyogU?t=1590 "We should blur this on YouTube and make it unblurred on Nebula."
-"""
 
 NAME = "yaoi streaming service :3"
 
@@ -156,7 +125,7 @@ class SignupFrame(ctk.CTkFrame):
 
         # Valid username check
         if "@" in username:
-            self.status_label.configure(text="Username cannot contain @", text_color="red")
+            self.status_label.configure(text="Username cannot contain @", text_color="red") # to prevent issues with usernames and emails being the same
             return
 
         # Check if age is a number
@@ -246,6 +215,7 @@ class LoadingScreen(ctk.CTkToplevel):
 
 class AccountInfoWindow(ctk.CTkToplevel):
     """Frame for showing account information"""
+    # Pops up when clicking profile button (the one with 1 character)
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
         self.grid_rowconfigure(7, weight=1)
@@ -359,10 +329,10 @@ class BrowseMenu(ctk.CTkFrame):
             title = ctk.CTkLabel(video_row, text=video, anchor="w")
             title.grid(row=0, column=0, padx=10, pady=5, sticky="ew")
 
-            watchbtn = ctk.CTkButton(video_row, text="Watch", width=100, command=lambda v=video: self.master.open_video(v))
+            watchbtn = ctk.CTkButton(video_row, text="Watch", width=100, command=lambda vid=video: self.watch_video(vid))
             watchbtn.grid(row=0, column=1, padx=5)
 
-            watchlaterbtn = ctk.CTkButton(video_row, width=120, command=lambda v=video: self.toggle_watch_later(v))
+            watchlaterbtn = ctk.CTkButton(video_row, width=120, command=lambda vid=video: self.toggle_watch_later(vid))
             watchlaterbtn.grid(row=0, column=2, padx=5)
 
             self.video_rows[video] = {"frame": video_row, "watchlater": watchlaterbtn, "info": info}
@@ -423,8 +393,7 @@ class BrowseMenu(ctk.CTkFrame):
         show_name = info["show"]
 
         episodes = shows[show_name]
-
-        index = next(i for i, ep in enumerate(episodes) if video == ep[1])
+        index = next(ep_index for ep_index, episode in enumerate(episodes) if video == episode[1])
 
         # Opens window
         self.master.window = TVEpisodeView(self.master, show_name, episodes, index)
@@ -447,7 +416,7 @@ class BaseScrollFrame(ctk.CTkScrollableFrame):
         self.dir = "x" if dir == "x" else "y"
 
     def add_btn(self, image_path, command=lambda:print(f"No command")):
-        """Creates a button with an image and adds to self frame"""
+        """Creates a clickable thumbnail button and adds to self frame"""
         if image_path:
             image = app.get_cached_image(image_path, (200, 110))
             btn = ctk.CTkButton(self, command=command, width=200, height=110, image=image, text="", fg_color="transparent", hover_color="#515151")
@@ -466,7 +435,7 @@ class BaseScrollFrame(ctk.CTkScrollableFrame):
 
 
 class BaseVideoFrame(ctk.CTkFrame):
-    """Frame for displaying video information"""
+    """Frame for displaying video information (movie, short, tv, usermade)"""
     def __init__(self, master, image_path:str, name:str, type:str, backcmd=None, **kwargs):
         super().__init__(master, **kwargs)
         self.name = name
@@ -488,7 +457,7 @@ class BaseVideoFrame(ctk.CTkFrame):
         self.image = ctk.CTkLabel(self, text="", image=self.master.get_cached_image(image_path, (700, 400)))
         self.image.grid(row=0, column=0, rowspan=3, columnspan=2, padx=20, pady=(20,5), sticky="w")
 
-        self.textlabel = ctk.CTkLabel(self, text=name, font=("Roboto", 36 if (nl:=len(name))<45 else (32 if nl<49 else 29)), anchor="w")
+        self.textlabel = ctk.CTkLabel(self, text=name, font=("Roboto", 36 if (namelen:=len(name))<45 else (32 if namelen<49 else 29)), anchor="w")
         self.textlabel.grid(row=3, column=0, columnspan=2, pady=7, padx=30, sticky="w")
 
         meta = []
@@ -507,7 +476,7 @@ class BaseVideoFrame(ctk.CTkFrame):
 
         meta_text = type + ("\n" + "\n".join(meta) if meta else "")
 
-        self.typelabel = ctk.CTkLabel(self, text=meta_text, font=("Roboto", 36), anchor="w", justify="left")
+        self.typelabel = ctk.CTkLabel(self, text=meta_text, font=("Roboto", 20), anchor="w", justify="left")
         self.typelabel.grid(row=5, column=0, columnspan=2, pady=7, padx=30, sticky="w")
 
         self.watchbtn = ctk.CTkButton(self, 450, 75, text="Watch", command=self._watch_video)
@@ -806,7 +775,7 @@ class MainFrame(ctk.CTkFrame):
 
         self.show_overlay()
 
-        history = [v for v in self.master.profile.get_whistory()]
+        history = [vid for vid in self.master.profile.get_whistory()]
         self.update_history_display("Watch HistorYaoi", history)
 
     def show_watch_later(self):
@@ -823,7 +792,7 @@ class MainFrame(ctk.CTkFrame):
 
         self.show_overlay()
 
-        wlist = [v for v in self.master.profile.get_wlist()]
+        wlist = [vid for vid in self.master.profile.get_wlist()]
         self.update_history_display("My LibrarYaoi", wlist)
 
     def clear_history_display(self):
@@ -841,12 +810,12 @@ class MainFrame(ctk.CTkFrame):
         self.history_widgets.clear()
         self.current_display = None
 
-    def _darken_color(self, color, amount) -> str: # amount is a % of the rgb value to reduce
+    def _darken_color(self, color, amount): # amount is a % of each rgb value to reduce
         """Generates the hover colour"""
-        c = color[1:]
-        r = round(int(c[0:2], 16) * (1-amount/100))
-        g = round(int(c[2:4], 16) * (1-amount/100))
-        b = round(int(c[4:6], 16) * (1-amount/100))
+        colornumber = color[1:]
+        r = round(int(colornumber[0:2], 16) * (1-amount/100))
+        g = round(int(colornumber[2:4], 16) * (1-amount/100))
+        b = round(int(colornumber[4:6], 16) * (1-amount/100))
         return f"#{r:02x}{g:02x}{b:02x}"
 
     def updateprofilebtn(self):
@@ -879,6 +848,7 @@ class SubscriptionFrame(ctk.CTkFrame):
         ctk.CTkLabel(self.form_frame, text="Subscription").pack()
         self.form_frame.planbox = ctk.CTkComboBox(self.form_frame, values=["basic", "premium", "神様"])
         self.form_frame.planbox.pack(pady=(0,5))
+        self.form_frame.planbox.set(self.master._accounts.get_subscription(self.master.account))
 
         # label text, placeholder text, hidden with asterisk?
         fields = {"cardholder": ("Cardholder Name", "e.g. Ryan Dunne", False, 200),
@@ -988,7 +958,8 @@ class SubscriptionFrame(ctk.CTkFrame):
         self.master._accounts.update_subscription(self.master.account, self.form_frame.planbox.get(), *details)
 
         with open(f"{self.master.account}_invoice.txt", "w", encoding="utf-8") as f:
-            f.write(f"{NAME} - Subscription and Viewing Report\n\n")
+            f.write(f"{NAME} - Subscription and Viewing Report\n")
+            f.write(f"Generated: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}\n\n")
 
             f.write("--------------------\n")
             f.write("SUBSCRIPTION INVOICE\n")
@@ -1003,19 +974,29 @@ class SubscriptionFrame(ctk.CTkFrame):
             f.write("WATCH HISTORYAOI\n")
             f.write("----------------\n\n")
 
-            history = self.master.profile.get_whistory()
+            profiles = self.master._accounts.get_profiles(self.master.account)
 
-            if history:
-                for video in history:
-                    f.write(f"- {video}\n")
-            else:
-                f.write("No videos in Watch HistorYaoi.\n")
+            for profile in profiles:
+                f.write(f"Profile: {profile.name}\n")
+                f.write("-" * (9 + len(profile.name)) + "\n")
+
+                history = profile.get_whistory()
+
+                if history:
+                    for video in history:
+                        if video != "":
+                            f.write(f"- {video}\n")
+                else:
+                    f.write("No videos in Watch HistorYaoi.\n")
+
+                f.write("\n")
 
         self.successlabel.configure(text="Subscription updated successfully!", text_color="green")
 
 
 class StreamingServiceApp(ctk.CTk):
     """App for Streaming service"""
+    # Controls many frames, navigation, and csv files
     def __init__(self):
         super().__init__()
         self.title(NAME)
@@ -1320,12 +1301,12 @@ class StreamingServiceApp(ctk.CTk):
             scroll = BaseScrollFrame(self.main.scrolls, show, "x", True)
             scroll.pack()
             for epnum, title, details in allowed_eps:
-                scroll.add_btn(details["image"],command=lambda e=title, d=details: self.open_video_frame(e, d))
+                scroll.add_btn(details["image"],command=lambda episode=title, episodedetails=details: self.open_video_frame(episode, episodedetails))
 
     def generate_scroll(self, genre:str="", video_type:str="", rating:str=""):
         """
         Generates a scroll frame with the window buttons based on the filters\n
-        genre: food, music, education, lifestyle, None(default -> all)\n .........................................theres more genres now
+        genre: food, music, education, lifestyle, adventure, romance, horror, action, None(default -> all)\n
         video_type: usermade, short, movie, None(default -> all)\n
         rating: G, PG, M, MA, R, None(default -> all)
         """
@@ -1351,7 +1332,7 @@ class StreamingServiceApp(ctk.CTk):
                     not self.can_watch(details["rating"]))):
                 continue
 
-            scroll.add_btn(details["image"], command=lambda v=video, d=details: self.open_video_frame(v, d))
+            scroll.add_btn(details["image"], command=lambda vid=video, videodetails=details: self.open_video_frame(vid, videodetails))
 
     def open_video_frame(self, video, details):
         """Opens the video frame of a video"""
@@ -1389,8 +1370,8 @@ class StreamingServiceApp(ctk.CTk):
 
 class UserAccounts:
     """Handles the user account information"""
-
-    FIELDS = ["username", "age", "email", "password", "profiles", "subscription", "cardholder", "cardnumber", "expiry", "securitycode", "billingaddress", "rgb"]
+    
+    FIELDS = ["username", "age", "email", "password", "profiles", "subscription", "cardholder", "cardnumber", "expiry", "securitycode", "billingaddress", "hex"]
     filepath = "accounts.csv"
 
     def __init__(self):
@@ -1410,7 +1391,7 @@ class UserAccounts:
                                "expiry": "",
                                "securitycode": "",
                                "billingaddress": "",
-                               "rgb": ""})
+                               "hex": "#1F6AA5"})
         self._profiles[username] = [UserProfiles(username, age, [], [])]
         self.save_to_csv()
         UserProfiles.save_to_csv(self)
@@ -1470,13 +1451,13 @@ class UserAccounts:
                                        "expiry": row.get("expiry", ""),
                                        "securitycode": row.get("securitycode", ""),
                                        "billingaddress": row.get("billingaddress", ""),
-                                       "rgb": row["rgb"]})
+                                       "hex": row["hex"]})
                 self._profiles[row["username"]] = []
                 if row["profiles"]:
                     for profile in row["profiles"].split(";"):
                         # profile should be name:age;name:age
                         self._profiles[row["username"]].append(UserProfiles((plist:=profile.split(":"))[0], int(plist[1]), [], []))
-                colors[row["username"]] = row["rgb"].split(":")
+                colors[row["username"]] = row["hex"].split(":")
         self.update_color_all(colors)
 
     def get_subscription(self, username:str) -> str:
@@ -1498,21 +1479,22 @@ class UserAccounts:
                 break
         self.save_to_csv()
 
-    def update_color(self, username:str, name:str, rgb):
+    def update_color(self, username:str, name:str, hex):
         """Updates profile colour"""
-        (profiles:=self._profiles[username])[self.get_profilesnames(username).index(name)].color = rgb
+        (profiles:=self._profiles[username])[self.get_profilesnames(username).index(name)].color = hex
         colors = []
-        for p in profiles:
-            colors.append(p.color)
+        for prof in profiles:
+            colors.append(prof.color)
         colortxt = ":".join(colors)
-        self._accounts[self.get_userdetails("username").index(username)]["rgb"] = colortxt
+        self._accounts[self.get_userdetails("username").index(username)]["hex"] = colortxt
+        self.save_to_csv()
 
     def update_color_all(self, colors:dict[list[str]]):
         """Updates all colours"""
         for username in [*self._profiles.keys()]:
             profile_colors = colors[username]
-            for i, profile in enumerate(self._profiles[username]):
-                self.update_color(username, profile.name, profile_colors[i])
+            for user, profile in enumerate(self._profiles[username]):
+                self.update_color(username, profile.name, profile_colors[user])
 
 
 class UserProfiles():
@@ -1559,8 +1541,8 @@ class UserProfiles():
             wlist = []
             whistorylist = []
             for profile in [*profiles.values()][i]:
-                wlist.append(wl if (wl:="|67|".join(profile._watch_list))[:4] != "|67|" else wl[4:])
-                whistorylist.append(wh if (wh:="|67|".join(profile._watch_history))[:4] != "|67|" else wh[4:])
+                wlist.append(watchlist if (watchlist:="|67|".join(profile._watch_list))[:4] != "|67|" else watchlist[4:])
+                whistorylist.append(watchhistory if (watchhistory:="|67|".join(profile._watch_history))[:4] != "|67|" else watchhistory[4:])
             wlisttxt = ";67;".join(wlist)
             whistorytxt = ";67;".join(whistorylist)
             plist.append({"name":[*profiles.keys()][i], "wlist":wlisttxt, "whistory":whistorytxt})           
