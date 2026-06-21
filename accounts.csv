@@ -1,4 +1,4 @@
-username,age,email,password,profiles,subscription,cardholder,cardnumber,expiry,securitycode,billingaddress,rgb
+username,age,email,password,profiles,subscription,cardholder,cardnumber,expiry,securitycode,billingaddress,hex
 MrDunne,36,ryan.dunne9@det.nsw.edu.au,Baulko11!!,Profile 1:36;Profile 2:16,premium,,,,,,#4abed5:#1F6AA5
 q,1,q@q,q,q:1;2:20,神様,dunn't,4444333322221111,01/67,6767,dunne's house,#5466ff:#a39ad1
 accongt1,17,cong@cong,cong,accongt1:17;accongt2:67,basic,cong,1337800813513376,09/30,1234,dunn't's house,#1F6AA5:#123456
